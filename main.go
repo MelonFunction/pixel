@@ -18,11 +18,53 @@ var (
 // All tools need MouseDown and MouseUp, but SetColor and GetColor are for
 // the majority of functions as they will need it
 type Tool interface {
-	MouseDown(x, y int)
-	MouseUp(x, y int)
+	MouseDown(x, y int) // Called each frame the mouse is down
+	MouseUp(x, y int)   // Called once, when the mouse button is released
 	SetColor(rl.Color)
 	GetColor() rl.Color
-	DrawPrompt() // Draw a selection boundary, pixel at a certain location etc
+	// Takes the current mouse position. Called every frame the tool is
+	// selected. Draw calls are drawn on the preview layer.
+	DrawPreview(x, y int)
+}
+
+// Line draws pixels across a line (rl.DrawLine doesn't draw properly)
+func Line(x0, y0, x1, y1 int, color rl.Color) {
+	dx := x1 - x0
+	if dx < 0 {
+		dx = -dx
+	}
+	dy := y1 - y0
+	if dy < 0 {
+		dy = -dy
+	}
+	var sx, sy int
+	if x0 < x1 {
+		sx = 1
+	} else {
+		sx = -1
+	}
+	if y0 < y1 {
+		sy = 1
+	} else {
+		sy = -1
+	}
+	err := dx - dy
+
+	for {
+		rl.DrawPixel(x0, y0, color)
+		if x0 == x1 && y0 == y1 {
+			break
+		}
+		e2 := 2 * err
+		if e2 > -dy {
+			err -= dy
+			x0 += sx
+		}
+		if e2 < dx {
+			err += dx
+			y0 += sy
+		}
+	}
 }
 
 type IntVec2 struct {
@@ -40,7 +82,10 @@ func (t *PixelTool) MouseDown(x, y int) {
 		t.shouldConnectToLastPos = true
 		rl.DrawPixel(x, y, t.GetColor())
 	} else {
-		rl.DrawLine(x, y, t.lastPos.X, t.lastPos.Y, t.GetColor())
+		// Need to increment x for some reason, probably a rounding issue...
+		// rl.DrawPixel(x, y, t.GetColor())
+		// rl.DrawLine(t.lastPos.X, t.lastPos.Y, x+1, y, t.GetColor())
+		Line(t.lastPos.X, t.lastPos.Y, x, y, t.GetColor())
 	}
 	t.lastPos.X = x
 	t.lastPos.Y = y
@@ -54,8 +99,9 @@ func (t *PixelTool) SetColor(color rl.Color) {
 func (t *PixelTool) GetColor() rl.Color {
 	return t.Color
 }
-func (t *PixelTool) DrawPrompt() {
-
+func (t *PixelTool) DrawPreview(x, y int) {
+	rl.ClearBackground(rl.Transparent)
+	rl.DrawPixel(x, y, t.GetColor())
 }
 
 type Layer struct {
@@ -64,15 +110,19 @@ type Layer struct {
 }
 
 type CustomCanvas struct {
+	// Layers belonging to the canvas. The last one is for tool previews
 	Layers       []*Layer
 	CurrentLayer int
 
-	CurrentTool Tool
+	CurrentTool    Tool
+	HasDoneMouseUp bool
 
 	KeyRepeat      time.Duration
 	keyRepeatTimer float32
 	keyMovable     bool
 	lastKey        []rl.Key
+
+	Zoom float32 // Camera zoom for pixel movement
 }
 
 // Update checks for input and uses the current tool to draw to the current
@@ -92,7 +142,7 @@ func (c *CustomCanvas) Update() {
 		c.keyMovable = true
 	}
 
-	// Queue keys up so that if left is held, then right is held, then right
+	// Stack keys up so that if left is held, then right is held, then right
 	// is released, the cursor would continue going left instead of staying
 	// still
 	if rl.IsKeyPressed(rl.KeyN) {
@@ -118,15 +168,20 @@ func (c *CustomCanvas) Update() {
 			c.keyRepeatTimer = 0
 			c.keyMovable = false
 
+			moveAmount := int(c.Zoom)
+			x := rl.GetMouseX()
+			y := rl.GetMouseY()
+
+			// TODO move amount based on zoom
 			switch last {
 			case rl.KeyN: // left
-				rl.SetMousePosition(rl.GetMouseX()+10, rl.GetMouseY())
+				rl.SetMousePosition(x+moveAmount, y)
 			case rl.KeyH: // right
-				rl.SetMousePosition(rl.GetMouseX()-10, rl.GetMouseY())
+				rl.SetMousePosition(x-moveAmount, y)
 			case rl.KeyT: // down
-				rl.SetMousePosition(rl.GetMouseX(), rl.GetMouseY()+10)
+				rl.SetMousePosition(x, y+moveAmount)
 			case rl.KeyC: // up
-				rl.SetMousePosition(rl.GetMouseX(), rl.GetMouseY()-10)
+				rl.SetMousePosition(x, y-moveAmount)
 			}
 		}
 	} else {
@@ -138,36 +193,25 @@ func (c *CustomCanvas) Update() {
 		c.keyMovable = true
 	}
 
-	// switch {
-	// case rl.IsKeyDown(rl.KeyN) || rl.IsKeyDown(rl.KeyRight):
-	// 	if c.keyMovable {
-	// 		c.keyRepeatTimer = 0
-	// 		c.keyMovable = false
-	// 		rl.SetMousePosition(rl.GetMouseX()+10, rl.GetMouseY())
-	// 	}
-	// case rl.IsKeyDown(rl.KeyH) || rl.IsKeyDown(rl.KeyLeft):
-	// 	if c.keyMovable {
-	// 		c.keyRepeatTimer = 0
-	// 		c.keyMovable = false
-	// 		rl.SetMousePosition(rl.GetMouseX()-10, rl.GetMouseY())
-	// 	}
-	// default:
-	// 	c.keyRepeatTimer = 0
-	// 	c.keyMovable = true
-	// }
-
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), camera)
 	cursor = cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+		c.HasDoneMouseUp = false
 		c.CurrentTool.MouseDown(int(cursor.X), int(cursor.Y))
 	} else {
-		c.CurrentTool.MouseUp(int(cursor.X), int(cursor.Y))
+		if c.HasDoneMouseUp == false {
+			c.HasDoneMouseUp = true
+			c.CurrentTool.MouseUp(int(cursor.X), int(cursor.Y))
+		}
 	}
+	rl.EndTextureMode()
+
+	rl.BeginTextureMode(c.Layers[len(c.Layers)-1].Canvas)
+	c.CurrentTool.DrawPreview(int(cursor.X), int(cursor.Y))
 	rl.EndTextureMode()
 }
 
 // Draw is used to draw all of the layers
-// TODO draw all of the layers
 func (c *CustomCanvas) Draw() {
 	for _, layer := range c.Layers {
 		rl.DrawTextureRec(layer.Canvas.Texture,
@@ -185,10 +229,12 @@ func NewCustomCanvas() *CustomCanvas {
 	return &CustomCanvas{
 		Layers: []*Layer{
 			{rl.LoadRenderTexture(64, 64), false},
-			{rl.LoadRenderTexture(64, 64), true}, // Scratch layer
+			{rl.LoadRenderTexture(64, 64), true},
 		},
-		CurrentTool: &PixelTool{Color: rl.Red},
-		KeyRepeat:   time.Second / 5,
+		CurrentTool:    &PixelTool{Color: rl.Red},
+		HasDoneMouseUp: true,
+		KeyRepeat:      time.Second / 5,
+		Zoom:           1,
 	}
 }
 
@@ -211,6 +257,7 @@ func main() {
 
 		// TODO zoom at cursor location, not target/offset
 		camera.Zoom += float32(rl.GetMouseWheelMove()) * 0.1 * camera.Zoom
+		canvas.Zoom = camera.Zoom
 
 		camera.Offset.X = float32(rl.GetScreenWidth()) / 2
 		camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
