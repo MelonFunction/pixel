@@ -72,6 +72,7 @@ type CustomCanvas struct {
 	KeyRepeat      time.Duration
 	keyRepeatTimer float32
 	keyMovable     bool
+	lastKey        []rl.Key
 }
 
 // Update checks for input and uses the current tool to draw to the current
@@ -91,22 +92,70 @@ func (c *CustomCanvas) Update() {
 		c.keyMovable = true
 	}
 
-	if rl.IsKeyDown(rl.KeyN) || rl.IsKeyDown(rl.KeyRight) {
+	// Queue keys up so that if left is held, then right is held, then right
+	// is released, the cursor would continue going left instead of staying
+	// still
+	if rl.IsKeyPressed(rl.KeyN) {
+		c.keyMovable = true
+		c.lastKey = append(c.lastKey, rl.KeyN)
+	}
+	if rl.IsKeyPressed(rl.KeyH) {
+		c.keyMovable = true
+		c.lastKey = append(c.lastKey, rl.KeyH)
+	}
+	if rl.IsKeyPressed(rl.KeyC) {
+		c.keyMovable = true
+		c.lastKey = append(c.lastKey, rl.KeyC)
+	}
+	if rl.IsKeyPressed(rl.KeyT) {
+		c.keyMovable = true
+		c.lastKey = append(c.lastKey, rl.KeyT)
+	}
+
+	if len(c.lastKey) > 0 && rl.IsKeyDown(c.lastKey[len(c.lastKey)-1]) {
+		last := c.lastKey[len(c.lastKey)-1]
 		if c.keyMovable {
 			c.keyRepeatTimer = 0
 			c.keyMovable = false
-			rl.SetMousePosition(rl.GetMouseX()+10, rl.GetMouseY())
-		}
-	} else if rl.IsKeyDown(rl.KeyH) || rl.IsKeyDown(rl.KeyLeft) {
-		if c.keyMovable {
-			c.keyRepeatTimer = 0
-			c.keyMovable = false
-			rl.SetMousePosition(rl.GetMouseX()-10, rl.GetMouseY())
+
+			switch last {
+			case rl.KeyN: // left
+				rl.SetMousePosition(rl.GetMouseX()+10, rl.GetMouseY())
+			case rl.KeyH: // right
+				rl.SetMousePosition(rl.GetMouseX()-10, rl.GetMouseY())
+			case rl.KeyT: // down
+				rl.SetMousePosition(rl.GetMouseX(), rl.GetMouseY()+10)
+			case rl.KeyC: // up
+				rl.SetMousePosition(rl.GetMouseX(), rl.GetMouseY()-10)
+			}
 		}
 	} else {
+		// Stop moving
+		if len(c.lastKey) > 0 {
+			c.lastKey = c.lastKey[:len(c.lastKey)-1]
+		}
 		c.keyRepeatTimer = 0
 		c.keyMovable = true
 	}
+
+	// switch {
+	// case rl.IsKeyDown(rl.KeyN) || rl.IsKeyDown(rl.KeyRight):
+	// 	if c.keyMovable {
+	// 		c.keyRepeatTimer = 0
+	// 		c.keyMovable = false
+	// 		rl.SetMousePosition(rl.GetMouseX()+10, rl.GetMouseY())
+	// 	}
+	// case rl.IsKeyDown(rl.KeyH) || rl.IsKeyDown(rl.KeyLeft):
+	// 	if c.keyMovable {
+	// 		c.keyRepeatTimer = 0
+	// 		c.keyMovable = false
+	// 		rl.SetMousePosition(rl.GetMouseX()-10, rl.GetMouseY())
+	// 	}
+	// default:
+	// 	c.keyRepeatTimer = 0
+	// 	c.keyMovable = true
+	// }
+
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), camera)
 	cursor = cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
