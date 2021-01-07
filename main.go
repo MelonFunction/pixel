@@ -43,8 +43,10 @@ type File struct {
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
 
-	CurrentTool    Tool
-	HasDoneMouseUp bool
+	LeftTool            Tool
+	RightTool           Tool
+	HasDoneMouseUpLeft  bool
+	HasDoneMouseUpRight bool
 
 	KeyRepeat      time.Duration
 	keyRepeatTimer float32
@@ -53,6 +55,8 @@ type File struct {
 
 	// Probably a cleaner way to handle mouse relational movement...
 	mouseX, mouseY, mouseLastX, mouseLastY int
+
+	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
 	Keymap Keymap
 }
@@ -150,18 +154,29 @@ func (f *File) Update() {
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), f.Camera)
 	cursor = cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
-		f.HasDoneMouseUp = false
-		f.CurrentTool.MouseDown(int(cursor.X), int(cursor.Y))
+		f.HasDoneMouseUpLeft = false
+		f.LeftTool.MouseDown(int(cursor.X), int(cursor.Y))
 	} else {
-		if f.HasDoneMouseUp == false {
-			f.HasDoneMouseUp = true
-			f.CurrentTool.MouseUp(int(cursor.X), int(cursor.Y))
+		if f.HasDoneMouseUpLeft == false {
+			f.HasDoneMouseUpLeft = true
+			f.LeftTool.MouseUp(int(cursor.X), int(cursor.Y))
+		}
+	}
+	if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		f.HasDoneMouseUpRight = false
+		f.RightTool.MouseDown(int(cursor.X), int(cursor.Y))
+	} else {
+		if f.HasDoneMouseUpRight == false {
+			f.HasDoneMouseUpRight = true
+			f.RightTool.MouseUp(int(cursor.X), int(cursor.Y))
 		}
 	}
 	rl.EndTextureMode()
 
 	rl.BeginTextureMode(f.Layers[len(f.Layers)-1].Canvas)
-	f.CurrentTool.DrawPreview(int(cursor.X), int(cursor.Y))
+	// LeftTool draws last as it's more important
+	f.RightTool.DrawPreview(int(cursor.X), int(cursor.Y))
+	f.LeftTool.DrawPreview(int(cursor.X), int(cursor.Y))
 	rl.EndTextureMode()
 }
 
@@ -172,6 +187,23 @@ func (f *File) Draw() {
 		rl.DrawTextureRec(layer.Canvas.Texture,
 			rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
 			rl.NewVector2(-float32(layer.Canvas.Texture.Width)/2, -float32(layer.Canvas.Texture.Height)/2),
+			rl.White)
+	}
+
+	for x := 0; x <= f.CanvasWidth; x += f.TileWidth {
+		rl.DrawLine(
+			-f.CanvasWidth/2+x,
+			-f.CanvasHeight/2,
+			-f.CanvasWidth/2+x,
+			f.CanvasHeight/2,
+			rl.White)
+	}
+	for y := 0; y <= f.CanvasHeight; y += f.TileHeight {
+		rl.DrawLine(
+			-f.CanvasWidth/2,
+			-f.CanvasHeight/2+y,
+			f.CanvasWidth/2,
+			-f.CanvasHeight/2+y,
 			rl.White)
 	}
 	rl.EndMode2D()
@@ -185,17 +217,23 @@ func (f *File) Destroy() {
 }
 
 // NewFile is the constructor for File
-func NewFile(keymap Keymap) *File {
+func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	return &File{
 		Layers: []*Layer{
-			{rl.LoadRenderTexture(64, 64), false},
-			{rl.LoadRenderTexture(64, 64), true},
+			{rl.LoadRenderTexture(canvasWidth, canvasHeight), false},
+			{rl.LoadRenderTexture(canvasWidth, canvasHeight), true},
 		},
-		CurrentTool:    &tools.PixelBrushTool{Color: rl.Red},
-		HasDoneMouseUp: true,
-		KeyRepeat:      time.Second / 5,
-		Keymap:         keymap,
-		Camera:         rl.Camera2D{Zoom: 8.0},
+		LeftTool:            &tools.PixelBrushTool{Color: rl.Red},
+		RightTool:           &tools.PixelBrushTool{Color: rl.Green},
+		HasDoneMouseUpLeft:  true,
+		HasDoneMouseUpRight: true,
+		KeyRepeat:           time.Second / 5,
+		Keymap:              keymap,
+		Camera:              rl.Camera2D{Zoom: 8.0},
+		CanvasWidth:         canvasWidth,
+		CanvasHeight:        canvasHeight,
+		TileWidth:           tileWidth,
+		TileHeight:          tileHeight,
 	}
 }
 
@@ -214,7 +252,7 @@ func main() {
 		"toolDown":  {rl.KeyT, rl.KeyDown},
 	}
 
-	file := NewFile(keymap)
+	file := NewFile(keymap, 64, 64, 8, 8)
 
 	for !rl.WindowShouldClose() {
 
