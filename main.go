@@ -5,6 +5,7 @@ import (
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
+	"github.com/scarycoffee/pixel/tools"
 )
 
 var (
@@ -12,6 +13,8 @@ var (
 	// canvas rl.RenderTexture2D
 	target rl.Vector2
 )
+
+type Keymap map[string]rl.Key
 
 // Tool implementations should call rl.DrawPixel or other operations, there are
 // no canvas middleware
@@ -27,89 +30,12 @@ type Tool interface {
 	DrawPreview(x, y int)
 }
 
-// Line draws pixels across a line (rl.DrawLine doesn't draw properly)
-func Line(x0, y0, x1, y1 int, color rl.Color) {
-	dx := x1 - x0
-	if dx < 0 {
-		dx = -dx
-	}
-	dy := y1 - y0
-	if dy < 0 {
-		dy = -dy
-	}
-	var sx, sy int
-	if x0 < x1 {
-		sx = 1
-	} else {
-		sx = -1
-	}
-	if y0 < y1 {
-		sy = 1
-	} else {
-		sy = -1
-	}
-	err := dx - dy
-
-	for {
-		rl.DrawPixel(x0, y0, color)
-		if x0 == x1 && y0 == y1 {
-			break
-		}
-		e2 := 2 * err
-		if e2 > -dy {
-			err -= dy
-			x0 += sx
-		}
-		if e2 < dx {
-			err += dx
-			y0 += sy
-		}
-	}
-}
-
-type IntVec2 struct {
-	X, Y int
-}
-
-type PixelTool struct {
-	lastPos                IntVec2
-	shouldConnectToLastPos bool
-	Color                  rl.Color
-}
-
-func (t *PixelTool) MouseDown(x, y int) {
-	if !t.shouldConnectToLastPos {
-		t.shouldConnectToLastPos = true
-		rl.DrawPixel(x, y, t.GetColor())
-	} else {
-		// Need to increment x for some reason, probably a rounding issue...
-		// rl.DrawPixel(x, y, t.GetColor())
-		// rl.DrawLine(t.lastPos.X, t.lastPos.Y, x+1, y, t.GetColor())
-		Line(t.lastPos.X, t.lastPos.Y, x, y, t.GetColor())
-	}
-	t.lastPos.X = x
-	t.lastPos.Y = y
-}
-func (t *PixelTool) MouseUp(x, y int) {
-	t.shouldConnectToLastPos = false
-}
-func (t *PixelTool) SetColor(color rl.Color) {
-	t.Color = color
-}
-func (t *PixelTool) GetColor() rl.Color {
-	return t.Color
-}
-func (t *PixelTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
-	rl.DrawPixel(x, y, t.GetColor())
-}
-
 type Layer struct {
 	Canvas      rl.RenderTexture2D
 	initialFill bool
 }
 
-type CustomCanvas struct {
+type File struct {
 	// Layers belonging to the canvas. The last one is for tool previews
 	Layers       []*Layer
 	CurrentLayer int
@@ -123,11 +49,13 @@ type CustomCanvas struct {
 	lastKey        []rl.Key
 
 	Zoom float32 // Camera zoom for pixel movement
+
+	Keymap Keymap
 }
 
 // Update checks for input and uses the current tool to draw to the current
 // layer
-func (c *CustomCanvas) Update() {
+func (c *File) Update() {
 	layer := c.Layers[c.CurrentLayer]
 
 	rl.BeginTextureMode(layer.Canvas)
@@ -174,18 +102,18 @@ func (c *CustomCanvas) Update() {
 
 			// TODO move amount based on zoom
 			switch last {
-			case rl.KeyN: // left
+			case c.Keymap["toolRight"]:
 				rl.SetMousePosition(x+moveAmount, y)
-			case rl.KeyH: // right
+			case c.Keymap["toolLeft"]:
 				rl.SetMousePosition(x-moveAmount, y)
-			case rl.KeyT: // down
+			case c.Keymap["toolDown"]:
 				rl.SetMousePosition(x, y+moveAmount)
-			case rl.KeyC: // up
+			case c.Keymap["toolUp"]:
 				rl.SetMousePosition(x, y-moveAmount)
 			}
 		}
 	} else {
-		// Stop moving
+		// Pop lastKey until we find a key that's still down
 		if len(c.lastKey) > 0 {
 			c.lastKey = c.lastKey[:len(c.lastKey)-1]
 		}
@@ -212,7 +140,7 @@ func (c *CustomCanvas) Update() {
 }
 
 // Draw is used to draw all of the layers
-func (c *CustomCanvas) Draw() {
+func (c *File) Draw() {
 	for _, layer := range c.Layers {
 		rl.DrawTextureRec(layer.Canvas.Texture,
 			rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
@@ -220,21 +148,22 @@ func (c *CustomCanvas) Draw() {
 			rl.White)
 	}
 }
-func (c *CustomCanvas) Destroy() {
+func (c *File) Destroy() {
 	for _, layer := range c.Layers {
 		layer.Canvas.Unload()
 	}
 }
-func NewCustomCanvas() *CustomCanvas {
-	return &CustomCanvas{
+func NewFile(keymap Keymap) *File {
+	return &File{
 		Layers: []*Layer{
 			{rl.LoadRenderTexture(64, 64), false},
 			{rl.LoadRenderTexture(64, 64), true},
 		},
-		CurrentTool:    &PixelTool{Color: rl.Red},
+		CurrentTool:    &tools.PixelBrushTool{Color: rl.Red},
 		HasDoneMouseUp: true,
 		KeyRepeat:      time.Second / 5,
 		Zoom:           1,
+		Keymap:         keymap,
 	}
 }
 
@@ -246,18 +175,24 @@ func main() {
 	rl.InitWindow(800, 450, "Pixel")
 	rl.SetTargetFPS(120)
 
-	canvas := NewCustomCanvas()
+	keymap := Keymap{
+		"toolLeft":  rl.KeyH,
+		"toolRight": rl.KeyN,
+		"toolUp":    rl.KeyC,
+		"toolDown":  rl.KeyT,
+	}
+
+	file := NewFile(keymap)
 
 	camera = rl.Camera2D{}
 	camera.Zoom = 8.0
 
 	var mouseX, mouseY, mouseLastX, mouseLastY int
-
 	for !rl.WindowShouldClose() {
 
 		// TODO zoom at cursor location, not target/offset
 		camera.Zoom += float32(rl.GetMouseWheelMove()) * 0.1 * camera.Zoom
-		canvas.Zoom = camera.Zoom
+		file.Zoom = camera.Zoom
 
 		camera.Offset.X = float32(rl.GetScreenWidth()) / 2
 		camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
@@ -276,18 +211,18 @@ func main() {
 		rl.ClearBackground(rl.Black)
 
 		// Update and draw to texture using current tool
-		canvas.Update()
+		file.Update()
 
-		// Draw the canvas.Canvas, use the camera to draw canvas.Canvas in the correct place
+		// Draw the file.Canvas, use the camera to draw file.Canvas in the correct place
 		rl.BeginMode2D(camera)
-		canvas.Draw()
+		file.Draw()
 
 		rl.EndMode2D()
 		rl.EndDrawing()
 	}
 
 	// Destroy resources
-	canvas.Destroy()
+	file.Destroy()
 
 	rl.CloseWindow()
 }
