@@ -1,13 +1,11 @@
 package main
 
-import rl "github.com/lachee/raylib-goplus/raylib"
-
 type IntVec2 struct {
 	X, Y int
 }
 
 // Line draws pixels across a line (rl.DrawLine doesn't draw properly)
-func Line(x0, y0, x1, y1 int, color rl.Color) {
+func Line(x0, y0, x1, y1 int, drawFunc func(x, y int)) {
 	dx := x1 - x0
 	if dx < 0 {
 		dx = -dx
@@ -30,7 +28,7 @@ func Line(x0, y0, x1, y1 int, color rl.Color) {
 	err := dx - dy
 
 	for {
-		rl.DrawPixel(x0, y0, color)
+		drawFunc(x0, y0)
 		if x0 == x1 && y0 == y1 {
 			break
 		}

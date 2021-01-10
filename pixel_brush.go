@@ -9,21 +9,25 @@ type PixelBrushTool struct {
 	shouldConnectToLastPos bool
 	color                  rl.Color
 	file                   *File
+	name                   string
 }
 
-func NewPixelBrushTool(color rl.Color, file *File) *PixelBrushTool {
+func NewPixelBrushTool(color rl.Color, file *File, name string) *PixelBrushTool {
 	return &PixelBrushTool{
 		color: color,
 		file:  file,
+		name:  name,
 	}
 }
 
 func (t *PixelBrushTool) MouseDown(x, y int) {
 	if !t.shouldConnectToLastPos {
 		t.shouldConnectToLastPos = true
-		rl.DrawPixel(x, y, t.GetColor())
+		t.file.DrawPixel(x, y, t.GetColor(), true)
 	} else {
-		Line(t.lastPos.X, t.lastPos.Y, x, y, t.GetColor())
+		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
+			t.file.DrawPixel(x, y, t.GetColor(), true)
+		})
 	}
 	t.lastPos.X = x
 	t.lastPos.Y = y
@@ -39,8 +43,12 @@ func (t *PixelBrushTool) GetColor() rl.Color {
 }
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
+	// Don't call file.DrawPixel as history isn't needed for this action
 	rl.DrawPixel(x, y, t.GetColor())
 }
 func (t *PixelBrushTool) SetFileReference(file *File) {
 
+}
+func (t *PixelBrushTool) String() string {
+	return t.name
 }
