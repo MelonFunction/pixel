@@ -29,6 +29,7 @@ type UI interface {
 	MouseDown() // Called each frame the mouse is down
 	MouseUp()   // Called once, when the mouse button is released
 
+	Update()
 	Draw()
 }
 
@@ -161,51 +162,59 @@ type File struct {
 	HistoryMaxActions int
 	historyOffset     int // How many undos have been made
 
+	Tools               []Tool // TODO Will be used by a Tool selector UI
 	LeftTool            Tool
 	RightTool           Tool
 	HasDoneMouseUpLeft  bool
 	HasDoneMouseUpRight bool
 
-	KeyRepeat      time.Duration
-	keyRepeatTimer float32
-	keyMovable     bool
-	lastKey        []rl.Key
-	// current keys down, used for combinations
-	keysDown map[rl.Key]bool
-	// keys which need to be released before they can be used again
-	keysAwaitingRelease map[rl.Key]bool
+	UI []UI
 
-	// Probably a cleaner way to handle mouse relational movement...
+	Keymap              Keymap
+	KeyRepeat           time.Duration
+	keyRepeatTimer      float32
+	keyMovable          bool
+	lastKey             []rl.Key
+	keysDown            map[rl.Key]bool // current keys down, used for combinations
+	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
+
+	// Used for relational mouse movement
 	mouseX, mouseY, mouseLastX, mouseLastY int
 
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
-
-	Keymap Keymap
 }
 
 // NewFile returns a pointer to a new File
 func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	f := &File{
+		Camera: rl.Camera2D{Zoom: 8.0},
+
 		Layers: []*Layer{
 			NewLayer(canvasWidth, canvasHeight, false),
 			NewLayer(canvasWidth, canvasHeight, true),
 		},
-		History:             make([]HistoryAction, 0, 5),
-		HistoryMaxActions:   5, // TODO get from config
+		History:           make([]HistoryAction, 0, 5),
+		HistoryMaxActions: 5, // TODO get from config
+
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
+
 		KeyRepeat:           time.Second / 5,
 		Keymap:              keymap,
-		Camera:              rl.Camera2D{Zoom: 8.0},
-		CanvasWidth:         canvasWidth,
-		CanvasHeight:        canvasHeight,
-		TileWidth:           tileWidth,
-		TileHeight:          tileHeight,
 		keysDown:            make(map[rl.Key]bool),
 		keysAwaitingRelease: make(map[rl.Key]bool),
+
+		CanvasWidth:  canvasWidth,
+		CanvasHeight: canvasHeight,
+		TileWidth:    tileWidth,
+		TileHeight:   tileHeight,
 	}
 	f.LeftTool = NewPixelBrushTool(rl.Red, f, "Pixel Brush L")
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
+
+	f.UI = []UI{
+		NewLayersUI(IntVec2{0, 0}, 100, 100, f, "Layers UI"),
+	}
 
 	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
 	f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
@@ -226,6 +235,14 @@ func (f *File) GetCurrentLayer() *Layer {
 // Update checks for input and uses the current tool to draw to the current
 // layer
 func (f *File) Update() {
+	// TODO scale UI depending on monitor dpi
+	// log.Println(rl.GetMonitorWidth(0), rl.GetWindowPosition())
+
+	UIHasControl = false
+	for _, ui := range f.UI {
+		ui.Update()
+	}
+
 	layer := f.GetCurrentLayer()
 
 	f.mouseX = rl.GetMouseX()
@@ -402,34 +419,36 @@ func (f *File) Update() {
 
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), f.Camera)
 	cursor = cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
-	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
-		// Fires once
-		if f.HasDoneMouseUpLeft {
-			// Create new history action
-			appendHistory(HistoryAction{f.LeftTool, make(map[IntVec2]PixelStateData)})
-		}
-		f.HasDoneMouseUpLeft = false
+	if !UIHasControl {
+		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+			// Fires once
+			if f.HasDoneMouseUpLeft {
+				// Create new history action
+				appendHistory(HistoryAction{f.LeftTool, make(map[IntVec2]PixelStateData)})
+			}
+			f.HasDoneMouseUpLeft = false
 
-		// Repeated action
-		f.LeftTool.MouseDown(int(cursor.X), int(cursor.Y))
-	} else {
-		// Always fires once
-		if f.HasDoneMouseUpLeft == false {
-			f.HasDoneMouseUpLeft = true
-			f.LeftTool.MouseUp(int(cursor.X), int(cursor.Y))
+			// Repeated action
+			f.LeftTool.MouseDown(int(cursor.X), int(cursor.Y))
+		} else {
+			// Always fires once
+			if f.HasDoneMouseUpLeft == false {
+				f.HasDoneMouseUpLeft = true
+				f.LeftTool.MouseUp(int(cursor.X), int(cursor.Y))
+			}
 		}
-	}
 
-	if rl.IsMouseButtonDown(rl.MouseRightButton) {
-		if f.HasDoneMouseUpRight {
-			appendHistory(HistoryAction{f.RightTool, make(map[IntVec2]PixelStateData)})
-		}
-		f.HasDoneMouseUpRight = false
-		f.RightTool.MouseDown(int(cursor.X), int(cursor.Y))
-	} else {
-		if f.HasDoneMouseUpRight == false {
-			f.HasDoneMouseUpRight = true
-			f.RightTool.MouseUp(int(cursor.X), int(cursor.Y))
+		if rl.IsMouseButtonDown(rl.MouseRightButton) {
+			if f.HasDoneMouseUpRight {
+				appendHistory(HistoryAction{f.RightTool, make(map[IntVec2]PixelStateData)})
+			}
+			f.HasDoneMouseUpRight = false
+			f.RightTool.MouseDown(int(cursor.X), int(cursor.Y))
+		} else {
+			if f.HasDoneMouseUpRight == false {
+				f.HasDoneMouseUpRight = true
+				f.RightTool.MouseUp(int(cursor.X), int(cursor.Y))
+			}
 		}
 	}
 	rl.EndTextureMode()
@@ -439,10 +458,7 @@ func (f *File) Update() {
 	f.RightTool.DrawPreview(int(cursor.X), int(cursor.Y))
 	f.LeftTool.DrawPreview(int(cursor.X), int(cursor.Y))
 	rl.EndTextureMode()
-}
 
-// Draw is used to draw all of the layers
-func (f *File) Draw() {
 	rl.BeginMode2D(f.Camera)
 	for _, layer := range f.Layers {
 		rl.DrawTextureRec(layer.Canvas.Texture,
@@ -451,6 +467,7 @@ func (f *File) Draw() {
 			rl.White)
 	}
 
+	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
 	for x := 0; x <= f.CanvasWidth; x += f.TileWidth {
 		rl.DrawLine(
 			-f.CanvasWidth/2+x,
@@ -468,6 +485,10 @@ func (f *File) Draw() {
 			rl.White)
 	}
 	rl.EndMode2D()
+
+	for _, ui := range f.UI {
+		ui.Draw()
+	}
 }
 
 // Undo an action

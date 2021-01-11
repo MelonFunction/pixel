@@ -33,9 +33,6 @@ func main() {
 		// Update and draw to texture using current tool
 		file.Update()
 
-		// Draw the file.Canvas, use the camera to draw file.Canvas in the correct place
-		file.Draw()
-
 		rl.EndDrawing()
 	}
 
