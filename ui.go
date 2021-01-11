@@ -7,22 +7,50 @@ import (
 var (
 	// UIHasControl lets the program know if input should go to the UI or not
 	UIHasControl = false
+	isInited     = false
+	Font         *rl.Font
 )
+
+func InitUI() {
+	isInited = true
+	Font = rl.LoadFont("./res/fonts/prstartk.ttf")
+}
+
+type Label string
+type Icon string
 
 type Button struct {
 	bounds  rl.Rectangle
 	onClick func()
-	label   string
 	hovered bool
+
+	isTextButton bool
+	label        string
+	icon         rl.Texture2D
 }
 
-func NewButton(bounds rl.Rectangle, label string, onClick func()) *Button {
-	return &Button{
+func NewButton(bounds rl.Rectangle, label interface{}, onClick func()) *Button {
+	if !isInited {
+		panic("Call InitUI")
+	}
+	b := &Button{
 		bounds:  bounds,
 		onClick: onClick,
-		label:   label,
 		hovered: false,
 	}
+
+	switch d := label.(type) {
+	case Label:
+		b.label = string(d)
+		b.isTextButton = true
+	case Icon:
+		b.icon = rl.LoadTexture(string(d))
+		b.isTextButton = false
+	default:
+		panic("Unsupported type passed to NewButton")
+	}
+
+	return b
 }
 
 func (b *Button) Update() {
@@ -39,9 +67,21 @@ func (b *Button) Update() {
 
 func (b *Button) Draw() {
 	if b.hovered {
-		rl.DrawRectangleRec(b.bounds, rl.Blue) // TODO get color from theme
+		rl.DrawRectangleRec(b.bounds, rl.Black)
+		rl.DrawRectangleLinesEx(b.bounds, 2, rl.White)
 	} else {
-		rl.DrawRectangleRec(b.bounds, rl.White) // TODO get color from theme
+		rl.DrawRectangleRec(b.bounds, rl.Black)
+		rl.DrawRectangleLinesEx(b.bounds, 2, rl.Gray)
+
 	}
-	rl.DrawText(b.label, int(b.bounds.X), int(b.bounds.Y), 16, rl.Black)
+	if b.isTextButton {
+		fo := rl.MeasureTextEx(*Font, b.label, 16, 1)
+		x := b.bounds.X + b.bounds.Width/2 - fo.X/2
+		y := b.bounds.Y + b.bounds.Height/2 - fo.Y/2
+		rl.DrawTextEx(*Font, b.label, rl.Vector2{X: x, Y: y}, 16, 1, rl.White)
+	} else {
+		x := b.bounds.X + b.bounds.Width/2 - float32(b.icon.Width)/2
+		y := b.bounds.Y + b.bounds.Height/2 - float32(b.icon.Height)/2
+		rl.DrawTexture(b.icon, int(x), int(y), rl.White)
+	}
 }

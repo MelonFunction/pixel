@@ -213,7 +213,7 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
 
 	f.UI = []UI{
-		NewLayersUI(IntVec2{0, 0}, 100, 100, f, "Layers UI"),
+		NewLayersUI(IntVec2{0, 0}, 200, 200, f, "Layers UI"),
 	}
 
 	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
@@ -411,10 +411,6 @@ func (f *File) Update() {
 		} else {
 			f.History = append(f.History, action)
 		}
-		// for i, h := range f.History {
-		// 	fmt.Printf("%d: %s - %d, ", i, h.Tool, len(h.PixelState))
-		// }
-		// fmt.Printf("\n")
 	}
 
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), f.Camera)

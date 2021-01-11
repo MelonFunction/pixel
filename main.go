@@ -23,6 +23,7 @@ func main() {
 		"redo":      {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},
 	}
 
+	InitUI()
 	file := NewFile(NewKeymap(keymap), 64, 64, 8, 8)
 
 	for !rl.WindowShouldClose() {
@@ -30,7 +31,6 @@ func main() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Black)
 
-		// Update and draw to texture using current tool
 		file.Update()
 
 		rl.EndDrawing()
