@@ -25,10 +25,13 @@ type Tool interface {
 	DrawPreview(x, y int)
 }
 
+// PixelStateData stores what the state was previously and currently
+// Prev is used by undo and Current is used by redo
 type PixelStateData struct {
 	Prev, Current rl.Color
 }
 
+// HistoryAction stores information about the action
 type HistoryAction struct {
 	// Tool is the tool used for the action (GetName is used in history panel)
 	Tool Tool
@@ -37,12 +40,63 @@ type HistoryAction struct {
 	PixelState map[IntVec2]PixelStateData
 }
 
-type Keymap map[string][][]rl.Key
+// KeymapData stores the action name as the key and a 2d slice of the keys
+type KeymapData map[string][][]rl.Key
+
+// Keymap stores the command+actions in Map and the the ordered keys in Keys
+type Keymap struct {
+	Keys []string
+	Data KeymapData
+}
+
+// NewKeymap returns a new Keymap
+// It also sorts the keys to avoid conflicts between bindings as ctrl+z will
+// fire before ctrl+shift+z if it is called first. Longer similar bindings will
+// be before shorter similar ones in the list
+func NewKeymap(data KeymapData) Keymap {
+	keys := make([]string, 0, 0)
+
+	for name, outer := range data {
+
+		var longestInner []rl.Key
+		for _, inner := range outer {
+			if len(inner) > len(longestInner) {
+				longestInner = inner
+			}
+		}
+		didInsert := false
+		for i, k := range keys {
+			for _, inner := range data[k] {
+				if len(longestInner) > len(inner) && !didInsert {
+					didInsert = true
+					log.Println(name, i, keys)
+					keys = append(keys[:i], append([]string{name}, keys[i:]...)...)
+				}
+			}
+		}
+
+		if !didInsert {
+			keys = append(keys, name)
+		}
+	}
+
+	log.Println(keys)
+
+	return Keymap{
+		Keys: keys,
+		Data: data,
+	}
+}
 
 // Static vars for file
 var (
 	keysExemptFromRelease = []rl.Key{
 		rl.KeyLeftControl,
+		rl.KeyLeftShift,
+		rl.KeyRightControl,
+		rl.KeyRightShift,
+		rl.KeyLeftAlt,
+		rl.KeyRightAlt,
 	}
 )
 
@@ -122,7 +176,7 @@ type File struct {
 	Keymap Keymap
 }
 
-// NewFile is the constructor for File
+// NewFile returns a pointer to a new File
 func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	f := &File{
 		Layers: []*Layer{
@@ -207,6 +261,9 @@ func (f *File) Update() {
 					allDown = false
 				}
 			}
+			if allDown {
+				return allDown
+			}
 		}
 		return allDown
 	}
@@ -226,13 +283,21 @@ func (f *File) Update() {
 		}
 		return true
 	}
+
 	// If checkDown is true, then execute setAwaitingRelease (return isn't important)
-	// TODO undo and redo have similar keys, should check the longer one first
-	switch {
-	case checkDown(f.Keymap["redo"]) && setAwaitingRelease(f.Keymap["redo"]):
-		f.Redo()
-	case checkDown(f.Keymap["undo"]) && setAwaitingRelease(f.Keymap["undo"]):
-		f.Undo()
+	for _, key := range f.Keymap.Keys {
+		if checkDown(f.Keymap.Data[key]) {
+			setAwaitingRelease(f.Keymap.Data[key])
+
+			switch key {
+			case "undo":
+				f.Undo()
+			case "redo":
+				f.Redo()
+			}
+
+			break
+		}
 	}
 
 	f.keyRepeatTimer += rl.GetFrameTime() * 1000
@@ -253,10 +318,10 @@ func (f *File) Update() {
 			}
 		}
 	}
-	checkDownAddStack(f.Keymap["toolRight"])
-	checkDownAddStack(f.Keymap["toolLeft"])
-	checkDownAddStack(f.Keymap["toolDown"])
-	checkDownAddStack(f.Keymap["toolUp"])
+	checkDownAddStack(f.Keymap.Data["toolRight"])
+	checkDownAddStack(f.Keymap.Data["toolLeft"])
+	checkDownAddStack(f.Keymap.Data["toolDown"])
+	checkDownAddStack(f.Keymap.Data["toolUp"])
 
 	if len(f.lastKey) > 0 && rl.IsKeyDown(f.lastKey[len(f.lastKey)-1]) {
 		last := f.lastKey[len(f.lastKey)-1]
@@ -280,13 +345,13 @@ func (f *File) Update() {
 			}
 			// TODO move amount based on zoom
 			switch {
-			case matches(last, f.Keymap["toolRight"]):
+			case matches(last, f.Keymap.Data["toolRight"]):
 				rl.SetMousePosition(x+moveAmount, y)
-			case matches(last, f.Keymap["toolLeft"]):
+			case matches(last, f.Keymap.Data["toolLeft"]):
 				rl.SetMousePosition(x-moveAmount, y)
-			case matches(last, f.Keymap["toolDown"]):
+			case matches(last, f.Keymap.Data["toolDown"]):
 				rl.SetMousePosition(x, y+moveAmount)
-			case matches(last, f.Keymap["toolUp"]):
+			case matches(last, f.Keymap.Data["toolUp"]):
 				rl.SetMousePosition(x, y-moveAmount)
 			}
 		}
@@ -398,8 +463,6 @@ func (f *File) Undo() {
 
 // Redo an action
 func (f *File) Redo() {
-	log.Println("redo", f.historyOffset, len(f.History), len(f.History)-f.historyOffset)
-
 	if f.historyOffset > 0 {
 		for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
 			f.DrawPixel(pos.X, pos.Y, psd.Current, false)

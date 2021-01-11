@@ -14,7 +14,7 @@ func main() {
 	rl.InitWindow(800, 450, "Pixel")
 	rl.SetTargetFPS(120)
 
-	keymap := Keymap{
+	keymap := KeymapData{
 		"toolLeft":  {{rl.KeyH}, {rl.KeyLeft}},
 		"toolRight": {{rl.KeyN}, {rl.KeyRight}},
 		"toolUp":    {{rl.KeyC}, {rl.KeyUp}},
@@ -23,7 +23,7 @@ func main() {
 		"redo":      {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},
 	}
 
-	file := NewFile(keymap, 64, 64, 8, 8)
+	file := NewFile(NewKeymap(keymap), 64, 64, 8, 8)
 
 	for !rl.WindowShouldClose() {
 
