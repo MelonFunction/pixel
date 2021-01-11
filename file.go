@@ -7,8 +7,7 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
-// Tool implementations should call rl.DrawPixel or other operations, there are
-// no canvas middleware
+// Tool is the interface for Tool elements
 type Tool interface {
 	// Used by every tool
 	MouseDown(x, y int) // Called each frame the mouse is down
@@ -23,6 +22,14 @@ type Tool interface {
 	// Takes the current mouse position. Called every frame the tool is
 	// selected. Draw calls are drawn on the preview layer.
 	DrawPreview(x, y int)
+}
+
+// UI is the interface for UI elements
+type UI interface {
+	MouseDown() // Called each frame the mouse is down
+	MouseUp()   // Called once, when the mouse button is released
+
+	Draw()
 }
 
 // PixelStateData stores what the state was previously and currently
@@ -199,6 +206,10 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	}
 	f.LeftTool = NewPixelBrushTool(rl.Red, f, "Pixel Brush L")
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
+
+	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
+	f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+
 	return f
 }
 
@@ -217,15 +228,25 @@ func (f *File) GetCurrentLayer() *Layer {
 func (f *File) Update() {
 	layer := f.GetCurrentLayer()
 
-	// Update camera
-	// TODO zoom at cursor location, not target/offset
-	f.Camera.Zoom += float32(rl.GetMouseWheelMove()) * 0.1 * f.Camera.Zoom
-
-	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
-	f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
-	// Move target
 	f.mouseX = rl.GetMouseX()
 	f.mouseY = rl.GetMouseY()
+
+	// Scroll towards the cursor's location
+	scrollAmount := rl.GetMouseWheelMove()
+	if scrollAmount != 0 {
+		// TODO scroll scalar in config (0.1)
+		f.target.X += ((float32(f.mouseX) - float32(rl.GetScreenWidth())/2) / (f.Camera.Zoom * 10)) * float32(scrollAmount)
+		f.target.Y += ((float32(f.mouseY) - float32(rl.GetScreenHeight())/2) / (f.Camera.Zoom * 10)) * float32(scrollAmount)
+		f.Camera.Target = f.target
+		f.Camera.Zoom += float32(scrollAmount) * 0.1 * f.Camera.Zoom
+	}
+
+	// Move target
+	if rl.IsWindowResized() {
+		f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
+		f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	}
+
 	if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
 		f.target.X += float32(f.mouseLastX-f.mouseX) / f.Camera.Zoom
 		f.target.Y += float32(f.mouseLastY-f.mouseY) / f.Camera.Zoom
@@ -343,7 +364,6 @@ func (f *File) Update() {
 				}
 				return false
 			}
-			// TODO move amount based on zoom
 			switch {
 			case matches(last, f.Keymap.Data["toolRight"]):
 				rl.SetMousePosition(x+moveAmount, y)
