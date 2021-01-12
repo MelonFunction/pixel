@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -22,15 +21,6 @@ type Tool interface {
 	// Takes the current mouse position. Called every frame the tool is
 	// selected. Draw calls are drawn on the preview layer.
 	DrawPreview(x, y int)
-}
-
-// UI is the interface for UI elements
-type UI interface {
-	MouseDown() // Called each frame the mouse is down
-	MouseUp()   // Called once, when the mouse button is released
-
-	Update()
-	Draw()
 }
 
 // PixelStateData stores what the state was previously and currently
@@ -77,7 +67,6 @@ func NewKeymap(data KeymapData) Keymap {
 			for _, inner := range data[k] {
 				if len(longestInner) > len(inner) && !didInsert {
 					didInsert = true
-					log.Println(name, i, keys)
 					keys = append(keys[:i], append([]string{name}, keys[i:]...)...)
 				}
 			}
@@ -87,8 +76,6 @@ func NewKeymap(data KeymapData) Keymap {
 			keys = append(keys, name)
 		}
 	}
-
-	log.Println(keys)
 
 	return Keymap{
 		Keys: keys,
@@ -190,8 +177,8 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 		Camera: rl.Camera2D{Zoom: 8.0},
 
 		Layers: []*Layer{
-			NewLayer(canvasWidth, canvasHeight, false),
-			NewLayer(canvasWidth, canvasHeight, true),
+			NewLayer(canvasWidth, canvasHeight, "background", true),
+			NewLayer(canvasWidth, canvasHeight, "hidden", false),
 		},
 		History:           make([]HistoryAction, 0, 5),
 		HistoryMaxActions: 5, // TODO get from config
@@ -213,7 +200,7 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
 
 	f.UI = []UI{
-		NewLayersUI(IntVec2{0, 0}, 200, 200, f, "Layers UI"),
+		NewLayersUI(IntVec2{100, 100}, 256, 200, f, "Layers UI"),
 	}
 
 	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
@@ -224,6 +211,7 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 
 // SetCurrentLayer sets the current layer
 func (f *File) SetCurrentLayer(index int) {
+	// TODO history
 	f.CurrentLayer = index
 }
 
@@ -232,14 +220,27 @@ func (f *File) GetCurrentLayer() *Layer {
 	return f.Layers[f.CurrentLayer]
 }
 
+func (f *File) AddNewLayer() {
+	// TODO
+	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", false)
+	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
+	f.CurrentLayer++
+}
+
 // Update checks for input and uses the current tool to draw to the current
 // layer
 func (f *File) Update() {
-	// TODO scale UI depending on monitor dpi
-	// log.Println(rl.GetMonitorWidth(0), rl.GetWindowPosition())
-
-	UIHasControl = false
+	// UIHasControl = false
 	for _, ui := range f.UI {
+		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+			ui.MouseDown()
+			ui.SetWasMouseButtonDown(true)
+		} else {
+			if ui.GetWasMouseButtonDown() {
+				ui.MouseUp()
+				ui.SetWasMouseButtonDown(false)
+			}
+		}
 		ui.Update()
 	}
 
@@ -274,9 +275,9 @@ func (f *File) Update() {
 
 	// Draw
 	rl.BeginTextureMode(layer.Canvas)
-	if !layer.initialFill {
+	if !layer.hasInitialFill {
 		f.ClearBackground(rl.DarkGray)
-		layer.initialFill = true
+		layer.hasInitialFill = true
 	}
 
 	// Handle keyboard actions
@@ -457,10 +458,13 @@ func (f *File) Update() {
 
 	rl.BeginMode2D(f.Camera)
 	for _, layer := range f.Layers {
-		rl.DrawTextureRec(layer.Canvas.Texture,
-			rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
-			rl.NewVector2(-float32(layer.Canvas.Texture.Width)/2, -float32(layer.Canvas.Texture.Height)/2),
-			rl.White)
+		if !layer.Hidden {
+			rl.DrawTextureRec(layer.Canvas.Texture,
+				rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
+				rl.NewVector2(-float32(layer.Canvas.Texture.Width)/2, -float32(layer.Canvas.Texture.Height)/2),
+				rl.White)
+		}
+		// log.Println(layer.Name, len(layer.PixelData))
 	}
 
 	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
@@ -489,7 +493,6 @@ func (f *File) Update() {
 
 // Undo an action
 func (f *File) Undo() {
-	// TODO handle layer switch actions
 	if f.historyOffset < len(f.History) {
 		f.historyOffset++
 		for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {

@@ -2,22 +2,24 @@ package main
 
 import rl "github.com/lachee/raylib-goplus/raylib"
 
-// Layer has a Canvas and initialFill keeps track of if it's been filled on
+// Layer has a Canvas and hasInitialFill keeps track of if it's been filled on
 // creation
 type Layer struct {
-	Canvas      rl.RenderTexture2D
-	initialFill bool
-	Name        string
+	Hidden         bool
+	Canvas         rl.RenderTexture2D
+	hasInitialFill bool
+	Name           string
 
 	// PixelData is the "raw" pixels map
 	PixelData map[IntVec2]rl.Color
 }
 
-func NewLayer(width, height int, shouldFill bool) *Layer {
+func NewLayer(width, height int, name string, shouldFill bool) *Layer {
 	return &Layer{
-		Canvas:      rl.LoadRenderTexture(width, height),
-		initialFill: shouldFill,
-		PixelData:   make(map[IntVec2]rl.Color),
-		Name:        "layer",
+		Canvas:         rl.LoadRenderTexture(width, height),
+		hasInitialFill: !shouldFill,
+		PixelData:      make(map[IntVec2]rl.Color),
+		Name:           name,
+		Hidden:         false,
 	}
 }

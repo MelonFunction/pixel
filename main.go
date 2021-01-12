@@ -11,7 +11,7 @@ func main() {
 
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
-	rl.InitWindow(800, 450, "Pixel")
+	rl.InitWindow(1200, 800, "Pixel")
 	rl.SetTargetFPS(120)
 
 	keymap := KeymapData{
