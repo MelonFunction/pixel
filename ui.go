@@ -6,19 +6,22 @@ import (
 
 // UI is the interface for UI elements (they handle their own components + states)
 type UI interface {
-	MouseDown()                  // Called each frame the mouse is down
-	MouseUp()                    // Called once, when the mouse button is released
-	GetWasMouseButtonDown() bool // Ensures MouseUp is only called once
+	CheckCollisions(offset rl.Vector2) bool // Offset is the parent UI position
+	MouseDown()                             // Called each frame the mouse is down
+	MouseUp()                               // Called once, when the mouse button is released
+	GetWasMouseButtonDown() bool            // Ensures MouseUp is only called once
 	SetWasMouseButtonDown(bool)
 
 	Update()
 	Draw()
+	Destroy() // UI might use a texture for rendering to, destroy it before making a new one
 }
 
 type UIComponent interface {
 	GetBounds() rl.Rectangle
 	CheckCollisions(offset rl.Vector2) bool // Offset is the parent UI position
 	Draw()
+	Destroy()
 }
 
 var (
@@ -90,6 +93,11 @@ func (b *Box) CheckCollisions(offset rl.Vector2) bool {
 func (b *Box) Draw() {
 	for _, element := range b.elements {
 		element.Draw()
+	}
+}
+func (b *Box) Destroy() {
+	for _, element := range b.elements {
+		element.Destroy()
 	}
 }
 
@@ -179,6 +187,10 @@ func (b *Button) Draw() {
 	}
 }
 
+func (b *Button) Destroy() {
+	b.icon.Unload()
+}
+
 // Scroll is a scroll bar UI element
 type Scroll struct {
 	handleAreaBounds rl.Rectangle // Element movement area
@@ -242,7 +254,7 @@ func (s *Scroll) GetBounds() rl.Rectangle {
 func (s *Scroll) Draw() {
 	rl.BeginTextureMode(s.Texture)
 	rl.BeginMode2D(uiCamera)
-	rl.ClearBackground(rl.Red)
+	rl.ClearBackground(rl.Color{48, 48, 48, 255})
 
 	elementHeight := s.topOffset
 	for _, element := range s.elements {
@@ -294,4 +306,8 @@ func (s *Scroll) Draw() {
 
 	rl.DrawRectangleRec(s.handleBounds, rl.Gray)             // handle
 	rl.DrawRectangleLinesEx(s.handleAreaBounds, 2, rl.White) // outline
+}
+
+func (s *Scroll) Destroy() {
+	s.Texture.Unload()
 }

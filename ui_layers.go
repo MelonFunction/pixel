@@ -106,7 +106,7 @@ func (l *LayersUI) SetWasMouseButtonDown(isDown bool) {
 
 func (l *LayersUI) MouseUp() {
 	if l == UIElementWithControl {
-		UIHasControl = false
+		// UIHasControl = false
 		UIElementWithControl = nil
 		UIComponentWithControl = nil // unset child too
 	}
@@ -116,19 +116,25 @@ func (l *LayersUI) MouseDown() {
 	// Using update instead since we have to check for hover on each component
 }
 
-func (l *LayersUI) Update() {
+func (l *LayersUI) CheckCollisions(offset rl.Vector2) bool {
 	for _, component := range l.Components {
 		if component.CheckCollisions(l.Bounds.Position()) {
-			UIHasControl = true
 			UIElementWithControl = l
 			UIComponentWithControl = component
+			return true
 		}
 	}
 	if l.scrollbar.CheckCollisions(l.Bounds.Position()) {
-		UIHasControl = true
 		UIElementWithControl = l
+		return true
 	}
+
+	return false
 }
+
+func (l *LayersUI) Update() {
+}
+
 func (l *LayersUI) Draw() {
 	rl.BeginTextureMode(l.Texture)
 	rl.ClearBackground(rl.Transparent)
@@ -145,4 +151,12 @@ func (l *LayersUI) Draw() {
 		rl.NewRectangle(0, 0, float32(l.Texture.Texture.Width), -float32(l.Texture.Texture.Height)),
 		rl.NewVector2(float32(l.Position.X), float32(l.Position.Y)),
 		rl.White)
+}
+
+func (l *LayersUI) Destroy() {
+	l.Texture.Unload()
+	for _, component := range l.Components {
+		component.Destroy()
+	}
+	l.scrollbar.Destroy()
 }
