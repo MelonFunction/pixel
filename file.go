@@ -246,19 +246,21 @@ func (f *File) AddNewLayer() {
 // Update checks for input and uses the current tool to draw to the current
 // layer
 func (f *File) Update() {
-	for _, ui := range f.UI {
-		if ui.CheckCollisions(rl.NewVector2(0, 0)) && rl.IsMouseButtonDown(rl.MouseLeftButton) {
-			UIHasControl = true
-			ui.SetWasMouseButtonDown(true)
-		} else if !rl.IsMouseButtonDown(rl.MouseLeftButton) {
-			if ui.GetWasMouseButtonDown() {
-				UIHasControl = false
-				ui.MouseUp()
-				ui.SetWasMouseButtonDown(false)
-			}
-		}
-		ui.Update()
-	}
+	UpdateUI()
+	// TODO convert block to systems
+	// for _, ui := range f.UI {
+	// 	if ui.CheckCollisions(rl.NewVector2(0, 0)) && rl.IsMouseButtonDown(rl.MouseLeftButton) {
+	// 		UIHasControl = true
+	// 		ui.SetWasMouseButtonDown(true)
+	// 	} else if !rl.IsMouseButtonDown(rl.MouseLeftButton) {
+	// 		if ui.GetWasMouseButtonDown() {
+	// 			UIHasControl = false
+	// 			ui.MouseUp()
+	// 			ui.SetWasMouseButtonDown(false)
+	// 		}
+	// 	}
+	// 	ui.Update()
+	// }
 
 	layer := f.GetCurrentLayer()
 
@@ -502,9 +504,7 @@ func (f *File) Update() {
 	}
 	rl.EndMode2D()
 
-	for _, ui := range f.UI {
-		ui.Draw()
-	}
+	DrawUI()
 }
 
 // Undo an action
@@ -535,5 +535,8 @@ func (f *File) Redo() {
 func (f *File) Destroy() {
 	for _, layer := range f.Layers {
 		layer.Canvas.Unload()
+	}
+	for _, ui := range f.UI {
+		ui.Destroy()
 	}
 }

@@ -47,7 +47,7 @@ type Scene struct {
 	entities    []*Entity
 	entitiesMap map[EntityID]*Entity
 	components  []*Component
-	systems     []System
+	Systems     []System
 
 	ComponentsMap map[string]*Component // allows for querying without a ref to the component
 	Tags          map[string]Tag        // tags cache, allows searching for tag by string
@@ -140,19 +140,19 @@ func (s *Scene) NewEntity(ids ...EntityID) *Entity {
 	}
 	s.entitiesMap[e.ID] = e
 	s.entities = append(s.entities, e)
+	e.scene = s
 
 	return e
 }
 
 func (s *Scene) AddSystem(sys System) *Scene {
-
-	s.systems = append(s.systems, sys)
+	s.Systems = append(s.Systems, sys)
 	sys.SetScene(s)
 	return s
 }
 
 func (s *Scene) Update(dt float32) {
-	for _, sys := range s.systems {
+	for _, sys := range s.Systems {
 		sys.Update(dt)
 	}
 }
@@ -165,6 +165,10 @@ func (e *Entity) AddComponent(c *Component, data interface{}) *Entity {
 	c.entities[e.ID] = data
 	e.Tag.flags |= c.tag.flags
 	return e
+}
+
+func (e *Entity) Destroy() {
+	e.scene.RemoveEntity(e)
 }
 
 func (e *Entity) RemoveComponent(c *Component) *Entity {
@@ -197,6 +201,7 @@ func (s *Scene) RemoveEntity(e *Entity) {
 
 // Query can accept a Tag or an EntityID
 // TODO could probably compress this a bit
+// TODO use multiple queries
 func (s *Scene) Query(q interface{}) []*QueryResult {
 	ret := make([]*QueryResult, 0, 32)
 
