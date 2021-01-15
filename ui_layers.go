@@ -48,7 +48,24 @@ func (l *LayersUI) generateUI() {
 	// 	func(button rl.MouseButton) {
 
 	// 	})
-	l.box = NewBox(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height), []*Entity{
+	NewBox(rl.NewRectangle(100, 100, l.Bounds.Width, l.Bounds.Height), []*Entity{
+		NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
+			func(button rl.MouseButton) {
+				log.Println("hello button was clicked", button)
+			},
+			func(button rl.MouseButton) {
+
+			}),
+		NewButtonText(rl.NewRectangle(0, l.Bounds.Height/2, l.Bounds.Width, l.Bounds.Height/2), "world", false,
+			func(button rl.MouseButton) {
+				log.Println("world button was clicked", button)
+			},
+			func(button rl.MouseButton) {
+
+			}),
+	})
+
+	NewBox(rl.NewRectangle(300, 300, l.Bounds.Width, l.Bounds.Height), []*Entity{
 		NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
 			func(button rl.MouseButton) {
 				log.Println("hello button was clicked", button)
@@ -113,7 +130,7 @@ func (l *LayersUI) Draw() {
 }
 
 func (l *LayersUI) Destroy() {
-	l.box.Destroy()
+	// l.box.Destroy()
 	// l.Texture.Unload()
 	// for _, component := range l.Components {
 	// 	component.Destroy()

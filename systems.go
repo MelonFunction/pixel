@@ -6,10 +6,11 @@ import (
 
 type UIRenderSystem struct {
 	BasicSystem
+	camera rl.Camera2D
 }
 
 func NewUIRenderSystem() *UIRenderSystem {
-	return &UIRenderSystem{}
+	return &UIRenderSystem{camera: rl.Camera2D{Zoom: 1}}
 }
 
 func (s *UIRenderSystem) draw(d *Drawable, m *Moveable, h *Hoverable, isDrawingChildren bool) {
@@ -36,10 +37,20 @@ func (s *UIRenderSystem) draw(d *Drawable, m *Moveable, h *Hoverable, isDrawingC
 	switch t := d.DrawableType.(type) {
 	case *DrawableParent:
 		rl.BeginTextureMode(t.Texture)
+		rl.ClearBackground(rl.Red)
+
+		s.camera.Target.X = m.Bounds.X
+		s.camera.Target.Y = m.Bounds.Y
 		for _, child := range t.Children {
+			rl.BeginMode2D(s.camera)
 			s.draw(child.Drawable, child.Moveable, child.Hoverable, true)
+			rl.EndMode2D()
 		}
+
 		rl.EndTextureMode()
+		// s.camera.Target.X = 0
+		// s.camera.Target.Y = 0
+
 		rl.DrawTextureRec(t.Texture.Texture,
 			rl.NewRectangle(0, 0, float32(t.Texture.Texture.Width), -float32(t.Texture.Texture.Height)),
 			rl.NewVector2(m.Bounds.X, m.Bounds.Y),

@@ -171,6 +171,10 @@ func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
 			moveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 			hoverable := result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
 
+			// Move the child's bounds to reflect the parent's position
+			moveable.Bounds.X += bounds.X
+			moveable.Bounds.Y += bounds.Y
+
 			drawable.IsChild = true
 			drawables = append(drawables, DrawableChild{
 				Drawable:  drawable,
