@@ -199,40 +199,23 @@ func (s *Scene) RemoveEntity(e *Entity) {
 	}
 }
 
-// Query can accept a Tag or an EntityID
-// TODO could probably compress this a bit
+// Query can accept a Tag or an EntityID. Multiple tags can be used which will
+// include all entities which have that singlular tag. A composite tag made
+// with s.BuildTag will exclude an entity if it's missing a component.
+// TODO replace s.entities with s.taggedEntities or something similar
 // TODO use multiple queries
-func (s *Scene) Query(q interface{}) []*QueryResult {
+func (s *Scene) QueryTag(tags ...Tag) []*QueryResult {
 	ret := make([]*QueryResult, 0, 32)
 
-	switch typed := q.(type) {
-	case EntityID:
-		entity, ok := s.entitiesMap[typed]
-		if ok {
-			q := &QueryResult{
-				Entity:     entity,
-				Components: make(map[*Component]interface{}),
-			}
-			for _, component := range s.components {
-				if entity.Tag.matches(component.tag) { // t could be composite, so always bigger
-					for e, v := range component.entities {
-						if e == entity.ID {
-							q.Components[component] = v
-						}
-					}
-				}
-			}
-			ret = append(ret, q)
+	for _, entity := range s.entities {
+		q := &QueryResult{
+			Entity:     entity,
+			Components: make(map[*Component]interface{}),
 		}
-	case Tag:
-		for _, entity := range s.entities {
-			if entity.Tag.matches(typed) {
-				q := &QueryResult{
-					Entity:     entity,
-					Components: make(map[*Component]interface{}),
-				}
+		for _, tag := range tags {
+			if entity.Tag.matches(tag) {
 				for _, component := range s.components {
-					if typed.matches(component.tag) { // t could be composite, so always bigger
+					if tag.matches(component.tag) { // t could be composite, so always bigger
 						for e, v := range component.entities {
 							if e == entity.ID {
 								q.Components[component] = v
@@ -240,10 +223,47 @@ func (s *Scene) Query(q interface{}) []*QueryResult {
 						}
 					}
 				}
-				ret = append(ret, q)
 			}
+		}
+		if len(q.Components) > 0 {
+			ret = append(ret, q)
 		}
 	}
 
 	return ret
+}
+
+// QueryTagStrings converts strings into tags and then returns QueryTag's results
+func (s *Scene) QueryTagStrings(tagStrings ...string) []*QueryResult {
+	tags := make([]Tag, 0, 8)
+	for _, tagString := range tagStrings {
+		tag, ok := s.Tags[tagString]
+		if !ok {
+			panic("Tag doesn't exist: " + tagString)
+		}
+		tags = append(tags, tag)
+	}
+	return s.QueryTag(tags...)
+}
+
+// QueryID returns the result for a single EntityID
+func (s *Scene) QueryID(id EntityID) (*QueryResult, error) {
+	entity, ok := s.entitiesMap[id]
+	if ok {
+		q := &QueryResult{
+			Entity:     entity,
+			Components: make(map[*Component]interface{}),
+		}
+		for _, component := range s.components {
+			if entity.Tag.matches(component.tag) { // t could be composite, so always bigger
+				for e, v := range component.entities {
+					if e == entity.ID {
+						q.Components[component] = v
+					}
+				}
+			}
+		}
+		return q, nil
+	}
+	return nil, fmt.Errorf("Entity with ID %d not found", int(id))
 }

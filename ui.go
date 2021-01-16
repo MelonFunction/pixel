@@ -36,35 +36,68 @@ var (
 	mouseLastX, mouseLastY = -1, -1
 
 	// Ecs stuffs
-	scene                                                            *Scene
-	moveable, resizeable, clickable, hoverable, drawable, scrollable *Component
-	renderSystem                                                     *UIRenderSystem
-	controlSystem                                                    *UIControlSystem
+	scene                                                               *Scene
+	moveable, resizeable, interactable, hoverable, drawable, scrollable *Component
+	renderSystem                                                        *UIRenderSystem
+	controlSystem                                                       *UIControlSystem
 )
 
+// Moveable gives a component a position and dimensions
 type Moveable struct {
+	// The position and dimensions of the component
 	Bounds rl.Rectangle
+	// Offset values from scrolling
+	Offset rl.Vector2
 }
 
+// Resizeable allows a component to be resized and stores some callbacks
 type Resizeable struct {
 }
 
-type Clickable struct {
+// Interactable is for storing all callbacks which can be procced by user inputs
+// The callbacks are optional
+type Interactable struct {
+	// ButtonDown keeps track of if a button is down
 	ButtonDown bool
 
+	// OnMouseDown fires every frame the mouse button is down on the element
 	OnMouseDown func(button rl.MouseButton)
-	OnMouseUp   func(button rl.MouseButton)
+	// OnMouseUp fires once when the mouse is released (doesn't fire if mouse
+	// is released while not within the bounds! Draggable should be used for
+	// this kind of event instead)
+	OnMouseUp func(button rl.MouseButton)
+
+	// OnScroll is for mouse wheel actions
+	OnScroll func(direction int)
 }
 
+// ScrollDirection states the scroll direction of the component
+type ScrollDirection int
+
+const (
+	// ScrollDirectionVertical is for vertical scrolling
+	ScrollDirectionVertical ScrollDirection = iota
+	// ScrollDirectionHorizontal is for horizontal scrolling
+	ScrollDirectionHorizontal
+)
+
+// Scrollable allows an element to render its children elements with an offset
 type Scrollable struct {
-	OnScroll func(dir int)
+	// ScrollDirection states which way the content should scroll
+	ScrollDirection ScrollDirection
+	// ScrollOffset is how much the content should be offset
+	ScrollOffset int
+
+	// TODO stuff for rendering scrollbars differently
 }
 
+// Hoverable stores the hovered and seleceted states
 type Hoverable struct {
 	Hovered  bool
 	Selected bool
 }
 
+// Drawable handles all drawing related information
 type Drawable struct {
 	// DrawableType can be DrawableText, DrawableTexture or DrawableParent
 	DrawableType interface{}
@@ -74,10 +107,12 @@ type Drawable struct {
 	IsChild bool
 }
 
+// DrawableText draws text
 type DrawableText struct {
 	Label string
 }
 
+// DrawableTexture draws a texture
 type DrawableTexture struct {
 	Texture rl.Texture2D
 }
@@ -90,9 +125,21 @@ type DrawableChild struct {
 	Hoverable *Hoverable
 }
 
+// DrawableParent draws its children to its texture
 type DrawableParent struct {
 	Texture  rl.RenderTexture2D
-	Children []DrawableChild
+	Children []EntityID
+}
+
+// DrawablePassthrough doesn't draw the element, it just allows the children to
+// be drawn
+type DrawablePassthrough struct {
+	// PreConvertedChildren holds children so that that they can be converted
+	// later if the element is nested (box inside scrollbar)
+	PreConvertedChildren []*Entity
+	// Children is also generated normally too, but is overwritten depending
+	// on nesting
+	Children []EntityID
 }
 
 // InitUI must be called before UI is used
@@ -104,7 +151,7 @@ func InitUI() {
 
 	moveable = scene.NewComponent("moveable")
 	resizeable = scene.NewComponent("resizeable")
-	clickable = scene.NewComponent("clickable")
+	interactable = scene.NewComponent("interactable")
 	scrollable = scene.NewComponent("scrollable")
 	hoverable = scene.NewComponent("hoverable")
 	drawable = scene.NewComponent("drawable")
@@ -122,12 +169,12 @@ func InitUI() {
 
 	scene.BuildTag("moveable", moveable)
 	scene.BuildTag("resizeable", resizeable)
-	scene.BuildTag("clickable", clickable)
+	scene.BuildTag("interactable", interactable)
 	scene.BuildTag("scrollable", scrollable)
 	scene.BuildTag("hoverable", hoverable)
 	scene.BuildTag("drawable", drawable)
 	scene.BuildTag("drawable, hoverable, moveable", drawable, moveable, hoverable)
-	scene.BuildTag("basicControl", clickable, hoverable, moveable)
+	scene.BuildTag("basicControl", drawable, moveable, hoverable, interactable)
 
 	renderSystem = NewUIRenderSystem()
 	controlSystem = NewUIControlSystem()
@@ -136,106 +183,93 @@ func InitUI() {
 	scene.AddSystem(controlSystem)
 }
 
+// UpdateUI updates the systems (excluding the RenderSystem)
 func UpdateUI() {
 	UIHasControl = false
 	controlSystem.Update(rl.GetFrameTime())
 }
 
+// DrawUI draws the RenderSystem
 func DrawUI() {
 	renderSystem.Update(rl.GetFrameTime())
 }
 
+// NewButtonTexture creates a button which renders a texture
 func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
 	texture := rl.LoadTexture(string(texturePath))
 	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds}).
+		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(clickable, &Clickable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableTexture{texture}})
 }
 
+// NewButtonText creates a button which renders text
 func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
 	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds}).
+		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(clickable, &Clickable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
 
 }
 
-func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
-	drawables := make([]DrawableChild, 0, 8)
+// generateDrawableChildren converts a slice of children entities to
+// DrawableChild components. If dontOffsetBounds is true, the children's
+// bounds positions won't be affected
+func generateDrawableChildren(bounds rl.Rectangle, children []*Entity, offsetBounds bool) []EntityID {
+	drawables := make([]EntityID, 0, 8)
 	for _, child := range children {
-		for _, result := range scene.Query(child.ID) {
+		if result, err := scene.QueryID(child.ID); err == nil {
 			drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 			moveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
-			hoverable := result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
+			// hoverable := result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
 
 			// Move the child's bounds to reflect the parent's position
-			moveable.Bounds.X += bounds.X
-			moveable.Bounds.Y += bounds.Y
+			if offsetBounds {
+				moveable.Bounds.X += bounds.X
+				moveable.Bounds.Y += bounds.Y
+			}
+
+			// Change nested children bounds again because of evaluation order
+			isPassthrough, ok := drawable.DrawableType.(*DrawablePassthrough)
+			if ok {
+				isPassthrough.Children = generateDrawableChildren(bounds, isPassthrough.PreConvertedChildren, true)
+			}
 
 			drawable.IsChild = true
-			drawables = append(drawables, DrawableChild{
-				Drawable:  drawable,
-				Moveable:  moveable,
-				Hoverable: hoverable,
-			})
+			drawables = append(drawables, child.ID)
+		} else {
+			log.Println(err)
 		}
 	}
+	return drawables
+}
 
-	// Not actually going to make boxes DrawableParents, this is just testing
-
+// NewBox creates a box which can store children
+func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
 	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds}).
+		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
-			Texture:  rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
-			Children: drawables,
+		AddComponent(interactable, &Interactable{}).
+		AddComponent(drawable, &Drawable{DrawableType: &DrawablePassthrough{
+			PreConvertedChildren: children,
+			Children:             generateDrawableChildren(bounds, children, false),
 		}})
 }
 
-// // Box can organise multiple elements within itself, depending on the AlignMode
-// type Box struct {
-// 	bounds   rl.Rectangle
-// 	elements []UIComponent
-// }
-
-// func NewBox(bounds rl.Rectangle, elements []UIComponent) *Box {
-// 	b := &Box{
-// 		bounds:   bounds,
-// 		elements: elements,
-// 	}
-
-// 	return b
-// }
-// func (b *Box) GetBounds() rl.Rectangle {
-// 	return b.bounds
-// }
-// func (b *Box) CheckCollisions(offset rl.Vector2) bool {
-// 	for _, element := range b.elements {
-// 		if element.CheckCollisions(offset) {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
-// func (b *Box) Draw() {
-// 	for _, element := range b.elements {
-// 		element.Draw()
-// 	}
-// }
-// func (b *Box) Destroy() {
-// 	for _, element := range b.elements {
-// 		element.Destroy()
-// 	}
-// }
-
-// // Label is used for buttons with text labels
-// type Label string
-
-// // Icon is used for buttons with icon labels
-// type Icon string
+// NewScrollableList creates a box, but it can scroll
+func NewScrollableList(bounds rl.Rectangle, children []*Entity) *Entity {
+	return scene.NewEntity().
+		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
+		AddComponent(hoverable, &Hoverable{Selected: false}).
+		AddComponent(interactable, &Interactable{}).
+		AddComponent(scrollable, &Scrollable{}).
+		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
+			Texture:  rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
+			Children: generateDrawableChildren(bounds, children, true),
+		}})
+}
 
 // // Scroll is a scroll bar UI element
 // type Scroll struct {

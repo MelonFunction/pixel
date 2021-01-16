@@ -48,39 +48,42 @@ func (l *LayersUI) generateUI() {
 	// 	func(button rl.MouseButton) {
 
 	// 	})
-	NewBox(rl.NewRectangle(100, 100, l.Bounds.Width, l.Bounds.Height), []*Entity{
-		NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
-			func(button rl.MouseButton) {
-				log.Println("hello button was clicked", button)
-			},
-			func(button rl.MouseButton) {
+	var buttonHeight float32 = 32.0
+	NewScrollableList(rl.NewRectangle(100, 100, l.Bounds.Width, l.Bounds.Height), []*Entity{
+		NewBox(rl.NewRectangle(0, 0, l.Bounds.Width, buttonHeight), []*Entity{
+			NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), "hello", false,
+				func(button rl.MouseButton) {
+					log.Println("hello button was clicked", button)
+				},
+				func(button rl.MouseButton) {
 
-			}),
-		NewButtonText(rl.NewRectangle(0, l.Bounds.Height/2, l.Bounds.Width, l.Bounds.Height/2), "world", false,
-			func(button rl.MouseButton) {
-				log.Println("world button was clicked", button)
-			},
-			func(button rl.MouseButton) {
+				}),
+			NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
+				func(button rl.MouseButton) {
+					log.Println("world button was clicked", button)
+				},
+				func(button rl.MouseButton) {
 
-			}),
+				}),
+		}),
 	})
 
-	NewBox(rl.NewRectangle(300, 300, l.Bounds.Width, l.Bounds.Height), []*Entity{
-		NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
-			func(button rl.MouseButton) {
-				log.Println("hello button was clicked", button)
-			},
-			func(button rl.MouseButton) {
+	// NewBox(rl.NewRectangle(300, 300, l.Bounds.Width, l.Bounds.Height), []*Entity{
+	// 	NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
+	// 		func(button rl.MouseButton) {
+	// 			log.Println("hello button was clicked", button)
+	// 		},
+	// 		func(button rl.MouseButton) {
 
-			}),
-		NewButtonText(rl.NewRectangle(0, l.Bounds.Height/2, l.Bounds.Width, l.Bounds.Height/2), "world", false,
-			func(button rl.MouseButton) {
-				log.Println("world button was clicked", button)
-			},
-			func(button rl.MouseButton) {
+	// 		}),
+	// 	NewButtonText(rl.NewRectangle(0, l.Bounds.Height/2, l.Bounds.Width, l.Bounds.Height/2), "world", false,
+	// 		func(button rl.MouseButton) {
+	// 			log.Println("world button was clicked", button)
+	// 		},
+	// 		func(button rl.MouseButton) {
 
-			}),
-	})
+	// 		}),
+	// })
 
 }
 
