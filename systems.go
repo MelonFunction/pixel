@@ -151,7 +151,6 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			result = res
 		}
 	}
-	_ = entity
 
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -186,12 +185,12 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			UIHasControl = true
 			interactable.ButtonDown = true
 			if interactable.OnMouseDown != nil {
-				interactable.OnMouseDown(rl.MouseLeftButton)
+				interactable.OnMouseDown(entity, rl.MouseLeftButton)
 			}
 		} else if interactable.ButtonDown && !rl.IsMouseButtonDown(rl.MouseLeftButton) {
 			interactable.ButtonDown = false
 			if interactable.OnMouseUp != nil {
-				interactable.OnMouseUp(rl.MouseLeftButton)
+				interactable.OnMouseUp(entity, rl.MouseLeftButton)
 			}
 		}
 

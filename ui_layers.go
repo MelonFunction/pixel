@@ -43,25 +43,29 @@ func (l *LayersUI) generateUI() {
 	makeBox := func(y int, name string) *Entity {
 		return NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
 			NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
-				func(button rl.MouseButton) {
+				func(entity *Entity, button rl.MouseButton) {
+					// button up
+
 					l.file.Layers[y].Hidden = !l.file.Layers[y].Hidden
 				},
-				func(button rl.MouseButton) {
-
+				func(entity *Entity, button rl.MouseButton) {
+					// button down
 				}),
 			NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), name, false,
-				func(button rl.MouseButton) {
+				func(entity *Entity, button rl.MouseButton) {
+					// button up
 					l.file.SetCurrentLayer(y)
 				},
-				func(button rl.MouseButton) {
-
+				func(entity *Entity, button rl.MouseButton) {
+					// button down
 				}),
 		})
 	}
 
 	// New layer button
 	NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
-		func(button rl.MouseButton) {
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
 			l.file.AddNewLayer()
 			max := len(l.file.Layers)
 			last := l.file.Layers[max-2]
@@ -69,8 +73,8 @@ func (l *LayersUI) generateUI() {
 			list.PushChild(makeBox(max-2, last.Name))
 			list.FlowChildren()
 		},
-		func(button rl.MouseButton) {
-
+		func(entity *Entity, button rl.MouseButton) {
+			// button down
 		})
 
 	// All of the layers

@@ -65,11 +65,11 @@ type Interactable struct {
 	ButtonDown bool
 
 	// OnMouseDown fires every frame the mouse button is down on the element
-	OnMouseDown func(button rl.MouseButton)
+	OnMouseDown func(entity *Entity, button rl.MouseButton)
 	// OnMouseUp fires once when the mouse is released (doesn't fire if mouse
 	// is released while not within the bounds! Draggable should be used for
 	// this kind of event instead)
-	OnMouseUp func(button rl.MouseButton)
+	OnMouseUp func(entity *Entity, button rl.MouseButton)
 
 	// OnScroll is for mouse wheel actions
 	OnScroll func(direction int)
@@ -268,23 +268,6 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
-// func (e *Entity) UnshiftChild(child *Entity) (*Entity, error) {
-// 	var err error
-// 	if result, err := scene.QueryID(e.ID); err == nil {
-// 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
-
-// 		if c, err := e.addChild(child); err == nil {
-// 			switch typed := parentDrawable.DrawableType.(type) {
-// 			case *DrawablePassthrough:
-// 				typed.Children = append([]*Entity{c}, typed.Children...)
-// 			case *DrawableParent:
-// 				typed.Children = append([]*Entity{c}, typed.Children...)
-// 			}
-// 		}
-// 	}
-// 	return nil, err
-// }
-
 func (e *Entity) FlowChildren() {
 	log.Println("flowing ", e.ID, e.Name)
 
@@ -368,7 +351,7 @@ func (e *Entity) FlowChildren() {
 }
 
 // NewButtonTexture creates a button which renders a texture
-func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
+func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
 	texture := rl.LoadTexture(string(texturePath))
 	e := scene.NewEntity().
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
@@ -380,7 +363,7 @@ func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, on
 }
 
 // NewButtonText creates a button which renders text
-func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
+func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
 	e := scene.NewEntity().
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
