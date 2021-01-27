@@ -44,10 +44,14 @@ var (
 
 // Moveable gives a component a position and dimensions
 type Moveable struct {
-	// The position and dimensions of the component
+	// Bounds is the position and dimensions of the component
 	Bounds rl.Rectangle
+	// OrigBounds is used when repositioning the element (stops offset stacking)
+	OrigBounds rl.Rectangle
 	// Offset values from scrolling
 	Offset rl.Vector2
+	// FlowDirection is how the elements should be arranged
+	FlowDirection FlowDirection
 }
 
 // Resizeable allows a component to be resized and stores some callbacks
@@ -79,6 +83,20 @@ const (
 	ScrollDirectionVertical ScrollDirection = iota
 	// ScrollDirectionHorizontal is for horizontal scrolling
 	ScrollDirectionHorizontal
+)
+
+// FlowDirection states which direction the children elements should flow in
+type FlowDirection int
+
+const (
+	// FlowDirectionVertical flows vertically
+	FlowDirectionVertical FlowDirection = iota
+	// FlowDirectionVerticalReversed flows vertically, in reverse order
+	FlowDirectionVerticalReversed
+	// FlowDirectionHorizontal flows horizontally
+	FlowDirectionHorizontal
+	// FlowDirectionHorizontalReversed flows horizontally, in reverse order
+	FlowDirectionHorizontalReversed
 )
 
 // Scrollable allows an element to render its children elements with an offset
@@ -117,18 +135,10 @@ type DrawableTexture struct {
 	Texture rl.Texture2D
 }
 
-// DrawableChild is just a quick reference to the components the parent needs
-// to draw it
-type DrawableChild struct {
-	Drawable  *Drawable
-	Moveable  *Moveable
-	Hoverable *Hoverable
-}
-
 // DrawableParent draws its children to its texture
 type DrawableParent struct {
 	Texture  rl.RenderTexture2D
-	Children []EntityID
+	Children []*Entity
 }
 
 // DrawablePassthrough doesn't draw the element, it just allows the children to
@@ -139,7 +149,7 @@ type DrawablePassthrough struct {
 	PreConvertedChildren []*Entity
 	// Children is also generated normally too, but is overwritten depending
 	// on nesting
-	Children []EntityID
+	Children []*Entity
 }
 
 // InitUI must be called before UI is used
@@ -176,11 +186,11 @@ func InitUI() {
 	scene.BuildTag("drawable, hoverable, moveable", drawable, moveable, hoverable)
 	scene.BuildTag("basicControl", drawable, moveable, hoverable, interactable)
 
-	renderSystem = NewUIRenderSystem()
 	controlSystem = NewUIControlSystem()
+	renderSystem = NewUIRenderSystem()
 
-	scene.AddSystem(renderSystem)
 	scene.AddSystem(controlSystem)
+	scene.AddSystem(renderSystem)
 }
 
 // UpdateUI updates the systems (excluding the RenderSystem)
@@ -194,200 +204,234 @@ func DrawUI() {
 	renderSystem.Update(rl.GetFrameTime())
 }
 
+// PushChild adds a child to a drawables children list and sets the relative
+// initial positions of the children
+func (e *Entity) PushChild(child *Entity) (*Entity, error) {
+	log.Println("adding child to ", e.ID, e.Name, " named ", child.ID, child.Name)
+
+	var err error
+	if result, err := scene.QueryID(e.ID); err == nil {
+		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		parentMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+
+		if result, err := scene.QueryID(child.ID); err == nil {
+			childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+			childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+
+			childDrawable.IsChild = true
+
+			childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
+			childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
+			log.Println("\t", parentMoveable.Bounds, e.Name, childMoveable.Bounds, child.Name)
+
+			switch typed := parentDrawable.DrawableType.(type) {
+			case *DrawablePassthrough:
+				found := false
+				for _, c := range typed.Children {
+					if c == child {
+						found = true
+					}
+				}
+				if !found {
+					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						typed.Children = append([]*Entity{child}, typed.Children...)
+					} else {
+						typed.Children = append(typed.Children, child)
+					}
+				}
+			case *DrawableParent:
+				found := false
+				for _, c := range typed.Children {
+					if c == child {
+						found = true
+					}
+				}
+				if !found {
+					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						typed.Children = append([]*Entity{child}, typed.Children...)
+					} else {
+						typed.Children = append(typed.Children, child)
+					}
+				}
+			default:
+				panic("Entity doesn't support child elements (make sure to only add children to boxes or scrolls!)")
+			}
+
+			isPassthrough, ok := childDrawable.DrawableType.(*DrawablePassthrough)
+			if ok {
+				for _, passChild := range isPassthrough.Children {
+					child.PushChild(passChild)
+				}
+			}
+		}
+	}
+	return nil, err
+}
+
+// func (e *Entity) UnshiftChild(child *Entity) (*Entity, error) {
+// 	var err error
+// 	if result, err := scene.QueryID(e.ID); err == nil {
+// 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+
+// 		if c, err := e.addChild(child); err == nil {
+// 			switch typed := parentDrawable.DrawableType.(type) {
+// 			case *DrawablePassthrough:
+// 				typed.Children = append([]*Entity{c}, typed.Children...)
+// 			case *DrawableParent:
+// 				typed.Children = append([]*Entity{c}, typed.Children...)
+// 			}
+// 		}
+// 	}
+// 	return nil, err
+// }
+
+func (e *Entity) FlowChildren() {
+	log.Println("flowing ", e.ID, e.Name)
+
+	if result, err := scene.QueryID(e.ID); err == nil {
+		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		parentMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+
+		children := make([]*Entity, 0, 16)
+
+		switch typed := parentDrawable.DrawableType.(type) {
+		case *DrawablePassthrough:
+			children = typed.Children
+		case *DrawableParent:
+			children = typed.Children
+		default:
+			panic("Entity doesn't support flowing as it doesn't have child elements (must be a box or scroll!)")
+		}
+
+		var fixNested func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable)
+		fixNested = func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable) {
+			children := make([]*Entity, 0, 16)
+
+			switch typed := parentDrawable.DrawableType.(type) {
+			case *DrawablePassthrough:
+				children = typed.Children
+			case *DrawableParent:
+				children = typed.Children
+			default:
+				return
+			}
+
+			log.Println("fixing", e.Name, children)
+
+			for _, child := range children {
+				if result, err := scene.QueryID(child.ID); err == nil {
+					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+					childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+
+					childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
+					childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
+					log.Println("\t", child.Name, parentMoveable.Bounds, childMoveable.Bounds)
+
+					fixNested(child, childDrawable, childMoveable)
+				}
+			}
+		}
+
+		var offset rl.Vector2
+		for i, child := range children {
+			log.Println("processing", child.Name)
+			if result, err := scene.QueryID(child.ID); err == nil {
+				childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+				childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+
+				log.Println("boundspre", child.Name, childMoveable.Bounds)
+
+				if i == 0 {
+					// Initial child needs to be set to parent bounds
+					childMoveable.Bounds.X = parentMoveable.Bounds.X
+					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+
+					// Set the bounds for the next child
+					offset.X = childMoveable.Bounds.X + childMoveable.Bounds.Width
+					offset.Y = childMoveable.Bounds.Y + childMoveable.Bounds.Height
+				} else {
+					if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						childMoveable.Bounds.Y = offset.Y
+						offset.Y += childMoveable.Bounds.Height
+					} else {
+						childMoveable.Bounds.X = offset.X
+						offset.X += childMoveable.Bounds.Width
+					}
+				}
+
+				log.Println("bounds", child.Name, childMoveable.Bounds)
+				fixNested(child, childDrawable, childMoveable)
+			}
+		}
+
+	}
+}
+
 // NewButtonTexture creates a button which renders a texture
 func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
 	texture := rl.LoadTexture(string(texturePath))
-	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
+	e := scene.NewEntity().
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableTexture{texture}})
+	e.Name = "buttonTexture"
+	return e
 }
 
 // NewButtonText creates a button which renders text
 func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(button rl.MouseButton)) *Entity {
-	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
+	e := scene.NewEntity().
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
-
+	e.Name = "buttonText: " + label
+	return e
 }
 
-// generateDrawableChildren converts a slice of children entities to
-// DrawableChild components. If dontOffsetBounds is true, the children's
-// bounds positions won't be affected
-func generateDrawableChildren(bounds rl.Rectangle, children []*Entity, offsetBounds bool) []EntityID {
-	drawables := make([]EntityID, 0, 8)
+// prepareChildren moves children elements etc
+func prepareChildren(entity *Entity, children []*Entity) {
 	for _, child := range children {
-		if result, err := scene.QueryID(child.ID); err == nil {
-			drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
-			moveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
-			// hoverable := result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
-
-			// Move the child's bounds to reflect the parent's position
-			if offsetBounds {
-				moveable.Bounds.X += bounds.X
-				moveable.Bounds.Y += bounds.Y
-			}
-
-			// Change nested children bounds again because of evaluation order
-			isPassthrough, ok := drawable.DrawableType.(*DrawablePassthrough)
-			if ok {
-				isPassthrough.Children = generateDrawableChildren(bounds, isPassthrough.PreConvertedChildren, true)
-			}
-
-			drawable.IsChild = true
-			drawables = append(drawables, child.ID)
-		} else {
+		_, err := entity.PushChild(child)
+		if err != nil {
 			log.Println(err)
 		}
 	}
-	return drawables
 }
 
 // NewBox creates a box which can store children
 func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
-	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
+	e := scene.NewEntity().
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawablePassthrough{
 			PreConvertedChildren: children,
-			Children:             generateDrawableChildren(bounds, children, false),
+			Children:             children,
 		}})
+	e.Name = "box"
+	prepareChildren(e, children)
+
+	return e
 }
 
-// NewScrollableList creates a box, but it can scroll
-func NewScrollableList(bounds rl.Rectangle, children []*Entity) *Entity {
-	return scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds, rl.Vector2{}}).
+// NewScrollableList creates a box, but it can scroll. Reversed is if the items
+// order should be reversed
+func NewScrollableList(bounds rl.Rectangle, children []*Entity, reversed bool) *Entity {
+	flowDirection := FlowDirectionVertical
+	if reversed {
+		flowDirection = FlowDirectionVerticalReversed
+	}
+	e := scene.NewEntity().
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
-			Texture:  rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
-			Children: generateDrawableChildren(bounds, children, true),
+			Texture: rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
 		}})
+	e.Name = "scroll"
+	prepareChildren(e, children)
+	return e
 }
-
-// // Scroll is a scroll bar UI element
-// type Scroll struct {
-// 	handleAreaBounds rl.Rectangle // Element movement area
-// 	handleBounds     rl.Rectangle // Handle handleBounds
-// 	elementBounds    rl.Rectangle // Where the scroll elements should be drawn
-// 	topOffset        float32      // Acts like padding, like extra elements are in the elements slice
-
-// 	elements      []UIComponent // All of the contained elements
-// 	lines         int           // Could have multiple elements on the same row, so use a known value instead
-// 	elementOffset int           // Offset by the dragged amount
-
-// 	Texture rl.RenderTexture2D
-
-// 	hovered bool
-// }
-
-// func NewScroll(handleAreaBounds, elementBounds rl.Rectangle, elements []UIComponent, lines int, topOffset float32) *Scroll {
-// 	s := &Scroll{
-// 		handleAreaBounds: handleAreaBounds,
-// 		handleBounds:     handleAreaBounds,
-// 		elementBounds:    elementBounds,
-// 		elements:         elements,
-// 		lines:            lines,
-// 		topOffset:        topOffset,
-// 		Texture:          rl.LoadRenderTexture(int(elementBounds.Width), int(elementBounds.Height)),
-// 	}
-// 	return s
-// }
-
-// func (s *Scroll) CheckCollisions(offset rl.Vector2) bool {
-// 	s.hovered = false
-
-// 	// UIComponentWithControl ownership feels a bit mangled
-// 	// But maybe it's ok?
-
-// 	offset = s.elementBounds.Position()
-// 	offset.Y += float32(s.elementOffset)
-// 	for _, component := range s.elements {
-// 		if component.CheckCollisions(offset) {
-// 			UIComponentWithControl = component
-// 			return true
-// 		}
-// 	}
-
-// 	// Doesn't need offset for some reason, TODO make it so it is consistent
-// 	if s.handleAreaBounds.Contains(rl.GetMousePosition()) {
-// 		s.hovered = true
-// 		if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
-// 			UIComponentWithControl = s
-// 			return true
-// 		}
-// 	}
-
-// 	return false
-// }
-
-// func (s *Scroll) GetBounds() rl.Rectangle {
-// 	return s.handleAreaBounds
-// }
-
-// func (s *Scroll) Draw() {
-// 	rl.BeginTextureMode(s.Texture)
-// 	rl.BeginMode2D(uiCamera)
-// 	rl.ClearBackground(rl.Color{48, 48, 48, 255})
-
-// 	elementHeight := s.topOffset
-// 	for _, element := range s.elements {
-// 		elementHeight += element.GetBounds().Height
-// 	}
-
-// 	if elementHeight > s.handleAreaBounds.Height {
-// 		s.handleBounds.Height = s.handleAreaBounds.Height - (elementHeight - s.handleAreaBounds.Height)
-
-// 		// Set minimum height to width
-// 		// TODO config for this
-// 		if s.handleBounds.Height < s.handleBounds.Width {
-// 			s.handleBounds.Height = s.handleBounds.Width
-// 		}
-
-// 		// Offset
-// 		mouseX, mouseY = rl.GetMouseX(), rl.GetMouseY()
-// 		if UIComponentWithControl == s {
-// 			if mouseLastY > -1 {
-// 				s.handleBounds.Y -= float32(mouseLastY - mouseY)
-// 			}
-// 			if s.handleBounds.Y < s.handleAreaBounds.Y {
-// 				s.handleBounds.Y += s.handleAreaBounds.Y - s.handleBounds.Y
-// 			}
-// 			if s.handleBounds.Y+s.handleBounds.Height > s.handleAreaBounds.Y+s.handleAreaBounds.Height {
-// 				s.handleBounds.Y -= (s.handleBounds.Y + s.handleBounds.Height) - (s.handleAreaBounds.Y + s.handleAreaBounds.Height)
-// 			}
-// 			s.elementOffset = int(s.handleAreaBounds.Y - s.handleBounds.Y)
-// 		}
-
-// 		mouseLastX, mouseLastY = mouseX, mouseY
-// 	}
-
-// 	target := rl.Vector2{}
-// 	target.Y -= float32(s.elementOffset)
-// 	uiCamera.Target = target
-
-// 	for _, element := range s.elements {
-// 		element.Draw()
-// 	}
-
-// 	rl.EndMode2D()
-// 	rl.EndTextureMode()
-
-// 	rl.DrawTextureRec(s.Texture.Texture,
-// 		rl.NewRectangle(0, 0, float32(s.Texture.Texture.Width), -float32(s.Texture.Texture.Height)),
-// 		rl.NewVector2(float32(s.elementBounds.X), float32(s.elementBounds.Y)),
-// 		rl.White)
-
-// 	rl.DrawRectangleRec(s.handleBounds, rl.Gray)             // handle
-// 	rl.DrawRectangleLinesEx(s.handleAreaBounds, 2, rl.White) // outline
-// }
-
-// func (s *Scroll) Destroy() {
-// 	s.Texture.Unload()
-// }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -14,8 +12,6 @@ type LayersUI struct {
 	Bounds        rl.Rectangle
 
 	ButtonWidth, ButtonHeight int
-	box                       *Entity
-	button                    *Entity
 
 	Texture rl.RenderTexture2D
 
@@ -40,50 +36,56 @@ func NewLayersUI(position IntVec2, width, height int, file *File, name string) *
 }
 
 func (l *LayersUI) generateUI() {
-
-	// l.button = NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height), "hello", false,
-	// 	func(button rl.MouseButton) {
-	// 		log.Println("i was clicked", button)
-	// 	},
-	// 	func(button rl.MouseButton) {
-
-	// 	})
 	var buttonHeight float32 = 32.0
-	NewScrollableList(rl.NewRectangle(100, 100, l.Bounds.Width, l.Bounds.Height), []*Entity{
-		NewBox(rl.NewRectangle(0, 0, l.Bounds.Width, buttonHeight), []*Entity{
-			NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), "hello", false,
-				func(button rl.MouseButton) {
-					log.Println("hello button was clicked", button)
-				},
-				func(button rl.MouseButton) {
+	var list *Entity
+	layers := make([]*Entity, 0, 16)
 
-				}),
+	makeBox := func(y int, name string) *Entity {
+		return NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
 			NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
 				func(button rl.MouseButton) {
-					log.Println("world button was clicked", button)
+					l.file.Layers[y].Hidden = !l.file.Layers[y].Hidden
 				},
 				func(button rl.MouseButton) {
 
 				}),
-		}),
-	})
+			NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), name, false,
+				func(button rl.MouseButton) {
+					l.file.SetCurrentLayer(y)
+				},
+				func(button rl.MouseButton) {
 
-	// NewBox(rl.NewRectangle(300, 300, l.Bounds.Width, l.Bounds.Height), []*Entity{
-	// 	NewButtonText(rl.NewRectangle(0, 0, l.Bounds.Width, l.Bounds.Height/2), "hello", false,
-	// 		func(button rl.MouseButton) {
-	// 			log.Println("hello button was clicked", button)
-	// 		},
-	// 		func(button rl.MouseButton) {
+				}),
+		})
+	}
 
-	// 		}),
-	// 	NewButtonText(rl.NewRectangle(0, l.Bounds.Height/2, l.Bounds.Width, l.Bounds.Height/2), "world", false,
-	// 		func(button rl.MouseButton) {
-	// 			log.Println("world button was clicked", button)
-	// 		},
-	// 		func(button rl.MouseButton) {
+	// New layer button
+	NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
+		func(button rl.MouseButton) {
+			l.file.AddNewLayer()
+			max := len(l.file.Layers)
+			last := l.file.Layers[max-2]
 
-	// 		}),
-	// })
+			list.PushChild(makeBox(max-2, last.Name))
+			list.FlowChildren()
+		},
+		func(button rl.MouseButton) {
+
+		})
+
+	// All of the layers
+	for i, layer := range l.file.Layers {
+		if i == len(l.file.Layers)-1 {
+			continue
+		}
+
+		var box *Entity
+		box = makeBox(i, layer.Name)
+		layers = append(layers, box)
+	}
+
+	list = NewScrollableList(rl.NewRectangle(32, 32, l.Bounds.Width, l.Bounds.Height), layers, true)
+	list.FlowChildren()
 
 }
 

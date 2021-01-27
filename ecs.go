@@ -25,6 +25,7 @@ type Entity struct {
 	ID    EntityID
 	Tag   Tag
 	scene *Scene
+	Name  string // set this manually to help with debugging/printing
 }
 
 type Component struct {

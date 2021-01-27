@@ -15,14 +15,18 @@ func NewUIRenderSystem() *UIRenderSystem {
 
 func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, offset rl.Vector2) {
 	var result *QueryResult
+	var entity *Entity
 	switch typed := component.(type) {
 	case *QueryResult:
 		result = typed
-	case EntityID:
-		if res, err := scene.QueryID(typed); err == nil {
+		entity = typed.Entity
+	case *Entity:
+		entity = typed
+		if res, err := scene.QueryID(typed.ID); err == nil {
 			result = res
 		}
 	}
+	_ = entity
 
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
@@ -43,6 +47,10 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 	drawBorder := func(hoverable *Hoverable, moveable *Moveable) {
 		if hoverable.Hovered {
+			// TODO find out why this is set false here instead of in the control
+			// area. Elements aren't hovered when they are added via a button but they can
+			// still be clicked etc. Appears that only hover is broken
+			hoverable.Hovered = false
 			rl.DrawRectangleRec(moveable.Bounds, rl.Black)
 			rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 		} else {
@@ -118,7 +126,6 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 func (s *UIRenderSystem) Update(dt float32) {
 	for _, result := range s.Scene.QueryTag(s.Scene.Tags["drawable, hoverable, moveable"], s.Scene.Tags["scrollable"]) {
-
 		s.draw(result, false, rl.Vector2{})
 	}
 }
@@ -133,14 +140,18 @@ func NewUIControlSystem() *UIControlSystem {
 
 func (s *UIControlSystem) process(component interface{}, isProcessingChildren bool) {
 	var result *QueryResult
+	var entity *Entity
 	switch typed := component.(type) {
 	case *QueryResult:
 		result = typed
-	case EntityID:
-		if res, err := scene.QueryID(typed); err == nil {
+		entity = typed.Entity
+	case *Entity:
+		entity = typed
+		if res, err := scene.QueryID(typed.ID); err == nil {
 			result = res
 		}
 	}
+	_ = entity
 
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -151,8 +162,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 	if ok {
 		scrollable = scrollableInterface.(*Scrollable)
 	}
-
-	hoverable.Hovered = false
+	// hoverable.Hovered = false
 
 	// Don't render children until the texture mode is set by the parent
 	if drawable.IsChild && !isProcessingChildren {
@@ -161,7 +171,6 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 
 	if moveable.Bounds.Contains(rl.GetMousePosition().Subtract(moveable.Offset)) {
 		hoverable.Hovered = true
-
 		switch t := drawable.DrawableType.(type) {
 		case *DrawableParent:
 			for _, child := range t.Children {

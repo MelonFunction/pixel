@@ -186,6 +186,8 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 
 		Layers: []*Layer{
 			NewLayer(canvasWidth, canvasHeight, "background", true),
+			NewLayer(canvasWidth, canvasHeight, "layer 1", false),
+			NewLayer(canvasWidth, canvasHeight, "layer 2", false),
 			NewLayer(canvasWidth, canvasHeight, "hidden", false),
 		},
 		History:           make([]HistoryAction, 0, 5),
@@ -225,10 +227,10 @@ func (f *File) SetCurrentLayer(index int) {
 		f.History[len(f.History)-1].LayerState.Prev = index
 	}
 
-	for i, h := range f.History {
-		log.Println(i, h.LayerState, len(h.PixelState))
-	}
-	log.Println()
+	// for i, h := range f.History {
+	// 	log.Println(i, h.LayerState, len(h.PixelState))
+	// }
+	// log.Println()
 	f.CurrentLayer = index
 }
 
