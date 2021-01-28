@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -40,35 +42,82 @@ func (l *LayersUI) generateUI() {
 	var list *Entity
 	layers := make([]*Entity, 0, 16)
 
-	makeBox := func(y int, name string) *Entity {
-		return NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
-			NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
-				func(entity *Entity, button rl.MouseButton) {
-					// button up
+	var currentLayerHoverable *Hoverable
 
+	makeBox := func(y int, name string) *Entity {
+		hidden := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/eye_open.png", false,
+			func(entity *Entity, button rl.MouseButton) {
+				// button up
+				if res, err := scene.QueryID(entity.ID); err == nil {
+					drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+					// hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 					l.file.Layers[y].Hidden = !l.file.Layers[y].Hidden
-				},
-				func(entity *Entity, button rl.MouseButton) {
-					// button down
-				}),
-			NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), name, false,
-				func(entity *Entity, button rl.MouseButton) {
-					// button up
+
+					drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
+					if ok {
+						if l.file.Layers[y].Hidden {
+							drawableTexture.SetTexture("./res/icons/eye_closed.png")
+						} else {
+							drawableTexture.SetTexture("./res/icons/eye_open.png")
+						}
+					}
+				}
+			},
+			func(entity *Entity, button rl.MouseButton) {
+				// button down
+			})
+		isCurrent := l.file.CurrentLayer == y
+		label := NewButtonText(rl.NewRectangle(buttonHeight, 0, l.Bounds.Width-buttonHeight*2, buttonHeight), name, isCurrent,
+			func(entity *Entity, button rl.MouseButton) {
+				// button up
+				if res, err := scene.QueryID(entity.ID); err == nil {
+					hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+
+					log.Println("hoverable", currentLayerHoverable)
+					if currentLayerHoverable != nil {
+						currentLayerHoverable.Selected = false
+					}
+
 					l.file.SetCurrentLayer(y)
-				},
-				func(entity *Entity, button rl.MouseButton) {
-					// button down
-				}),
+					hoverable.Selected = true
+					currentLayerHoverable = hoverable
+				}
+			},
+			func(entity *Entity, button rl.MouseButton) {
+				// button down
+			})
+		if isCurrent {
+			// Set current layer ref
+			if res, err := scene.QueryID(label.ID); err == nil {
+				hoverable := res.Components[label.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+				currentLayerHoverable = hoverable
+			}
+		}
+
+		box := NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
+			hidden,
+			label,
 		})
+		return box
 	}
 
 	// New layer button
-	NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
+	NewButtonTexture(rl.NewRectangle(float32(l.Position.X), float32(l.Position.Y)-buttonHeight, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			l.file.AddNewLayer()
 			max := len(l.file.Layers)
-			last := l.file.Layers[max-2]
+			last := l.file.Layers[max-2] // ignore the temp layer
+
+			if currentLayerHoverable != nil {
+				currentLayerHoverable.Selected = false
+			}
+
+			if res, err := scene.QueryID(entity.ID); err == nil {
+				hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+				hoverable.Selected = true
+				currentLayerHoverable = hoverable
+			}
 
 			list.PushChild(makeBox(max-2, last.Name))
 			list.FlowChildren()
@@ -88,9 +137,8 @@ func (l *LayersUI) generateUI() {
 		layers = append(layers, box)
 	}
 
-	list = NewScrollableList(rl.NewRectangle(32, 32, l.Bounds.Width, l.Bounds.Height), layers, true)
+	list = NewScrollableList(rl.NewRectangle(float32(l.Position.X), float32(l.Position.Y), l.Bounds.Width, l.Bounds.Height), layers, true)
 	list.FlowChildren()
-
 }
 
 func (l *LayersUI) GetWasMouseButtonDown() bool {
@@ -103,9 +151,7 @@ func (l *LayersUI) SetWasMouseButtonDown(isDown bool) {
 
 func (l *LayersUI) MouseUp() {
 	if l == UIElementWithControl {
-		// UIHasControl = false
 		UIElementWithControl = nil
-		// UIComponentWithControl = nil // unset child too
 	}
 }
 
@@ -121,28 +167,7 @@ func (l *LayersUI) Update() {
 }
 
 func (l *LayersUI) Draw() {
-	// rl.BeginTextureMode(l.Texture)
-	// rl.ClearBackground(rl.Transparent)
-
-	// for _, component := range l.Components {
-	// 	component.Draw()
-	// }
-
-	// rl.EndTextureMode()
-
-	// l.scrollbar.Draw()
-
-	// rl.DrawTextureRec(l.Texture.Texture,
-	// 	rl.NewRectangle(0, 0, float32(l.Texture.Texture.Width), -float32(l.Texture.Texture.Height)),
-	// 	rl.NewVector2(float32(l.Position.X), float32(l.Position.Y)),
-	// 	rl.White)
 }
 
 func (l *LayersUI) Destroy() {
-	// l.box.Destroy()
-	// l.Texture.Unload()
-	// for _, component := range l.Components {
-	// 	component.Destroy()
-	// }
-	// l.scrollbar.Destroy()
 }
