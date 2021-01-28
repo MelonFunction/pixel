@@ -24,7 +24,7 @@ func (s *BasicSystem) SetScene(scene *Scene) {
 type Entity struct {
 	ID    EntityID
 	Tag   Tag
-	scene *Scene
+	Scene *Scene
 	Name  string // set this manually to help with debugging/printing
 }
 
@@ -114,10 +114,10 @@ func (s *Scene) NewComponent(name string) *Component {
 // If an EntityID is provided, it will use that instead of the automatic one.
 // If an EntityID is provided and it  already exists, it will be removed and
 // replaced, otherwise the ID will be skipped.
-func (s *Scene) NewEntity(ids ...EntityID) *Entity {
+func (s *Scene) NewEntity(id *EntityID) *Entity {
 	var e *Entity
-	if len(ids) > 0 {
-		ID := ids[0]
+	if id != nil {
+		ID := *id
 		if entity, ok := s.entitiesMap[ID]; ok {
 			s.RemoveEntity(entity)
 			fmt.Printf("replaced %d\n", ID)
@@ -141,7 +141,7 @@ func (s *Scene) NewEntity(ids ...EntityID) *Entity {
 	}
 	s.entitiesMap[e.ID] = e
 	s.entities = append(s.entities, e)
-	e.scene = s
+	e.Scene = s
 
 	return e
 }
@@ -169,7 +169,7 @@ func (e *Entity) AddComponent(c *Component, data interface{}) *Entity {
 }
 
 func (e *Entity) Destroy() {
-	e.scene.RemoveEntity(e)
+	e.Scene.RemoveEntity(e)
 }
 
 func (e *Entity) RemoveComponent(c *Component) *Entity {
