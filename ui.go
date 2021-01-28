@@ -97,6 +97,8 @@ const (
 	FlowDirectionHorizontal
 	// FlowDirectionHorizontalReversed flows horizontally, in reverse order
 	FlowDirectionHorizontalReversed
+	// FlowDirectionNone doesn't reflow elements
+	FlowDirectionNone
 )
 
 // Scrollable allows an element to render its children elements with an offset
@@ -130,9 +132,39 @@ type DrawableText struct {
 	Label string
 }
 
+type textureCache map[string]rl.Texture2D
+
+var texCache = make(map[string]rl.Texture2D)
+
+func (d *DrawableTexture) SetTexture(path string) {
+	texture, ok := texCache[path]
+	if ok {
+		d.Texture = texture
+	} else {
+		texture = rl.LoadTexture(path)
+		texCache[path] = texture
+	}
+
+	d.Texture = texture
+
+}
+
 // DrawableTexture draws a texture
 type DrawableTexture struct {
 	Texture rl.Texture2D
+}
+
+func NewDrawableTexture(texturePath string) *DrawableTexture {
+	texture, ok := texCache[texturePath]
+	if !ok {
+		texture = rl.LoadTexture(texturePath)
+		texCache[texturePath] = texture
+	}
+
+	d := &DrawableTexture{
+		Texture: texture,
+	}
+	return d
 }
 
 // DrawableParent draws its children to its texture
@@ -207,8 +239,6 @@ func DrawUI() {
 // PushChild adds a child to a drawables children list and sets the relative
 // initial positions of the children
 func (e *Entity) PushChild(child *Entity) (*Entity, error) {
-	log.Println("adding child to ", e.ID, e.Name, " named ", child.ID, child.Name)
-
 	var err error
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -222,7 +252,6 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 
 			childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
 			childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
-			log.Println("\t", parentMoveable.Bounds, e.Name, childMoveable.Bounds, child.Name)
 
 			switch typed := parentDrawable.DrawableType.(type) {
 			case *DrawablePassthrough:
@@ -269,8 +298,6 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 }
 
 func (e *Entity) FlowChildren() {
-	log.Println("flowing ", e.ID, e.Name)
-
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		parentMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
@@ -299,8 +326,6 @@ func (e *Entity) FlowChildren() {
 				return
 			}
 
-			log.Println("fixing", e.Name, children)
-
 			for _, child := range children {
 				if result, err := scene.QueryID(child.ID); err == nil {
 					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -308,7 +333,6 @@ func (e *Entity) FlowChildren() {
 
 					childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
 					childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
-					log.Println("\t", child.Name, parentMoveable.Bounds, childMoveable.Bounds)
 
 					fixNested(child, childDrawable, childMoveable)
 				}
@@ -317,32 +341,30 @@ func (e *Entity) FlowChildren() {
 
 		var offset rl.Vector2
 		for i, child := range children {
-			log.Println("processing", child.Name)
 			if result, err := scene.QueryID(child.ID); err == nil {
 				childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 				childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 
-				log.Println("boundspre", child.Name, childMoveable.Bounds)
+				if parentMoveable.FlowDirection != FlowDirectionNone {
+					if i == 0 {
+						// Initial child needs to be set to parent bounds
+						childMoveable.Bounds.X = parentMoveable.Bounds.X
+						childMoveable.Bounds.Y = parentMoveable.Bounds.Y
 
-				if i == 0 {
-					// Initial child needs to be set to parent bounds
-					childMoveable.Bounds.X = parentMoveable.Bounds.X
-					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
-
-					// Set the bounds for the next child
-					offset.X = childMoveable.Bounds.X + childMoveable.Bounds.Width
-					offset.Y = childMoveable.Bounds.Y + childMoveable.Bounds.Height
-				} else {
-					if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
-						childMoveable.Bounds.Y = offset.Y
-						offset.Y += childMoveable.Bounds.Height
+						// Set the bounds for the next child
+						offset.X = childMoveable.Bounds.X + childMoveable.Bounds.Width
+						offset.Y = childMoveable.Bounds.Y + childMoveable.Bounds.Height
 					} else {
-						childMoveable.Bounds.X = offset.X
-						offset.X += childMoveable.Bounds.Width
+						if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+							childMoveable.Bounds.Y = offset.Y
+							offset.Y += childMoveable.Bounds.Height
+						} else {
+							childMoveable.Bounds.X = offset.X
+							offset.X += childMoveable.Bounds.Width
+						}
 					}
 				}
 
-				log.Println("bounds", child.Name, childMoveable.Bounds)
 				fixNested(child, childDrawable, childMoveable)
 			}
 		}
@@ -352,19 +374,18 @@ func (e *Entity) FlowChildren() {
 
 // NewButtonTexture creates a button which renders a texture
 func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
-	texture := rl.LoadTexture(string(texturePath))
-	e := scene.NewEntity().
+	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableTexture{texture}})
+		AddComponent(drawable, &Drawable{DrawableType: NewDrawableTexture(texturePath)})
 	e.Name = "buttonTexture"
 	return e
 }
 
 // NewButtonText creates a button which renders text
 func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
-	e := scene.NewEntity().
+	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
@@ -385,8 +406,8 @@ func prepareChildren(entity *Entity, children []*Entity) {
 
 // NewBox creates a box which can store children
 func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
-	e := scene.NewEntity().
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+	e := scene.NewEntity(nil).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionNone}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawablePassthrough{
@@ -406,7 +427,7 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, reversed bool) *
 	if reversed {
 		flowDirection = FlowDirectionVerticalReversed
 	}
-	e := scene.NewEntity().
+	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
