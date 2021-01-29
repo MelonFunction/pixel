@@ -163,7 +163,7 @@ type File struct {
 	HasDoneMouseUpLeft  bool
 	HasDoneMouseUpRight bool
 
-	UI []UI
+	UI map[string]*Entity
 
 	Keymap              Keymap
 	KeyRepeat           time.Duration
@@ -209,8 +209,8 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	f.LeftTool = NewPixelBrushTool(rl.Red, f, "Pixel Brush L")
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
 
-	f.UI = []UI{
-		NewLayersUI(IntVec2{rl.GetScreenWidth() - 256, rl.GetScreenHeight() - 400}, 256, 400, f, "Layers UI"),
+	f.UI = map[string]*Entity{
+		"layers": NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-256), float32(rl.GetScreenHeight()-400), 256, 400), f),
 	}
 
 	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
@@ -227,6 +227,8 @@ func (f *File) SetCurrentLayer(index int) {
 		f.History[len(f.History)-1].LayerState.Prev = index
 	}
 
+	log.Println("current layer is now ", index)
+
 	// for i, h := range f.History {
 	// 	log.Println(i, h.LayerState, len(h.PixelState))
 	// }
@@ -242,27 +244,13 @@ func (f *File) GetCurrentLayer() *Layer {
 func (f *File) AddNewLayer() {
 	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", false)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
-	f.CurrentLayer++
+	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
 }
 
 // Update checks for input and uses the current tool to draw to the current
 // layer
 func (f *File) Update() {
 	UpdateUI()
-	// TODO convert block to systems
-	// for _, ui := range f.UI {
-	// 	if ui.CheckCollisions(rl.NewVector2(0, 0)) && rl.IsMouseButtonDown(rl.MouseLeftButton) {
-	// 		UIHasControl = true
-	// 		ui.SetWasMouseButtonDown(true)
-	// 	} else if !rl.IsMouseButtonDown(rl.MouseLeftButton) {
-	// 		if ui.GetWasMouseButtonDown() {
-	// 			UIHasControl = false
-	// 			ui.MouseUp()
-	// 			ui.SetWasMouseButtonDown(false)
-	// 		}
-	// 	}
-	// 	ui.Update()
-	// }
 
 	layer := f.GetCurrentLayer()
 
@@ -285,6 +273,23 @@ func (f *File) Update() {
 	if rl.IsWindowResized() {
 		f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
 		f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+
+		// Should probably make something that snaps components to others or
+		// to the window edge but that's a problem for another day (TODO)
+		for name, entity := range f.UI {
+			if res, err := scene.QueryID(entity.ID); err == nil {
+				moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
+
+				switch name {
+				case "layers":
+					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
+					moveable.Bounds.Y = float32(rl.GetScreenHeight()) - moveable.Bounds.Height
+					entity.FlowChildren()
+				}
+			}
+
+		}
+
 	}
 
 	if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
@@ -539,8 +544,5 @@ func (f *File) Redo() {
 func (f *File) Destroy() {
 	for _, layer := range f.Layers {
 		layer.Canvas.Unload()
-	}
-	for _, ui := range f.UI {
-		ui.Destroy()
 	}
 }

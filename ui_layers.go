@@ -7,37 +7,19 @@ import (
 )
 
 type LayersUI struct {
-	Position      IntVec2
-	file          *File
-	name          string
-	Width, Height int
-	Bounds        rl.Rectangle
+	file   *File
+	Bounds rl.Rectangle
 
 	ButtonWidth, ButtonHeight int
-
-	Texture rl.RenderTexture2D
-
-	wasMouseButtonDown bool
 }
 
-func NewLayersUI(position IntVec2, width, height int, file *File, name string) *LayersUI {
+func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 	l := &LayersUI{
-		Position:     position,
 		file:         file,
-		name:         name,
-		Width:        width,
-		Height:       height,
-		Bounds:       rl.NewRectangle(float32(position.X), float32(position.Y), float32(width), float32(height)),
-		ButtonWidth:  width - 20 - 16,
+		Bounds:       bounds,
+		ButtonWidth:  int(bounds.Width) - 20 - 16,
 		ButtonHeight: 20,
-		// Texture:            rl.LoadRenderTexture(width, height),
-		wasMouseButtonDown: false,
 	}
-	l.generateUI()
-	return l
-}
-
-func (l *LayersUI) generateUI() {
 	var buttonHeight float32 = 32.0
 	var list *Entity
 	layers := make([]*Entity, 0, 16)
@@ -97,12 +79,12 @@ func (l *LayersUI) generateUI() {
 		box := NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
 			hidden,
 			label,
-		})
+		}, FlowDirectionHorizontal)
 		return box
 	}
 
 	// New layer button
-	NewButtonTexture(rl.NewRectangle(float32(l.Position.X), float32(l.Position.Y)-buttonHeight, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
+	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			l.file.AddNewLayer()
@@ -137,37 +119,13 @@ func (l *LayersUI) generateUI() {
 		layers = append(layers, box)
 	}
 
-	list = NewScrollableList(rl.NewRectangle(float32(l.Position.X), float32(l.Position.Y), l.Bounds.Width, l.Bounds.Height), layers, true)
+	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, l.Bounds.Width, l.Bounds.Height-buttonHeight), layers, FlowDirectionVerticalReversed)
 	list.FlowChildren()
-}
 
-func (l *LayersUI) GetWasMouseButtonDown() bool {
-	return l.wasMouseButtonDown
-}
-
-func (l *LayersUI) SetWasMouseButtonDown(isDown bool) {
-	l.wasMouseButtonDown = isDown
-}
-
-func (l *LayersUI) MouseUp() {
-	if l == UIElementWithControl {
-		UIElementWithControl = nil
-	}
-}
-
-func (l *LayersUI) MouseDown() {
-	// Using update instead since we have to check for hover on each component
-}
-
-func (l *LayersUI) CheckCollisions(offset rl.Vector2) bool {
-	return false
-}
-
-func (l *LayersUI) Update() {
-}
-
-func (l *LayersUI) Draw() {
-}
-
-func (l *LayersUI) Destroy() {
+	container := NewBox(l.Bounds, []*Entity{
+		newLayerButton,
+		list,
+	}, FlowDirectionVertical)
+	container.FlowChildren()
+	return container
 }

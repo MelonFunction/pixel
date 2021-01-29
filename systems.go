@@ -70,7 +70,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	case *DrawableParent:
 		drawBorder(hoverable, moveable)
 		rl.BeginTextureMode(t.Texture)
-		rl.ClearBackground(rl.Red)
+		rl.ClearBackground(rl.Transparent)
 
 		// Offset all children the parent's position
 		s.camera.Target.X = moveable.Bounds.X
@@ -103,10 +103,10 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			rl.White)
 	case *DrawablePassthrough:
 		for _, child := range t.Children {
-			rl.BeginMode2D(s.camera)
+			// rl.BeginMode2D(s.camera)
 			// Passthrough whatever offset was given
 			s.draw(child, true, offset)
-			rl.EndMode2D()
+			// rl.EndMode2D()
 		}
 	case *DrawableText:
 		drawBorder(hoverable, moveable)

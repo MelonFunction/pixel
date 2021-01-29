@@ -8,15 +8,6 @@ import (
 
 // UI is the interface for UI elements (they handle their own components + states)
 type UI interface {
-	CheckCollisions(offset rl.Vector2) bool // Offset is the parent UI position
-	MouseDown()                             // Called each frame the mouse is down
-	MouseUp()                               // Called once, when the mouse button is released
-	GetWasMouseButtonDown() bool            // Ensures MouseUp is only called once
-	SetWasMouseButtonDown(bool)
-
-	Update()
-	Draw()
-	Destroy() // UI might use a texture for rendering to, destroy it before making a new one
 }
 
 var (
@@ -263,6 +254,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 				}
 				if !found {
 					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						// Reverse children
 						typed.Children = append([]*Entity{child}, typed.Children...)
 					} else {
 						typed.Children = append(typed.Children, child)
@@ -286,9 +278,13 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 				panic("Entity doesn't support child elements (make sure to only add children to boxes or scrolls!)")
 			}
 
-			isPassthrough, ok := childDrawable.DrawableType.(*DrawablePassthrough)
-			if ok {
-				for _, passChild := range isPassthrough.Children {
+			switch typed := childDrawable.DrawableType.(type) {
+			case *DrawablePassthrough:
+				for _, passChild := range typed.Children {
+					child.PushChild(passChild)
+				}
+			case *DrawableParent:
+				for _, passChild := range typed.Children {
 					child.PushChild(passChild)
 				}
 			}
@@ -339,30 +335,24 @@ func (e *Entity) FlowChildren() {
 			}
 		}
 
+		_ = parentMoveable
+		_ = children
+
 		var offset rl.Vector2
-		for i, child := range children {
+		for _, child := range children {
 			if result, err := scene.QueryID(child.ID); err == nil {
 				childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 				childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 
-				if parentMoveable.FlowDirection != FlowDirectionNone {
-					if i == 0 {
-						// Initial child needs to be set to parent bounds
-						childMoveable.Bounds.X = parentMoveable.Bounds.X
-						childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+				childMoveable.Bounds.X = parentMoveable.Bounds.X
+				childMoveable.Bounds.Y = parentMoveable.Bounds.Y
 
-						// Set the bounds for the next child
-						offset.X = childMoveable.Bounds.X + childMoveable.Bounds.Width
-						offset.Y = childMoveable.Bounds.Y + childMoveable.Bounds.Height
-					} else {
-						if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
-							childMoveable.Bounds.Y = offset.Y
-							offset.Y += childMoveable.Bounds.Height
-						} else {
-							childMoveable.Bounds.X = offset.X
-							offset.X += childMoveable.Bounds.Width
-						}
-					}
+				if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+					childMoveable.Bounds.Y += offset.Y
+					offset.Y += childMoveable.Bounds.Height
+				} else {
+					childMoveable.Bounds.X += offset.X
+					offset.X += childMoveable.Bounds.Width
 				}
 
 				fixNested(child, childDrawable, childMoveable)
@@ -405,9 +395,9 @@ func prepareChildren(entity *Entity, children []*Entity) {
 }
 
 // NewBox creates a box which can store children
-func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
+func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionNone}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawablePassthrough{
@@ -416,17 +406,12 @@ func NewBox(bounds rl.Rectangle, children []*Entity) *Entity {
 		}})
 	e.Name = "box"
 	prepareChildren(e, children)
-
 	return e
 }
 
 // NewScrollableList creates a box, but it can scroll. Reversed is if the items
 // order should be reversed
-func NewScrollableList(bounds rl.Rectangle, children []*Entity, reversed bool) *Entity {
-	flowDirection := FlowDirectionVertical
-	if reversed {
-		flowDirection = FlowDirectionVerticalReversed
-	}
+func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
