@@ -227,8 +227,6 @@ func (f *File) SetCurrentLayer(index int) {
 		f.History[len(f.History)-1].LayerState.Prev = index
 	}
 
-	log.Println("current layer is now ", index)
-
 	// for i, h := range f.History {
 	// 	log.Println(i, h.LayerState, len(h.PixelState))
 	// }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -54,7 +52,6 @@ func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 				if res, err := scene.QueryID(entity.ID); err == nil {
 					hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 
-					log.Println("hoverable", currentLayerHoverable)
 					if currentLayerHoverable != nil {
 						currentLayerHoverable.Selected = false
 					}
@@ -75,7 +72,7 @@ func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 			}
 		}
 
-		box := NewBox(rl.NewRectangle(0, float32(y)*buttonHeight, l.Bounds.Width, buttonHeight), []*Entity{
+		box := NewBox(rl.NewRectangle(0, 0, l.Bounds.Width, buttonHeight), []*Entity{
 			hidden,
 			label,
 		}, FlowDirectionHorizontal)
@@ -111,9 +108,9 @@ func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 	// All of the layers
 	for i, layer := range l.file.Layers {
 		if i == len(l.file.Layers)-1 {
+			// ignore hidden layer
 			continue
 		}
-
 		list.PushChild(makeBox(i, layer.Name))
 	}
 

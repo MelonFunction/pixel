@@ -209,11 +209,8 @@ func DrawUI() {
 	renderSystem.Update(rl.GetFrameTime())
 }
 
-// PushChild adds a child to a drawables children list and sets the relative
-// initial positions of the children
+// PushChild adds a child to a drawables children list
 func (e *Entity) PushChild(child *Entity) (*Entity, error) {
-	log.Println("adding", child.Name, "to", e.Name)
-
 	var err error
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -225,7 +222,6 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 			childDrawable.IsChild = true
 
 			switch typed := parentDrawable.DrawableType.(type) {
-
 			case *DrawableParent:
 				found := false
 				for _, c := range typed.Children {
@@ -235,10 +231,8 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 				}
 				if !found {
 					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
-						log.Println("\treversed")
 						typed.Children = append([]*Entity{child}, typed.Children...)
 					} else {
-						log.Println("\tnot reversed")
 						typed.Children = append(typed.Children, child)
 					}
 				}
@@ -247,7 +241,6 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 			}
 
 			switch typed := childDrawable.DrawableType.(type) {
-
 			case *DrawableParent:
 				for _, passChild := range typed.Children {
 					child.PushChild(passChild)
@@ -275,16 +268,16 @@ func (e *Entity) FlowChildren() {
 
 		var fixNested func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable)
 		fixNested = func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable) {
-			children := make([]*Entity, 0, 16)
+			var children []*Entity
 
 			switch typed := parentDrawable.DrawableType.(type) {
-
 			case *DrawableParent:
 				children = typed.Children
 			default:
 				return
 			}
 
+			var offset rl.Vector2
 			for _, child := range children {
 				if result, err := scene.QueryID(child.ID); err == nil {
 					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -293,33 +286,27 @@ func (e *Entity) FlowChildren() {
 					childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
 					childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
 
+					childMoveable.Bounds.X = parentMoveable.Bounds.X
+					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+
+					// TODO actually use directions
+
+					if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						childMoveable.Bounds.Y += offset.Y
+						offset.Y += childMoveable.Bounds.Height
+					} else {
+						childMoveable.Bounds.X += offset.X
+						offset.X += childMoveable.Bounds.Width
+					}
+
 					fixNested(child, childDrawable, childMoveable)
 				}
 			}
 		}
 
-		_ = parentMoveable
-		_ = children
-
-		var offset rl.Vector2
+		// TODO compress this with above
 		for _, child := range children {
-			if result, err := scene.QueryID(child.ID); err == nil {
-				childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
-				childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
-
-				childMoveable.Bounds.X = parentMoveable.Bounds.X
-				childMoveable.Bounds.Y = parentMoveable.Bounds.Y
-
-				if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
-					childMoveable.Bounds.Y += offset.Y
-					offset.Y += childMoveable.Bounds.Height
-				} else {
-					childMoveable.Bounds.X += offset.X
-					offset.X += childMoveable.Bounds.Width
-				}
-
-				fixNested(child, childDrawable, childMoveable)
-			}
+			fixNested(child, parentDrawable, parentMoveable)
 		}
 
 	}
