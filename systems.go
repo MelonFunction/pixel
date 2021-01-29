@@ -68,7 +68,14 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 	switch t := drawable.DrawableType.(type) {
 	case *DrawableParent:
-		drawBorder(hoverable, moveable)
+		if t.IsPassthrough {
+			for _, child := range t.Children {
+				// Just draw the child, offset is already set
+				s.draw(child, true, offset)
+			}
+			return
+		}
+
 		rl.BeginTextureMode(t.Texture)
 		rl.ClearBackground(rl.Transparent)
 
@@ -87,8 +94,6 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			}
 		}
 
-		// log.Println(s.camera.Target)
-
 		for _, child := range t.Children {
 			rl.BeginMode2D(s.camera)
 			s.draw(child, true, childOffset)
@@ -101,13 +106,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			rl.NewRectangle(0, 0, float32(t.Texture.Texture.Width), -float32(t.Texture.Texture.Height)),
 			rl.NewVector2(moveable.Bounds.X, moveable.Bounds.Y),
 			rl.White)
-	case *DrawablePassthrough:
-		for _, child := range t.Children {
-			// rl.BeginMode2D(s.camera)
-			// Passthrough whatever offset was given
-			s.draw(child, true, offset)
-			// rl.EndMode2D()
-		}
+
 	case *DrawableText:
 		drawBorder(hoverable, moveable)
 		fo := rl.MeasureTextEx(*Font, t.Label, 16, 1)
@@ -172,10 +171,6 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		hoverable.Hovered = true
 		switch t := drawable.DrawableType.(type) {
 		case *DrawableParent:
-			for _, child := range t.Children {
-				s.process(child, true)
-			}
-		case *DrawablePassthrough:
 			for _, child := range t.Children {
 				s.process(child, true)
 			}

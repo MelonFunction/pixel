@@ -22,7 +22,6 @@ func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 	}
 	var buttonHeight float32 = 32.0
 	var list *Entity
-	layers := make([]*Entity, 0, 16)
 
 	var currentLayerHoverable *Hoverable
 
@@ -108,24 +107,19 @@ func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
 			// button down
 		})
 
+	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, l.Bounds.Width, l.Bounds.Height-buttonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the layers
 	for i, layer := range l.file.Layers {
 		if i == len(l.file.Layers)-1 {
 			continue
 		}
 
-		var box *Entity
-		box = makeBox(i, layer.Name)
-		layers = append(layers, box)
+		list.PushChild(makeBox(i, layer.Name))
 	}
-
-	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, l.Bounds.Width, l.Bounds.Height-buttonHeight), layers, FlowDirectionVerticalReversed)
-	list.FlowChildren()
 
 	container := NewBox(l.Bounds, []*Entity{
 		newLayerButton,
 		list,
 	}, FlowDirectionVertical)
-	container.FlowChildren()
 	return container
 }

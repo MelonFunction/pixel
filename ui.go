@@ -158,20 +158,12 @@ func NewDrawableTexture(texturePath string) *DrawableTexture {
 	return d
 }
 
-// DrawableParent draws its children to its texture
+// DrawableParent draws its children to its texture if IsPassthrough is true
 type DrawableParent struct {
-	Texture  rl.RenderTexture2D
-	Children []*Entity
-}
+	// If true, doesn't draw to the Texture
+	IsPassthrough bool
+	Texture       rl.RenderTexture2D
 
-// DrawablePassthrough doesn't draw the element, it just allows the children to
-// be drawn
-type DrawablePassthrough struct {
-	// PreConvertedChildren holds children so that that they can be converted
-	// later if the element is nested (box inside scrollbar)
-	PreConvertedChildren []*Entity
-	// Children is also generated normally too, but is overwritten depending
-	// on nesting
 	Children []*Entity
 }
 
@@ -230,6 +222,8 @@ func DrawUI() {
 // PushChild adds a child to a drawables children list and sets the relative
 // initial positions of the children
 func (e *Entity) PushChild(child *Entity) (*Entity, error) {
+	log.Println("adding", child.Name, "to", e.Name)
+
 	var err error
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -237,29 +231,11 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 
 		if result, err := scene.QueryID(child.ID); err == nil {
 			childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
-			childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 
 			childDrawable.IsChild = true
 
-			childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
-			childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
-
 			switch typed := parentDrawable.DrawableType.(type) {
-			case *DrawablePassthrough:
-				found := false
-				for _, c := range typed.Children {
-					if c == child {
-						found = true
-					}
-				}
-				if !found {
-					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
-						// Reverse children
-						typed.Children = append([]*Entity{child}, typed.Children...)
-					} else {
-						typed.Children = append(typed.Children, child)
-					}
-				}
+
 			case *DrawableParent:
 				found := false
 				for _, c := range typed.Children {
@@ -269,8 +245,10 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 				}
 				if !found {
 					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+						log.Println("\treversed")
 						typed.Children = append([]*Entity{child}, typed.Children...)
 					} else {
+						log.Println("\tnot reversed")
 						typed.Children = append(typed.Children, child)
 					}
 				}
@@ -279,10 +257,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 			}
 
 			switch typed := childDrawable.DrawableType.(type) {
-			case *DrawablePassthrough:
-				for _, passChild := range typed.Children {
-					child.PushChild(passChild)
-				}
+
 			case *DrawableParent:
 				for _, passChild := range typed.Children {
 					child.PushChild(passChild)
@@ -301,8 +276,7 @@ func (e *Entity) FlowChildren() {
 		children := make([]*Entity, 0, 16)
 
 		switch typed := parentDrawable.DrawableType.(type) {
-		case *DrawablePassthrough:
-			children = typed.Children
+
 		case *DrawableParent:
 			children = typed.Children
 		default:
@@ -314,8 +288,7 @@ func (e *Entity) FlowChildren() {
 			children := make([]*Entity, 0, 16)
 
 			switch typed := parentDrawable.DrawableType.(type) {
-			case *DrawablePassthrough:
-				children = typed.Children
+
 			case *DrawableParent:
 				children = typed.Children
 			default:
@@ -400,12 +373,13 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawablePassthrough{
-			PreConvertedChildren: children,
-			Children:             children,
+		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
+			IsPassthrough: true,
+			Children:      children,
 		}})
 	e.Name = "box"
 	prepareChildren(e, children)
+	e.FlowChildren()
 	return e
 }
 
@@ -422,5 +396,6 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection Fl
 		}})
 	e.Name = "scroll"
 	prepareChildren(e, children)
+	e.FlowChildren()
 	return e
 }
