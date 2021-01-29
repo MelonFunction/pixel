@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 )
 
 type EntityID uint32
@@ -158,6 +159,15 @@ func (s *Scene) Update(dt float32) {
 	}
 }
 
+func (s *Scene) Destroy() {
+	cloned := s.entities[:]
+	for i := 0; i < len(cloned); i++ {
+		entity := cloned[len(cloned)-i-1]
+		entity.Destroy()
+	}
+	log.Println("Destroyed, length of s.entities is", len(s.entities))
+}
+
 func (c *Component) SetDestructor(d func(e *Entity, data interface{})) {
 	c.destructor = d
 }
@@ -186,14 +196,15 @@ func (e *Entity) RemoveComponent(c *Component) *Entity {
 // RemoveEntity removes an entity from the scene and also removes its component
 // data (and calls the destructor if it was set)
 func (s *Scene) RemoveEntity(e *Entity) {
-	for i, entity := range s.entities {
+	for i := 0; i < len(s.entities); i++ {
+		entity := s.entities[i]
 		if e.ID == entity.ID {
 			for _, component := range s.components {
 				if _, ok := component.entities[e.ID]; ok {
 					entity.RemoveComponent(component)
 				}
 			}
-			delete(s.entitiesMap, e.ID)
+			delete(s.entitiesMap, entity.ID)
 			s.entities = append(s.entities[:i], s.entities[i+1:]...)
 			break
 		}

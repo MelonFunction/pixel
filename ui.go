@@ -125,19 +125,8 @@ type DrawableText struct {
 
 type textureCache map[string]rl.Texture2D
 
-var texCache = make(map[string]rl.Texture2D)
-
 func (d *DrawableTexture) SetTexture(path string) {
-	texture, ok := texCache[path]
-	if ok {
-		d.Texture = texture
-	} else {
-		texture = rl.LoadTexture(path)
-		texCache[path] = texture
-	}
-
-	d.Texture = texture
-
+	d.Texture = rl.LoadTexture(path)
 }
 
 // DrawableTexture draws a texture
@@ -146,14 +135,8 @@ type DrawableTexture struct {
 }
 
 func NewDrawableTexture(texturePath string) *DrawableTexture {
-	texture, ok := texCache[texturePath]
-	if !ok {
-		texture = rl.LoadTexture(texturePath)
-		texCache[texturePath] = texture
-	}
-
 	d := &DrawableTexture{
-		Texture: texture,
+		Texture: rl.LoadTexture(texturePath),
 	}
 	return d
 }
@@ -185,8 +168,11 @@ func InitUI() {
 		d, ok := data.(*Drawable)
 		if ok {
 			switch t := d.DrawableType.(type) {
+			case *DrawableParent:
+				if !t.IsPassthrough {
+					t.Texture.Unload()
+				}
 			case *DrawableTexture:
-				log.Println("unloading")
 				t.Texture.Unload()
 			}
 		}
@@ -206,6 +192,10 @@ func InitUI() {
 
 	scene.AddSystem(controlSystem)
 	scene.AddSystem(renderSystem)
+}
+
+func DestroyUI() {
+	scene.Destroy()
 }
 
 // UpdateUI updates the systems (excluding the RenderSystem)
@@ -392,7 +382,8 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection Fl
 		AddComponent(interactable, &Interactable{}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
-			Texture: rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
+			IsPassthrough: false,
+			Texture:       rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
 		}})
 	e.Name = "scroll"
 	prepareChildren(e, children)

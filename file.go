@@ -545,4 +545,5 @@ func (f *File) Destroy() {
 	for _, layer := range f.Layers {
 		layer.Canvas.Unload()
 	}
+	DestroyUI()
 }
