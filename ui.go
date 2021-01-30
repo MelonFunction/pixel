@@ -313,6 +313,17 @@ func (e *Entity) FlowChildren() {
 }
 
 // NewButtonTexture creates a button which renders a texture
+func NewTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
+	e := scene.NewEntity(nil).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(hoverable, &Hoverable{Selected: false}).
+		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(drawable, &Drawable{DrawableType: &DrawableTexture{rl.Texture2D{}}})
+	e.Name = "buttonTexture"
+	return e
+}
+
+// NewButtonTexture creates a button which renders a texture
 func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).

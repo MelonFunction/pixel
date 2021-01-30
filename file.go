@@ -210,7 +210,8 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
 
 	f.UI = map[string]*Entity{
-		"layers": NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-256), float32(rl.GetScreenHeight()-400), 256, 400), f),
+		"rgb":    NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2), float32(0), 128*2, 128*2)),
+		"layers": NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*3), float32(rl.GetScreenHeight()-128*3), 128*3, 128*3), f),
 	}
 
 	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
@@ -282,6 +283,9 @@ func (f *File) Update() {
 				case "layers":
 					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
 					moveable.Bounds.Y = float32(rl.GetScreenHeight()) - moveable.Bounds.Height
+					entity.FlowChildren()
+				case "rgb":
+					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
 					entity.FlowChildren()
 				}
 			}

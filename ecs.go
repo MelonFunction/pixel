@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
 type EntityID uint32
@@ -165,7 +164,6 @@ func (s *Scene) Destroy() {
 		entity := cloned[len(cloned)-i-1]
 		entity.Destroy()
 	}
-	log.Println("Destroyed, length of s.entities is", len(s.entities))
 }
 
 func (c *Component) SetDestructor(d func(e *Entity, data interface{})) {
