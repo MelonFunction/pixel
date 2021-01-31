@@ -9,6 +9,8 @@ import (
 func NewRGBUI(bounds rl.Rectangle) *Entity {
 	// Hovers over the selected color in the color gradient area
 	var areaSelector *Entity
+	// Same but for the color bar
+	var colorSelector *Entity
 
 	// The main color gradient area, fading from white to the current color
 	// horizontally, then vertically down to black
@@ -107,8 +109,24 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 			// button down
 			if res, err := scene.QueryID(slider.ID); err == nil {
 				moveable := res.Components[slider.Scene.ComponentsMap["moveable"]].(*Moveable)
+
 				mx := rl.GetMouseX()
 				mx -= int(moveable.Bounds.X)
+				my := int(moveable.Bounds.Height) / 2
+
+				if mx < 0 {
+					mx = 0
+				}
+				if mx > int(moveable.Bounds.Width)-1 {
+					mx = int(moveable.Bounds.Width) - 1
+				}
+
+				// Move the areaSelector
+				if res, err := scene.QueryID(colorSelector.ID); err == nil {
+					sm := res.Components[colorSelector.Scene.ComponentsMap["moveable"]].(*Moveable)
+					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
+					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+				}
 
 				color, ok := sliderColors[mx]
 				if ok {
@@ -173,28 +191,40 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		slider,
 	}, FlowDirectionVertical)
 
-	// Make the color areaSelector which floats around on top of the color area
-	areaSelector = NewRenderTexture(rl.NewRectangle(0, 0, 16, 16),
-		nil, nil)
-	if res, err := scene.QueryID(areaSelector.ID); err == nil {
-		drawable := res.Components[areaSelector.Scene.ComponentsMap["drawable"]].(*Drawable)
-		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
-		if ok {
-			texture := renderTexture.Texture
-			rl.BeginTextureMode(texture)
-			rl.ClearBackground(rl.Transparent)
-			w := float32(texture.Texture.Width)
-			h := float32(texture.Texture.Height)
-			var t float32 = 3.0 // line thickness
+	// Selectors don't belong to the container, just let them be alone
 
-			rl.DrawLineEx(rl.NewVector2(t, 0), rl.NewVector2(w-t, 0), t*2, rl.White) // top
-			rl.DrawLineEx(rl.NewVector2(0, t), rl.NewVector2(0, h-t), t*2, rl.White) // left
-			rl.DrawLineEx(rl.NewVector2(w, t), rl.NewVector2(w, h-t), t*2, rl.White) // right
-			rl.DrawLineEx(rl.NewVector2(t, h), rl.NewVector2(w-t, h), t*2, rl.White) // bottom
+	makeSelector := func(e *Entity) {
+		if res, err := scene.QueryID(e.ID); err == nil {
+			drawable := res.Components[e.Scene.ComponentsMap["drawable"]].(*Drawable)
+			renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
+			if ok {
+				texture := renderTexture.Texture
+				rl.BeginTextureMode(texture)
+				rl.ClearBackground(rl.Transparent)
+				w := float32(texture.Texture.Width)
+				h := float32(texture.Texture.Height)
+				var t float32 = 3.0 // line thickness
 
-			rl.EndTextureMode()
+				rl.DrawLineEx(rl.NewVector2(t, 0), rl.NewVector2(w-t, 0), t*2, rl.White) // top
+				rl.DrawLineEx(rl.NewVector2(0, t), rl.NewVector2(0, h-t), t*2, rl.White) // left
+				rl.DrawLineEx(rl.NewVector2(w, t), rl.NewVector2(w, h-t), t*2, rl.White) // right
+				rl.DrawLineEx(rl.NewVector2(t, h), rl.NewVector2(w-t, h), t*2, rl.White) // bottom
+
+				rl.EndTextureMode()
+			}
 		}
 	}
+
+	// Make the selector which floats around on top of the color gradient area
+	// Also move it off screen for now TODO starting position depending on starting color
+	areaSelector = NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16),
+		nil, nil)
+	makeSelector(areaSelector)
+
+	// Make the selector which floats around on top of the color area
+	colorSelector = NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16),
+		nil, nil)
+	makeSelector(colorSelector)
 
 	return container
 }
