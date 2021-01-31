@@ -1,21 +1,62 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
 func NewRGBUI(bounds rl.Rectangle) *Entity {
-	rgbBounds := bounds
-	rgbBounds.Height = rgbBounds.Width
+	// Hovers over the selected color in the color gradient area
+	var areaSelector *Entity
+
+	// The main color gradient area, fading from white to the current color
+	// horizontally, then vertically down to black
+	areaBounds := bounds
+	areaBounds.Height = areaBounds.Width
 	var rgb *Entity
-	rgb = NewRenderTexture(rgbBounds,
+	var areaColors = make(map[IntVec2]rl.Color)
+	rgb = NewRenderTexture(areaBounds,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},
 		func(entity *Entity, button rl.MouseButton) {
 			// button down
+			if res, err := scene.QueryID(rgb.ID); err == nil {
+				moveable := res.Components[rgb.Scene.ComponentsMap["moveable"]].(*Moveable)
+				mx := rl.GetMouseX()
+				my := rl.GetMouseY()
+				mx -= int(moveable.Bounds.X)
+				my -= int(moveable.Bounds.Y)
+
+				if mx < 0 {
+					mx = 0
+				}
+				if my < 0 {
+					my = 0
+				}
+				if mx > int(moveable.Bounds.Width)-1 {
+					mx = int(moveable.Bounds.Width) - 1
+				}
+				if my > int(moveable.Bounds.Height)-1 {
+					my = int(moveable.Bounds.Height) - 1
+				}
+
+				// Move the areaSelector
+				if res, err := scene.QueryID(areaSelector.ID); err == nil {
+					sm := res.Components[areaSelector.Scene.ComponentsMap["moveable"]].(*Moveable)
+					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
+					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+				}
+
+				color, ok := areaColors[IntVec2{mx, my}]
+				if ok {
+					log.Println(button, color)
+				}
+			}
 		})
 
+	// Generates the gradient for the color area
 	makeBlendArea := func(origColor rl.Color) {
 		if res, err := scene.QueryID(rgb.ID); err == nil {
 			drawable := res.Components[rgb.Scene.ComponentsMap["drawable"]].(*Drawable)
@@ -44,17 +85,18 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 						color.B = uint8(float32(color.B) * (1 - pv))
 
 						rl.DrawPixel(px, py, color)
+						areaColors[IntVec2{px, py}] = color
 					}
 				}
 				rl.EndTextureMode()
 			}
 		}
 	}
-
 	makeBlendArea(rl.NewColor(255, 0, 0, 255))
 
+	// The slider of colors
 	sliderBounds := bounds
-	sliderBounds.Height = bounds.Height - rgbBounds.Height
+	sliderBounds.Height = bounds.Height - areaBounds.Height
 	var slider *Entity
 	var sliderColors = make(map[int]rl.Color)
 	slider = NewRenderTexture(sliderBounds,
@@ -73,7 +115,6 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					makeBlendArea(color)
 				}
 			}
-
 		})
 
 	if res, err := scene.QueryID(slider.ID); err == nil {
@@ -131,5 +172,29 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		rgb,
 		slider,
 	}, FlowDirectionVertical)
+
+	// Make the color areaSelector which floats around on top of the color area
+	areaSelector = NewRenderTexture(rl.NewRectangle(0, 0, 16, 16),
+		nil, nil)
+	if res, err := scene.QueryID(areaSelector.ID); err == nil {
+		drawable := res.Components[areaSelector.Scene.ComponentsMap["drawable"]].(*Drawable)
+		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
+		if ok {
+			texture := renderTexture.Texture
+			rl.BeginTextureMode(texture)
+			rl.ClearBackground(rl.Transparent)
+			w := float32(texture.Texture.Width)
+			h := float32(texture.Texture.Height)
+			var t float32 = 3.0 // line thickness
+
+			rl.DrawLineEx(rl.NewVector2(t, 0), rl.NewVector2(w-t, 0), t*2, rl.White) // top
+			rl.DrawLineEx(rl.NewVector2(0, t), rl.NewVector2(0, h-t), t*2, rl.White) // left
+			rl.DrawLineEx(rl.NewVector2(w, t), rl.NewVector2(w, h-t), t*2, rl.White) // right
+			rl.DrawLineEx(rl.NewVector2(t, h), rl.NewVector2(w-t, h), t*2, rl.White) // bottom
+
+			rl.EndTextureMode()
+		}
+	}
+
 	return container
 }

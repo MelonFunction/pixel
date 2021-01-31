@@ -119,7 +119,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		y := moveable.Bounds.Y + moveable.Bounds.Height/2 - float32(t.Texture.Height)/2
 		rl.DrawTexture(t.Texture, int(x), int(y), rl.White)
 	case *DrawableRenderTexture:
-		drawBorder(hoverable, moveable)
+		// drawBorder(hoverable, moveable)
 		// maybe shrink texture to fit inside border instead of drawing on top?
 		rl.DrawTextureRec(t.Texture.Texture,
 			rl.NewRectangle(0, 0, float32(t.Texture.Texture.Width), -float32(t.Texture.Texture.Height)),
@@ -187,12 +187,20 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			UIHasControl = true
 			interactable.ButtonDown = true
 			if interactable.OnMouseDown != nil {
+				UICompontentCapturedInput = interactable
+				UIEntityCapturedInput = entity
+				UIHasControl = true
 				interactable.OnMouseDown(entity, rl.MouseLeftButton)
 			}
-		} else if interactable.ButtonDown && !rl.IsMouseButtonDown(rl.MouseLeftButton) {
-			interactable.ButtonDown = false
-			if interactable.OnMouseUp != nil {
-				interactable.OnMouseUp(entity, rl.MouseLeftButton)
+		} else {
+			if interactable.ButtonDown {
+				interactable.ButtonDown = false
+				if interactable.OnMouseUp != nil {
+					interactable.OnMouseUp(entity, rl.MouseLeftButton)
+				}
+				UICompontentCapturedInput = nil
+				UIEntityCapturedInput = nil
+				UIHasControl = false
 			}
 		}
 
@@ -207,7 +215,24 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 }
 
 func (s *UIControlSystem) Update(dt float32) {
-	for _, result := range s.Scene.QueryTag(s.Scene.Tags["basicControl"], s.Scene.Tags["scrollable"]) {
-		s.process(result, false)
+	// Make sure we only handle this once, so do it out of loop where nesting
+	// could happen
+
+	if rl.IsMouseButtonDown(rl.MouseLeftButton) && UICompontentCapturedInput != nil {
+		UIHasControl = true
+		if UICompontentCapturedInput != nil {
+			if UICompontentCapturedInput.OnMouseDown != nil {
+				UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, MouseButtonNone)
+			}
+		}
+	} else {
+		UICompontentCapturedInput = nil
+		UIEntityCapturedInput = nil
+		UIHasControl = false
+
+		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basicControl"], s.Scene.Tags["scrollable"]) {
+			s.process(result, false)
+		}
+
 	}
 }

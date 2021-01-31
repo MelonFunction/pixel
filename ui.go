@@ -13,8 +13,10 @@ type UI interface {
 var (
 	// UIHasControl lets the program know if input should go to the UI or not
 	UIHasControl = false
-	// UIElementWithControl is the current element with control
-	UIElementWithControl UI
+	// UICompontentCapturedInput is the current Interactable with control
+	UICompontentCapturedInput *Interactable
+	// UIEntityCapturedInput is the current Entity with control
+	UIEntityCapturedInput *Entity
 	// UIComponentWithControl is the current ui component with control
 	// UIComponentWithControl UIComponent
 	// isInited is a flag to record if InitUI has been called
@@ -31,6 +33,11 @@ var (
 	moveable, resizeable, interactable, hoverable, drawable, scrollable *Component
 	renderSystem                                                        *UIRenderSystem
 	controlSystem                                                       *UIControlSystem
+)
+
+const (
+	// MouseButtonNone is for when no mouse button event is needed, but up event hasn't happened
+	MouseButtonNone = rl.MouseButton(3)
 )
 
 // Moveable gives a component a position and dimensions
