@@ -210,7 +210,7 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
 
 	f.UI = map[string]*Entity{
-		"rgb":    NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
+		"rgb":    NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8), f),
 		"layers": NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*3), float32(rl.GetScreenHeight()-128*3), 128*3, 128*3), f),
 	}
 

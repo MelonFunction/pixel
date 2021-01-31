@@ -1,12 +1,10 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
-func NewRGBUI(bounds rl.Rectangle) *Entity {
+func NewRGBUI(bounds rl.Rectangle, f *File) *Entity {
 	// Hovers over the selected color in the color gradient area
 	var areaSelector *Entity
 	// Same but for the color bar
@@ -18,11 +16,16 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	areaBounds.Height = areaBounds.Width
 	var rgb *Entity
 	var areaColors = make(map[IntVec2]rl.Color)
+	// Used by slider to set tool color when slider is moved
+	var lastColorLocation IntVec2
 	rgb = NewRenderTexture(areaBounds,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},
 		func(entity *Entity, button rl.MouseButton) {
+			// TODO in case of MouseButtonNone, store the last physical button press
+			// so that the color can be changed on the correct tool
+
 			// button down
 			if res, err := scene.QueryID(rgb.ID); err == nil {
 				moveable := res.Components[rgb.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -51,9 +54,12 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 				}
 
-				color, ok := areaColors[IntVec2{mx, my}]
+				loc := IntVec2{mx, my}
+				color, ok := areaColors[loc]
 				if ok {
-					log.Println(button, color)
+					// Set the current color in the file
+					lastColorLocation = loc
+					f.LeftTool.SetColor(color)
 				}
 			}
 		})
@@ -131,6 +137,13 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				color, ok := sliderColors[mx]
 				if ok {
 					makeBlendArea(color)
+
+					// Update the current color with the last color location
+					color, ok := areaColors[lastColorLocation]
+					if ok {
+						// Set the current color in the file
+						f.LeftTool.SetColor(color)
+					}
 				}
 			}
 		})
