@@ -123,8 +123,6 @@ type DrawableText struct {
 	Label string
 }
 
-type textureCache map[string]rl.Texture2D
-
 func (d *DrawableTexture) SetTexture(path string) {
 	d.Texture = rl.LoadTexture(path)
 }
@@ -139,6 +137,10 @@ func NewDrawableTexture(texturePath string) *DrawableTexture {
 		Texture: rl.LoadTexture(texturePath),
 	}
 	return d
+}
+
+type DrawableRenderTexture struct {
+	Texture rl.RenderTexture2D
 }
 
 // DrawableParent draws its children to its texture if IsPassthrough is true
@@ -313,12 +315,12 @@ func (e *Entity) FlowChildren() {
 }
 
 // NewButtonTexture creates a button which renders a texture
-func NewTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
+func NewRenderTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableTexture{rl.Texture2D{}}})
+		AddComponent(drawable, &Drawable{DrawableType: &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))}})
 	e.Name = "buttonTexture"
 	return e
 }

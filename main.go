@@ -12,7 +12,7 @@ func main() {
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(1200, 800, "Pixel")
-	rl.SetTargetFPS(120)
+	rl.SetTargetFPS(60)
 
 	keymap := KeymapData{
 		"toolLeft":  {{rl.KeyH}, {rl.KeyLeft}},
