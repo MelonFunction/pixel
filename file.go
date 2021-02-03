@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -30,18 +30,11 @@ type PixelStateData struct {
 	Prev, Current rl.Color
 }
 
-// LayerStateData stores which layer the actions happened on
-type LayerStateData struct {
-	Prev, Current int
-}
-
 // HistoryAction stores information about the action
 type HistoryAction struct {
 	// Tool is the tool used for the action (GetName is used in history panel)
-	Tool Tool
-
 	PixelState map[IntVec2]PixelStateData
-	LayerState LayerStateData
+	LayerIndex int
 }
 
 // KeymapData stores the action name as the key and a 2d slice of the keys
@@ -103,32 +96,38 @@ var (
 
 // DrawPixel draws a pixel. It records actions into history.
 func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
-	rl.DrawPixel(x, y, color)
 
 	// Set the pixel data in the current layer
 	layer := f.GetCurrentLayer()
-	if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
-		// Add old color to history
-		if saveToHistory {
-			oldColor, ok := layer.PixelData[IntVec2{x, y}]
-			if ok {
+	if saveToHistory {
+		if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
+			// Add old color to history
+			rl.BeginTextureMode(layer.Canvas)
+			rl.DrawPixel(x, y, color)
+			rl.EndTextureMode()
 
-				// Prevent overwriting the old color with the new color since this
-				// function is called every frame
-				// Always draws to the last element of f.History since the
-				// offset is removed automatically
-				if oldColor != color {
-					ps := f.History[len(f.History)-1].PixelState[IntVec2{x, y}]
-					ps.Current = color
-					ps.Prev = oldColor
-					f.History[len(f.History)-1].PixelState[IntVec2{x, y}] = ps
-				}
+			oldColor, ok := layer.PixelData[IntVec2{x, y}]
+			if !ok {
+				oldColor = rl.Transparent
 			}
+
+			// Prevent overwriting the old color with the new color since this
+			// function is called every frame
+			// Always draws to the last element of f.History since the
+			// offset is removed automatically on mouse down
+			if oldColor != color {
+				ps := f.History[len(f.History)-1].PixelState[IntVec2{x, y}]
+				ps.Current = color
+				ps.Prev = oldColor
+				f.History[len(f.History)-1].PixelState[IntVec2{x, y}] = ps
+			}
+
+			// Change pixel data to the new color
+			layer.PixelData[IntVec2{x, y}] = color
 		}
 
-		// Change pixel data to the new color
-		layer.PixelData[IntVec2{x, y}] = color
 	}
+
 }
 
 // ClearBackground fills out the initial PixelData. Probably shouldn't be
@@ -185,10 +184,10 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 		Camera: rl.Camera2D{Zoom: 8.0},
 
 		Layers: []*Layer{
-			NewLayer(canvasWidth, canvasHeight, "background", true),
-			NewLayer(canvasWidth, canvasHeight, "layer 1", false),
-			NewLayer(canvasWidth, canvasHeight, "layer 2", false),
-			NewLayer(canvasWidth, canvasHeight, "hidden", false),
+			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray),
+			NewLayer(canvasWidth, canvasHeight, "layer 1", rl.Transparent),
+			NewLayer(canvasWidth, canvasHeight, "layer 2", rl.Transparent),
+			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent),
 		},
 		History:           make([]HistoryAction, 0, 5),
 		HistoryMaxActions: 5, // TODO get from config
@@ -224,15 +223,12 @@ func NewFile(keymap Keymap, canvasWidth, canvasHeight, tileWidth, tileHeight int
 func (f *File) SetCurrentLayer(index int) {
 	if len(f.History) > 0 && f.historyOffset == 0 {
 		// Only record layer switches if we don't have any undos
-		f.History[len(f.History)-1].LayerState.Prev = f.CurrentLayer
-		f.History[len(f.History)-1].LayerState.Prev = index
+		// f.History[len(f.History)-1].LayerState.Prev = f.CurrentLayer
+		// f.History[len(f.History)-1].LayerState = index
 	}
 
-	// for i, h := range f.History {
-	// 	log.Println(i, h.LayerState, len(h.PixelState))
-	// }
-	// log.Println()
 	f.CurrentLayer = index
+	// f.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), f.CurrentLayer})
 }
 
 // GetCurrentLayer reutrns the current layer
@@ -240,8 +236,20 @@ func (f *File) GetCurrentLayer() *Layer {
 	return f.Layers[f.CurrentLayer]
 }
 
+func (f *File) AppendHistory(action HistoryAction) {
+	// Clear everything past the offset if a change has been made after undoing
+	f.History = f.History[0 : len(f.History)-f.historyOffset]
+	f.historyOffset = 0
+
+	if len(f.History) >= f.HistoryMaxActions {
+		f.History = append(f.History[len(f.History)-f.HistoryMaxActions+1:f.HistoryMaxActions], action)
+	} else {
+		f.History = append(f.History, action)
+	}
+}
+
 func (f *File) AddNewLayer() {
-	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", false)
+	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
 }
@@ -301,13 +309,6 @@ func (f *File) Update() {
 	f.mouseLastX = f.mouseX
 	f.mouseLastY = f.mouseY
 	f.Camera.Target = f.target
-
-	// Draw
-	rl.BeginTextureMode(layer.Canvas)
-	if !layer.hasInitialFill {
-		f.ClearBackground(rl.DarkGray)
-		layer.hasInitialFill = true
-	}
 
 	// Handle keyboard actions
 	for key := range f.keysAwaitingRelease {
@@ -431,18 +432,6 @@ func (f *File) Update() {
 		f.keyMovable = true
 	}
 
-	appendHistory := func(action HistoryAction) {
-		// Clear everything past the offset if a change has been made after undoing
-		f.History = f.History[0 : len(f.History)-f.historyOffset]
-		f.historyOffset = 0
-
-		if len(f.History) >= f.HistoryMaxActions {
-			f.History = append(f.History[len(f.History)-f.HistoryMaxActions+1:f.HistoryMaxActions], action)
-		} else {
-			f.History = append(f.History, action)
-		}
-	}
-
 	cursor := rl.GetScreenToWorld2D(rl.GetMousePosition(), f.Camera)
 	cursor = cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 	if !UIHasControl {
@@ -450,7 +439,7 @@ func (f *File) Update() {
 			// Fires once
 			if f.HasDoneMouseUpLeft {
 				// Create new history action
-				appendHistory(HistoryAction{f.LeftTool, make(map[IntVec2]PixelStateData), LayerStateData{f.CurrentLayer, f.CurrentLayer}})
+				f.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), f.CurrentLayer})
 			}
 			f.HasDoneMouseUpLeft = false
 
@@ -466,7 +455,7 @@ func (f *File) Update() {
 
 		if rl.IsMouseButtonDown(rl.MouseRightButton) {
 			if f.HasDoneMouseUpRight {
-				appendHistory(HistoryAction{f.RightTool, make(map[IntVec2]PixelStateData), LayerStateData{f.CurrentLayer, f.CurrentLayer}})
+				f.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), f.CurrentLayer})
 			}
 			f.HasDoneMouseUpRight = false
 			f.RightTool.MouseDown(int(cursor.X), int(cursor.Y))
@@ -477,8 +466,16 @@ func (f *File) Update() {
 			}
 		}
 	}
+
+	// Draw
+	rl.BeginTextureMode(layer.Canvas)
+	if !layer.hasInitialFill {
+		f.ClearBackground(layer.InitialFillColor)
+		layer.hasInitialFill = true
+	}
 	rl.EndTextureMode()
 
+	// Draw temp layer
 	rl.BeginTextureMode(f.Layers[len(f.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
 	f.RightTool.DrawPreview(int(cursor.X), int(cursor.Y))
@@ -516,28 +513,84 @@ func (f *File) Update() {
 	rl.EndMode2D()
 
 	DrawUI()
+
+	for y, history := range f.History {
+		str := fmt.Sprintf("Layer: %d, Diff: %d",
+			history.LayerIndex,
+			len(history.PixelState))
+		rl.DrawText(str, 0, 20*y, 20, rl.White)
+	}
+
+	rl.DrawText(fmt.Sprintf("Current layer: %d", f.CurrentLayer), 0, (f.HistoryMaxActions+1)*20, 20, rl.White)
+	rl.DrawText(fmt.Sprintf("HistoryOffset: %d", f.historyOffset), 0, (f.HistoryMaxActions+2)*20, 20, rl.White)
 }
 
 // Undo an action
 func (f *File) Undo() {
-	// TODO make layer history actually work
 	if f.historyOffset < len(f.History) {
+		current := f.CurrentLayer
 		f.historyOffset++
-		log.Println(f.History[len(f.History)-f.historyOffset].LayerState)
-		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerState.Prev)
-		for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
-			f.DrawPixel(pos.X, pos.Y, psd.Prev, false)
+
+		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
+		layer := f.GetCurrentLayer()
+		newCanvas := rl.LoadRenderTexture(f.CanvasWidth, f.CanvasHeight)
+		rl.BeginTextureMode(newCanvas)
+		shouldDraw := true
+		for v, color := range layer.PixelData {
+			shouldDraw = true
+			for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
+				if v.X == pos.X && v.Y == pos.Y {
+					// Update current color with previous color
+					layer.PixelData[v] = psd.Prev
+					// Overwrite
+					color = psd.Prev
+					if psd.Prev == rl.Transparent {
+						shouldDraw = false
+					}
+				}
+			}
+			if shouldDraw {
+				rl.DrawPixel(v.X, v.Y, color)
+			}
 		}
+		layer.Canvas = newCanvas
+		rl.EndTextureMode()
+
+		f.SetCurrentLayer(current)
 	}
 }
 
 // Redo an action
 func (f *File) Redo() {
 	if f.historyOffset > 0 {
-		for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
-			// f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerState.Current)
-			f.DrawPixel(pos.X, pos.Y, psd.Current, false)
+		current := f.CurrentLayer
+
+		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
+		layer := f.GetCurrentLayer()
+		newCanvas := rl.LoadRenderTexture(f.CanvasWidth, f.CanvasHeight)
+		rl.BeginTextureMode(newCanvas)
+		shouldDraw := true
+		for v, color := range layer.PixelData {
+			shouldDraw = true
+			for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
+				if v.X == pos.X && v.Y == pos.Y {
+					// Update current color with previous color
+					layer.PixelData[v] = psd.Current
+					// Overwrite
+					color = psd.Current
+					if psd.Current == rl.Transparent {
+						shouldDraw = false
+					}
+				}
+			}
+			if shouldDraw {
+				rl.DrawPixel(v.X, v.Y, color)
+			}
 		}
+		layer.Canvas = newCanvas
+		rl.EndTextureMode()
+
+		f.SetCurrentLayer(current)
 		f.historyOffset--
 	}
 }
