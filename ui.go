@@ -33,6 +33,7 @@ var (
 	moveable, resizeable, interactable, hoverable, drawable, scrollable *Component
 	renderSystem                                                        *UIRenderSystem
 	controlSystem                                                       *UIControlSystem
+	fileSystem                                                          *UIFileSystem
 )
 
 const (
@@ -160,7 +161,7 @@ type DrawableParent struct {
 }
 
 // InitUI must be called before UI is used
-func InitUI() {
+func InitUI(file *File, keymap Keymap) {
 	isInited = true
 	Font = rl.LoadFont("./res/fonts/prstartk.ttf")
 
@@ -196,11 +197,13 @@ func InitUI() {
 	scene.BuildTag("drawable, hoverable, moveable", drawable, moveable, hoverable)
 	scene.BuildTag("basicControl", drawable, moveable, hoverable, interactable)
 
-	controlSystem = NewUIControlSystem()
+	controlSystem = NewUIControlSystem(file, keymap)
 	renderSystem = NewUIRenderSystem()
+	fileSystem = NewUIFileSystem(file)
 
 	scene.AddSystem(controlSystem)
 	scene.AddSystem(renderSystem)
+	scene.AddSystem(fileSystem)
 }
 
 func DestroyUI() {
@@ -211,11 +214,13 @@ func DestroyUI() {
 func UpdateUI() {
 	UIHasControl = false
 	controlSystem.Update(rl.GetFrameTime())
+	fileSystem.Update(rl.GetFrameTime())
 }
 
 // DrawUI draws the RenderSystem
 func DrawUI() {
-	renderSystem.Update(rl.GetFrameTime())
+	fileSystem.Draw()
+	renderSystem.Draw()
 }
 
 // PushChild adds a child to a drawables children list
