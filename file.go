@@ -247,7 +247,6 @@ func (f *File) Export() {
 		log.Println(layer.Name)
 		if !layer.Hidden {
 			for pos, data := range layer.PixelData {
-				// TODO layer blend modes
 				if data.A == 255 {
 					img.Set(pos.X, pos.Y, color.NRGBA{
 						R: data.R,
@@ -256,7 +255,8 @@ func (f *File) Export() {
 						A: data.A,
 					})
 				} else {
-					// Blend with below
+					// TODO layer blend modes
+					// Blend with existing depending on blend mode
 				}
 			}
 		}

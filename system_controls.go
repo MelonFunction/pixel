@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -211,15 +210,14 @@ func (s *UIControlSystem) Update(dt float32) {
 				if s.file.CurrentLayer > len(s.file.Layers)-2 {
 					s.file.CurrentLayer = len(s.file.Layers) - 2
 				}
-				log.Println("up")
+				LayersUISetCurrentLayer(s.file.CurrentLayer)
 			case "layerDown":
 				s.file.CurrentLayer--
 				if s.file.CurrentLayer < 0 {
 					s.file.CurrentLayer = 0
 				}
-				log.Println("down")
+				LayersUISetCurrentLayer(s.file.CurrentLayer)
 			case "save":
-				log.Println("saving")
 				s.file.Save()
 			case "export":
 				s.file.Export()
