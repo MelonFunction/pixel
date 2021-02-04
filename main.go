@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
 
+	"github.com/gotk3/gotk3/gtk"
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -30,6 +32,50 @@ func main() {
 	file := NewFile(64, 64, 8, 8)
 	InitUI(file, NewKeymap(keymap))
 
+	go func() {
+		gtk.Init(nil)
+
+		win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+		if err != nil {
+			log.Fatal("Unable to create window:", err)
+		}
+		win.Connect("destroy", func() {
+			gtk.MainQuit()
+			log.Println("destoryed")
+		})
+
+		fc, err := gtk.FileChooserNativeDialogNew(
+			"Select file",
+			win,
+			gtk.FILE_CHOOSER_ACTION_OPEN,
+			"open",
+			"cancel",
+		)
+		acc, err := fc.GetAcceptLabel()
+		log.Println(acc)
+
+		home, err := os.UserHomeDir()
+		log.Println(home)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fc.SetCurrentFolder(home)
+
+		switch fc.Run() {
+		case int(gtk.RESPONSE_ACCEPT):
+			log.Println("accept")
+		case int(gtk.RESPONSE_CANCEL):
+			log.Println("cancel")
+		case int(gtk.RESPONSE_CLOSE):
+			log.Println("close")
+		default:
+			log.Println("??")
+		}
+
+		gtk.Main()
+		log.Println("done")
+	}()
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Black)
@@ -43,6 +89,7 @@ func main() {
 	// Destroy resources
 	file.Destroy() // TODO system should handle this as there could be multiple files
 	DestroyUI()
+	gtk.MainQuit()
 
 	rl.CloseWindow()
 }
