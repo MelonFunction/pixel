@@ -109,10 +109,10 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 	case *DrawableText:
 		drawBorder(hoverable, moveable)
-		fo := rl.MeasureTextEx(*Font, t.Label, 16, 1)
+		fo := rl.MeasureTextEx(*Font, t.Label, UIFontSize, 1)
 		x := moveable.Bounds.X + moveable.Bounds.Width/2 - fo.X/2
 		y := moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
-		rl.DrawTextEx(*Font, t.Label, rl.Vector2{X: x, Y: y}, 16, 1, rl.White)
+		rl.DrawTextEx(*Font, t.Label, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
 	case *DrawableTexture:
 		drawBorder(hoverable, moveable)
 		x := moveable.Bounds.X + moveable.Bounds.Width/2 - float32(t.Texture.Width)/2

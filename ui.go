@@ -23,6 +23,8 @@ var (
 	isInited = false
 	// Font is the font used
 	Font *rl.Font
+	// UIFontSize is the size of the font
+	UIFontSize float32 = 14
 
 	uiCamera               = rl.Camera2D{Zoom: 1}
 	mouseX, mouseY         int
@@ -131,6 +133,8 @@ type DrawableText struct {
 	Label string
 }
 
+// SetTexture sets the texture of a DrawableTexture to the path given.
+// Doesn't cache, so it's probably not very efficient.
 func (d *DrawableTexture) SetTexture(path string) {
 	d.Texture = rl.LoadTexture(path)
 }
@@ -140,6 +144,7 @@ type DrawableTexture struct {
 	Texture rl.Texture2D
 }
 
+// NewDrawableTexture returns a pointer to a DrawableTexture
 func NewDrawableTexture(texturePath string) *DrawableTexture {
 	d := &DrawableTexture{
 		Texture: rl.LoadTexture(texturePath),
@@ -147,6 +152,8 @@ func NewDrawableTexture(texturePath string) *DrawableTexture {
 	return d
 }
 
+// DrawableRenderTexture is like DrawableTexture, but it's intended to be used
+// with rl.BeginTextureMode
 type DrawableRenderTexture struct {
 	Texture rl.RenderTexture2D
 }
@@ -206,6 +213,7 @@ func InitUI(file *File, keymap Keymap) {
 	scene.AddSystem(fileSystem)
 }
 
+// DestroyUI calls the destructor on every entity/component
 func DestroyUI() {
 	scene.Destroy()
 }
@@ -219,8 +227,8 @@ func UpdateUI() {
 
 // DrawUI draws the RenderSystem
 func DrawUI() {
-	fileSystem.Draw()
-	renderSystem.Draw()
+	fileSystem.Draw()   // draw layer canvases etc
+	renderSystem.Draw() // draw ui components
 }
 
 // PushChild adds a child to a drawables children list
@@ -265,6 +273,8 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
+// FlowChildren aligns the children based on their FlowDirection and alignment
+// options (TODO actually do this)
 func (e *Entity) FlowChildren() {
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -318,7 +328,6 @@ func (e *Entity) FlowChildren() {
 			}
 		}
 
-		// TODO compress this with above
 		for _, child := range children {
 			fixNested(child, parentDrawable, parentMoveable)
 		}
@@ -326,7 +335,7 @@ func (e *Entity) FlowChildren() {
 	}
 }
 
-// NewButtonTexture creates a button which renders a texture
+// NewRenderTexture creates a render texture
 func NewRenderTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
