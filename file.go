@@ -115,8 +115,6 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		Filename: "filename",
 		Layers: []*Layer{
 			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray, true),
-			NewLayer(canvasWidth, canvasHeight, "layer 1", rl.Transparent, true),
-			NewLayer(canvasWidth, canvasHeight, "layer 2", rl.Transparent, true),
 			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
 		},
 		History:           make([]HistoryAction, 0, 5),
@@ -176,8 +174,8 @@ func (f *File) Undo() {
 		// TODO flatten the stuff below as it's mostly repeated
 		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
 		layer := f.GetCurrentLayer()
-		newCanvas := rl.LoadRenderTexture(f.CanvasWidth, f.CanvasHeight)
-		rl.BeginTextureMode(newCanvas)
+		rl.BeginTextureMode(layer.Canvas)
+		rl.ClearBackground(rl.Transparent)
 		shouldDraw := true
 		for v, color := range layer.PixelData {
 			shouldDraw = true
@@ -196,7 +194,6 @@ func (f *File) Undo() {
 				rl.DrawPixel(v.X, v.Y, color)
 			}
 		}
-		layer.Canvas = newCanvas
 		rl.EndTextureMode()
 
 		f.SetCurrentLayer(current)
@@ -210,8 +207,8 @@ func (f *File) Redo() {
 
 		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
 		layer := f.GetCurrentLayer()
-		newCanvas := rl.LoadRenderTexture(f.CanvasWidth, f.CanvasHeight)
-		rl.BeginTextureMode(newCanvas)
+		rl.BeginTextureMode(layer.Canvas)
+		rl.ClearBackground(rl.Transparent)
 		shouldDraw := true
 		for v, color := range layer.PixelData {
 			shouldDraw = true
@@ -228,7 +225,6 @@ func (f *File) Redo() {
 				rl.DrawPixel(v.X, v.Y, color)
 			}
 		}
-		layer.Canvas = newCanvas
 		rl.EndTextureMode()
 
 		f.SetCurrentLayer(current)
