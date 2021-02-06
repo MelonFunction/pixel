@@ -5,10 +5,17 @@ import (
 )
 
 var (
+	buttonHeight float32 = 48.0
+
 	currentLayerHoverable *Hoverable
 	interactables         = make(map[int]*Entity)
+
+	list          *Entity
+	listContainer *Entity
 )
 
+// LayersUISetCurrentLayer can be used to activate a callback on a layer button
+// Intended to be used by the ControlSystem
 func LayersUISetCurrentLayer(index int) {
 	currentLayerHoverable.Selected = false
 	entity, ok := interactables[index]
@@ -24,93 +31,119 @@ func LayersUISetCurrentLayer(index int) {
 	}
 }
 
-func NewLayersUI(bounds rl.Rectangle, file *File) *Entity {
-	var buttonHeight float32 = 48.0
-	var list *Entity
-
-	makeBox := func(y int, name string) *Entity {
-		hidden := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/eye_open.png", false,
-			func(entity *Entity, button rl.MouseButton) {
-				// button up
-				if res, err := scene.QueryID(entity.ID); err == nil {
-					drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-					// hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
-					file.Layers[y].Hidden = !file.Layers[y].Hidden
-
-					drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
-					if ok {
-						if file.Layers[y].Hidden {
-							drawableTexture.SetTexture("./res/icons/eye_closed.png")
-						} else {
-							drawableTexture.SetTexture("./res/icons/eye_open.png")
-						}
-					}
-				}
-			}, nil)
-		isCurrent := file.CurrentLayer == y
-		label := NewButtonText(rl.NewRectangle(buttonHeight, 0, bounds.Width-buttonHeight*2, buttonHeight), name, isCurrent,
-			func(entity *Entity, button rl.MouseButton) {
-				// button up
-				if res, err := scene.QueryID(entity.ID); err == nil {
-					hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
-
-					if currentLayerHoverable != nil {
-						currentLayerHoverable.Selected = false
-					}
-					currentLayerHoverable = hoverable
-					hoverable.Selected = true
-
-					file.SetCurrentLayer(y)
-				}
-			}, nil)
-
-		// Set current layer ref
-		if res, err := scene.QueryID(label.ID); err == nil {
-			hoverable := res.Components[label.Scene.ComponentsMap["hoverable"]].(*Hoverable)
-
-			if isCurrent {
-				currentLayerHoverable = hoverable
-			}
-
-			interactables[y] = label
+func LayersUIMakeList(bounds rl.Rectangle) {
+	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, bounds.Width, bounds.Height-buttonHeight), []*Entity{}, FlowDirectionVerticalReversed)
+	// All of the layers
+	for i, layer := range CurrentFile.Layers {
+		if i == len(CurrentFile.Layers)-1 {
+			// ignore hidden layer
+			continue
 		}
+		list.PushChild(LayersUIMakeBox(i, layer.Name))
+	}
+	list.FlowChildren()
+}
 
-		box := NewBox(rl.NewRectangle(0, 0, bounds.Width, buttonHeight), []*Entity{
-			hidden,
-			label,
-		}, FlowDirectionHorizontal)
-		return box
+func LayersUIRebuildList() {
+	list.DestroyNested()
+	list.Destroy()
+	listContainer.RemoveChild(list)
+
+	if res, err := scene.QueryID(listContainer.ID); err == nil {
+		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+		bounds := moveable.Bounds
+		LayersUIMakeList(bounds)
+		listContainer.PushChild(list)
+		listContainer.FlowChildren()
 	}
 
+}
+
+func LayersUIMakeBox(y int, name string) *Entity {
+	var bounds rl.Rectangle
+	if res, err := scene.QueryID(listContainer.ID); err == nil {
+		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+		bounds = moveable.Bounds
+	}
+
+	hidden := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/eye_open.png", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			if res, err := scene.QueryID(entity.ID); err == nil {
+				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+				// hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+				CurrentFile.Layers[y].Hidden = !CurrentFile.Layers[y].Hidden
+
+				drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
+				if ok {
+					if CurrentFile.Layers[y].Hidden {
+						drawableTexture.SetTexture("./res/icons/eye_closed.png")
+					} else {
+						drawableTexture.SetTexture("./res/icons/eye_open.png")
+					}
+				}
+			}
+		}, nil)
+	isCurrent := CurrentFile.CurrentLayer == y
+	label := NewButtonText(rl.NewRectangle(buttonHeight, 0, bounds.Width-buttonHeight*2, buttonHeight), name, isCurrent,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			if res, err := scene.QueryID(entity.ID); err == nil {
+				hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+
+				if currentLayerHoverable != nil {
+					currentLayerHoverable.Selected = false
+				}
+				currentLayerHoverable = hoverable
+				hoverable.Selected = true
+
+				CurrentFile.SetCurrentLayer(y)
+			}
+		}, nil)
+
+	// Set current layer ref
+	if res, err := scene.QueryID(label.ID); err == nil {
+		hoverable := res.Components[label.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+
+		if isCurrent {
+			currentLayerHoverable = hoverable
+		}
+
+		interactables[y] = label
+	}
+
+	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, buttonHeight), []*Entity{
+		hidden,
+		label,
+	}, FlowDirectionHorizontal)
+	return box
+}
+
+// NewLayersUI creates the UI representation of the CurrentFile's layers
+func NewLayersUI(bounds rl.Rectangle) *Entity {
 	// New layer button
 	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			file.AddNewLayer()
-			max := len(file.Layers)
-			last := file.Layers[max-2] // ignore the temp layer
+			CurrentFile.AddNewLayer()
+			max := len(CurrentFile.Layers)
+			last := CurrentFile.Layers[max-2] // ignore the temp layer
 
 			if currentLayerHoverable != nil {
 				currentLayerHoverable.Selected = false
 			}
 
-			list.PushChild(makeBox(max-2, last.Name))
+			list.PushChild(LayersUIMakeBox(max-2, last.Name))
 			list.FlowChildren()
 		}, nil)
 
-	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, bounds.Width, bounds.Height-buttonHeight), []*Entity{}, FlowDirectionVerticalReversed)
-	// All of the layers
-	for i, layer := range file.Layers {
-		if i == len(file.Layers)-1 {
-			// ignore hidden layer
-			continue
-		}
-		list.PushChild(makeBox(i, layer.Name))
-	}
-
-	container := NewBox(bounds, []*Entity{
+	listContainer = NewBox(bounds, []*Entity{
 		newLayerButton,
-		list,
 	}, FlowDirectionVertical)
-	return container
+
+	LayersUIMakeList(bounds)
+	listContainer.PushChild(list)
+	listContainer.FlowChildren()
+
+	return listContainer
 }

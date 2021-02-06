@@ -168,7 +168,7 @@ type DrawableParent struct {
 }
 
 // InitUI must be called before UI is used
-func InitUI(file *File, keymap Keymap) {
+func InitUI(keymap Keymap) {
 	isInited = true
 	Font = rl.LoadFont("./res/fonts/prstartk.ttf")
 
@@ -204,9 +204,9 @@ func InitUI(file *File, keymap Keymap) {
 	scene.BuildTag("drawable, hoverable, moveable", drawable, moveable, hoverable)
 	scene.BuildTag("basicControl", drawable, moveable, hoverable, interactable)
 
-	controlSystem = NewUIControlSystem(file, keymap)
+	controlSystem = NewUIControlSystem(keymap)
 	renderSystem = NewUIRenderSystem()
-	fileSystem = NewUIFileSystem(file)
+	fileSystem = NewUIFileSystem()
 
 	scene.AddSystem(controlSystem)
 	scene.AddSystem(renderSystem)
@@ -229,6 +229,43 @@ func UpdateUI() {
 func DrawUI() {
 	fileSystem.Draw()   // draw layer canvases etc
 	renderSystem.Draw() // draw ui components
+}
+
+// RemoveChild removes a child from the DrawableParent and returns true if
+// something was removed
+func (e *Entity) RemoveChild(child *Entity) bool {
+	if result, err := scene.QueryID(e.ID); err == nil {
+		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
+
+		if ok {
+			for i, c := range drawableParent.Children {
+				if c.ID == child.ID {
+					drawableParent.Children = append(drawableParent.Children[:i], drawableParent.Children[i+1:]...)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func (e *Entity) DestroyNested() {
+	if result, err := scene.QueryID(e.ID); err == nil {
+		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
+		if !ok {
+			e.Destroy()
+			return
+		}
+
+		for _, child := range drawableParent.Children {
+			log.Println(e.Name, drawableParent.Children)
+			child.DestroyNested()
+		}
+		drawableParent.Children = nil
+		log.Println("done", e.Name, drawableParent.Children, e.ID)
+	}
 }
 
 // PushChild adds a child to a drawables children list

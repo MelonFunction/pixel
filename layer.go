@@ -15,10 +15,11 @@ type Layer struct {
 	PixelData map[IntVec2]rl.Color
 }
 
-func NewLayer(width, height int, name string, fillColor rl.Color) *Layer {
+// NewLayer returns a pointer to a new Layer
+func NewLayer(width, height int, name string, fillColor rl.Color, shouldFill bool) *Layer {
 	return &Layer{
 		Canvas:           rl.LoadRenderTexture(width, height),
-		hasInitialFill:   false,
+		hasInitialFill:   !shouldFill,
 		InitialFillColor: fillColor,
 		PixelData:        make(map[IntVec2]rl.Color),
 		Name:             name,

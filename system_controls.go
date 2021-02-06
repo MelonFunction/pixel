@@ -1,8 +1,12 @@
 package main
 
 import (
+	"log"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/gotk3/gotk3/gtk"
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -65,7 +69,6 @@ func NewKeymap(data KeymapData) Keymap {
 
 type UIControlSystem struct {
 	BasicSystem
-	file *File
 
 	keyRepeatTimer      float32
 	KeyRepeat           time.Duration
@@ -76,9 +79,106 @@ type UIControlSystem struct {
 	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
 }
 
-func NewUIControlSystem(file *File, keymap Keymap) *UIControlSystem {
+var (
+	UIControlSystemCmds    chan string
+	UIControlSystemReturns chan string
+)
+
+func NewUIControlSystem(keymap Keymap) *UIControlSystem {
+	UIControlSystemCmds = make(chan string)
+	UIControlSystemReturns = make(chan string)
+	go func(cmds, returns chan string) {
+		gtk.Init(nil)
+
+		win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+		if err != nil {
+			log.Fatal("Unable to create window:", err)
+		}
+		win.Connect("destroy", func() {
+			gtk.MainQuit()
+			log.Println("destoryed")
+		})
+
+		// Only show png files
+		filter, err := gtk.FileFilterNew()
+		if err != nil {
+			log.Fatal(err)
+		}
+		filter.AddPattern("*.png")
+
+		// Default path is program exec location
+		ex, err := os.Executable()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		running := true
+		for running {
+			select {
+			case cmd := <-cmds:
+				switch cmd {
+				case "open":
+					fc, err := gtk.FileChooserNativeDialogNew(
+						"Select file to open",
+						win,
+						gtk.FILE_CHOOSER_ACTION_OPEN,
+						"open",
+						"cancel",
+					)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					fc.AddFilter(filter)
+					fc.SetCurrentFolder(filepath.Dir(ex))
+
+					switch fc.Run() {
+					case int(gtk.RESPONSE_ACCEPT):
+						log.Println("accept")
+						name := fc.GetFilename()
+						log.Println(name)
+						returns <- name
+					default:
+						log.Println("not accept")
+						returns <- ""
+					}
+				case "save":
+					fc, err := gtk.FileChooserNativeDialogNew(
+						"Select file to save",
+						win,
+						gtk.FILE_CHOOSER_ACTION_SAVE,
+						"save",
+						"cancel",
+					)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					fc.SetCurrentFolder(filepath.Dir(ex))
+
+					switch fc.Run() {
+					case int(gtk.RESPONSE_ACCEPT):
+						log.Println("accept")
+						name := fc.GetFilename()
+						log.Println(name)
+						returns <- name
+					default:
+						log.Println("not accept")
+						returns <- ""
+					}
+				case "quit":
+					running = false
+					log.Println("quitting gtk")
+					gtk.MainQuit()
+				}
+			default:
+				time.Sleep(time.Millisecond * 100)
+				gtk.MainIterationDo(false)
+			}
+		}
+	}(UIControlSystemCmds, UIControlSystemReturns)
+
 	return &UIControlSystem{
-		file:                file,
 		KeyRepeat:           time.Second / 5,
 		Keymap:              keymap,
 		keysDown:            make(map[rl.Key]bool),
@@ -206,30 +306,62 @@ func (s *UIControlSystem) Update(dt float32) {
 
 			switch key {
 			case "layerUp":
-				s.file.CurrentLayer++
-				if s.file.CurrentLayer > len(s.file.Layers)-2 {
-					s.file.CurrentLayer = len(s.file.Layers) - 2
+				CurrentFile.CurrentLayer++
+				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {
+					CurrentFile.CurrentLayer = len(CurrentFile.Layers) - 2
 				}
-				LayersUISetCurrentLayer(s.file.CurrentLayer)
+				LayersUISetCurrentLayer(CurrentFile.CurrentLayer)
 			case "layerDown":
-				s.file.CurrentLayer--
-				if s.file.CurrentLayer < 0 {
-					s.file.CurrentLayer = 0
+				CurrentFile.CurrentLayer--
+				if CurrentFile.CurrentLayer < 0 {
+					CurrentFile.CurrentLayer = 0
 				}
-				LayersUISetCurrentLayer(s.file.CurrentLayer)
+				LayersUISetCurrentLayer(CurrentFile.CurrentLayer)
+			case "open":
+				UIControlSystemCmds <- "open"
+				waiting := true
+				for waiting {
+					select {
+					case name := <-UIControlSystemReturns:
+						log.Println("open", name)
+						waiting = false
+						file := Open(name)
+						log.Println(file)
+						Files = append(Files, file)
+						CurrentFile = file
+						EditorsUIAddButton(file)
+					}
+				}
 			case "save":
-				s.file.Save()
+				UIControlSystemCmds <- "save"
+				waiting := true
+				for waiting {
+					select {
+					case name := <-UIControlSystemReturns:
+						log.Println("save", name)
+						waiting = false
+						CurrentFile.Save(name)
+					}
+				}
 			case "export":
-				s.file.Export()
+				UIControlSystemCmds <- "save"
+				waiting := true
+				for waiting {
+					select {
+					case name := <-UIControlSystemReturns:
+						log.Println("export", name)
+						waiting = false
+						CurrentFile.Export(name)
+					}
+				}
 			case "undo":
-				s.file.Undo()
+				CurrentFile.Undo()
 			case "redo":
-				s.file.Redo()
+				CurrentFile.Redo()
 			}
 
 			break
 		}
-
 	}
 
 	s.keyRepeatTimer += rl.GetFrameTime() * 1000

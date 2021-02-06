@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"strings"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -91,6 +92,7 @@ func (f *File) ClearBackground(color rl.Color) {
 
 // File contains all the methods and data required to alter a file
 type File struct {
+	Filename     string
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
 
@@ -110,11 +112,12 @@ type File struct {
 // NewFile returns a pointer to a new File
 func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	f := &File{
+		Filename: "filename",
 		Layers: []*Layer{
-			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray),
-			NewLayer(canvasWidth, canvasHeight, "layer 1", rl.Transparent),
-			NewLayer(canvasWidth, canvasHeight, "layer 2", rl.Transparent),
-			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent),
+			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray, true),
+			NewLayer(canvasWidth, canvasHeight, "layer 1", rl.Transparent, true),
+			NewLayer(canvasWidth, canvasHeight, "layer 2", rl.Transparent, true),
+			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
 		},
 		History:           make([]HistoryAction, 0, 5),
 		HistoryMaxActions: 5, // TODO get from config
@@ -145,7 +148,7 @@ func (f *File) GetCurrentLayer() *Layer {
 
 // AddNewLayer inserts a new layer
 func (f *File) AddNewLayer() {
-	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent)
+	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent, true)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
 }
@@ -233,13 +236,20 @@ func (f *File) Redo() {
 	}
 }
 
+// Destroy unloads each layer's canvas
+func (f *File) Destroy() {
+	for _, layer := range f.Layers {
+		layer.Canvas.Unload()
+	}
+}
+
 // Save the file into the custom editor format
-func (f *File) Save() {
+func (f *File) Save(path string) {
 
 }
 
 // Export the file into .png etc
-func (f *File) Export() {
+func (f *File) Export(path string) {
 	// Create a colored image of the given width and height.
 	img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))
 
@@ -262,31 +272,55 @@ func (f *File) Export() {
 		}
 	}
 
-	// err if file exists
-	_, err := os.Stat("image.png")
-	if err == nil {
+	file, err := os.Create(path)
+	if err != nil {
 		log.Fatal(err)
+	}
 
-		file, err := os.Create("image.png")
-		if err != nil {
-			log.Fatal(err)
-		}
+	if err := png.Encode(file, img); err != nil {
+		file.Close()
+		log.Fatal(err)
+	}
 
-		if err := png.Encode(file, img); err != nil {
-			file.Close()
-			log.Fatal(err)
-		}
-
-		if err := file.Close(); err != nil {
-			log.Fatal(err)
-		}
+	if err := file.Close(); err != nil {
+		log.Fatal(err)
 	}
 
 }
 
-// Destroy unloads each layer's canvas
-func (f *File) Destroy() {
-	for _, layer := range f.Layers {
-		layer.Canvas.Unload()
+// Open a file
+func Open(path string) *File {
+	reader, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer reader.Close()
+
+	img, err := png.Decode(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f := NewFile(img.Bounds().Max.X, img.Bounds().Max.Y, 8, 8)
+	editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
+
+	rl.BeginTextureMode(editedLayer.Canvas)
+	for x := 0; x < f.CanvasWidth; x++ {
+		for y := 0; y < f.CanvasHeight; y++ {
+			color := img.At(x, y)
+			r, g, b, a := color.RGBA()
+			rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
+			editedLayer.PixelData[IntVec2{x, y}] = rlColor
+			rl.DrawPixel(x, y, rlColor)
+		}
+	}
+	rl.EndTextureMode()
+
+	f.Layers = []*Layer{
+		editedLayer,
+		NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
+	}
+	spl := strings.Split(path, "/")
+	f.Filename = spl[len(spl)-1]
+	return f
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -15,18 +17,16 @@ func NewUIRenderSystem() *UIRenderSystem {
 
 func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, offset rl.Vector2) {
 	var result *QueryResult
-	var entity *Entity
 	switch typed := component.(type) {
 	case *QueryResult:
 		result = typed
-		entity = typed.Entity
 	case *Entity:
-		entity = typed
 		if res, err := scene.QueryID(typed.ID); err == nil {
 			result = res
 		}
 	}
-	_ = entity
+
+	log.Println("rendering", result.Entity.Name, result.Entity.ID)
 
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)

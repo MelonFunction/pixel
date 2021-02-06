@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "go run .",
+            "label": "go build",
             "type": "shell",
-            "command": "go run .",
+            "command": "go build && ./pixel ",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

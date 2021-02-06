@@ -1,16 +1,13 @@
 package main
 
 import (
-	"fmt"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
 type UIFileSystem struct {
 	BasicSystem
 
-	UI   map[string]*Entity
-	file *File
+	UI map[string]*Entity
 
 	Camera rl.Camera2D
 	target rl.Vector2
@@ -21,14 +18,14 @@ type UIFileSystem struct {
 	cursor rl.Vector2
 }
 
-func NewUIFileSystem(file *File) *UIFileSystem {
+func NewUIFileSystem() *UIFileSystem {
 	f := &UIFileSystem{
 		Camera: rl.Camera2D{Zoom: 8.0},
-		file:   file,
 
 		UI: map[string]*Entity{
-			"rgb":    NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8), file),
-			"layers": NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*3), float32(rl.GetScreenHeight()-128*3), 128*3, 128*3), file),
+			"editors": NewEditorsUI(rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), UIFontSize*2)),
+			"rgb":     NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
+			"layers":  NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2.5), float32(rl.GetScreenHeight()-128*3), 128*2.5, 128*3)),
 		},
 	}
 
@@ -39,26 +36,26 @@ func NewUIFileSystem(file *File) *UIFileSystem {
 }
 
 func (s *UIFileSystem) Draw() {
-	layer := s.file.GetCurrentLayer()
+	layer := CurrentFile.GetCurrentLayer()
 
 	// Draw
 	rl.BeginTextureMode(layer.Canvas)
 	if !layer.hasInitialFill {
-		s.file.ClearBackground(layer.InitialFillColor)
+		CurrentFile.ClearBackground(layer.InitialFillColor)
 		layer.hasInitialFill = true
 	}
 	rl.EndTextureMode()
 
 	// Draw temp layer
-	rl.BeginTextureMode(s.file.Layers[len(s.file.Layers)-1].Canvas)
+	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
-	s.file.RightTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
-	s.file.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+	CurrentFile.RightTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+	CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
 	rl.EndTextureMode()
 
 	// Draw layers
 	rl.BeginMode2D(s.Camera)
-	for _, layer := range s.file.Layers {
+	for _, layer := range CurrentFile.Layers {
 		if !layer.Hidden {
 			rl.DrawTextureRec(layer.Canvas.Texture,
 				rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
@@ -69,34 +66,34 @@ func (s *UIFileSystem) Draw() {
 
 	// Grid drawing
 	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
-	for x := 0; x <= s.file.CanvasWidth; x += s.file.TileWidth {
+	for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
 		rl.DrawLine(
-			-s.file.CanvasWidth/2+x,
-			-s.file.CanvasHeight/2,
-			-s.file.CanvasWidth/2+x,
-			s.file.CanvasHeight/2,
+			-CurrentFile.CanvasWidth/2+x,
+			-CurrentFile.CanvasHeight/2,
+			-CurrentFile.CanvasWidth/2+x,
+			CurrentFile.CanvasHeight/2,
 			rl.White)
 	}
-	for y := 0; y <= s.file.CanvasHeight; y += s.file.TileHeight {
+	for y := 0; y <= CurrentFile.CanvasHeight; y += CurrentFile.TileHeight {
 		rl.DrawLine(
-			-s.file.CanvasWidth/2,
-			-s.file.CanvasHeight/2+y,
-			s.file.CanvasWidth/2,
-			-s.file.CanvasHeight/2+y,
+			-CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2+y,
+			CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2+y,
 			rl.White)
 	}
 	rl.EndMode2D()
 
 	// Debug text
-	for y, history := range s.file.History {
-		str := fmt.Sprintf("Layer: %d, Diff: %d",
-			history.LayerIndex,
-			len(history.PixelState))
-		rl.DrawText(str, 0, 20*y, 20, rl.White)
-	}
+	// for y, history := range CurrentFile.History {
+	// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
+	// 		history.LayerIndex,
+	// 		len(history.PixelState))
+	// 	rl.DrawText(str, 0, 20*y, 20, rl.White)
+	// }
 
-	rl.DrawText(fmt.Sprintf("Current layer: %d", s.file.CurrentLayer), 0, (s.file.HistoryMaxActions+1)*20, 20, rl.White)
-	rl.DrawText(fmt.Sprintf("HistoryOffset: %d", s.file.historyOffset), 0, (s.file.HistoryMaxActions+2)*20, 20, rl.White)
+	// rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, (CurrentFile.HistoryMaxActions+1)*20, 20, rl.White)
+	// rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, (CurrentFile.HistoryMaxActions+2)*20, 20, rl.White)
 }
 
 func (s *UIFileSystem) Update(dt float32) {
@@ -126,7 +123,7 @@ func (s *UIFileSystem) Update(dt float32) {
 
 	}
 
-	layer := s.file.GetCurrentLayer()
+	layer := CurrentFile.GetCurrentLayer()
 	s.mouseX = rl.GetMouseX()
 	s.mouseY = rl.GetMouseY()
 
@@ -155,32 +152,32 @@ func (s *UIFileSystem) Update(dt float32) {
 	if !UIHasControl {
 		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
 			// Fires once
-			if s.file.HasDoneMouseUpLeft {
+			if CurrentFile.HasDoneMouseUpLeft {
 				// Create new history action
-				s.file.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), s.file.CurrentLayer})
+				CurrentFile.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 			}
-			s.file.HasDoneMouseUpLeft = false
+			CurrentFile.HasDoneMouseUpLeft = false
 
 			// Repeated action
-			s.file.LeftTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
+			CurrentFile.LeftTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
 		} else {
 			// Always fires once
-			if s.file.HasDoneMouseUpLeft == false {
-				s.file.HasDoneMouseUpLeft = true
-				s.file.LeftTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
+			if CurrentFile.HasDoneMouseUpLeft == false {
+				CurrentFile.HasDoneMouseUpLeft = true
+				CurrentFile.LeftTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
 			}
 		}
 
 		if rl.IsMouseButtonDown(rl.MouseRightButton) {
-			if s.file.HasDoneMouseUpRight {
-				s.file.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), s.file.CurrentLayer})
+			if CurrentFile.HasDoneMouseUpRight {
+				CurrentFile.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 			}
-			s.file.HasDoneMouseUpRight = false
-			s.file.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
+			CurrentFile.HasDoneMouseUpRight = false
+			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
 		} else {
-			if s.file.HasDoneMouseUpRight == false {
-				s.file.HasDoneMouseUpRight = true
-				s.file.RightTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
+			if CurrentFile.HasDoneMouseUpRight == false {
+				CurrentFile.HasDoneMouseUpRight = true
+				CurrentFile.RightTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
 			}
 		}
 	}

@@ -4,7 +4,8 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
-func NewRGBUI(bounds rl.Rectangle, f *File) *Entity {
+// NewRGBUI creates the UI representation of the color picker
+func NewRGBUI(bounds rl.Rectangle) *Entity {
 	// Hovers over the selected color in the color gradient area
 	var areaSelector *Entity
 	// Same but for the color bar
@@ -59,7 +60,7 @@ func NewRGBUI(bounds rl.Rectangle, f *File) *Entity {
 				if ok {
 					// Set the current color in the file
 					lastColorLocation = loc
-					f.LeftTool.SetColor(color)
+					CurrentFile.LeftTool.SetColor(color)
 				}
 			}
 		})
@@ -142,7 +143,7 @@ func NewRGBUI(bounds rl.Rectangle, f *File) *Entity {
 					color, ok := areaColors[lastColorLocation]
 					if ok {
 						// Set the current color in the file
-						f.LeftTool.SetColor(color)
+						CurrentFile.LeftTool.SetColor(color)
 					}
 				}
 			}

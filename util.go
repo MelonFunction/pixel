@@ -1,5 +1,6 @@
 package main
 
+// IntVec2 is used mostly as a composite key for pixel data maps
 type IntVec2 struct {
 	X, Y int
 }
