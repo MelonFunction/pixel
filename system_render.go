@@ -121,9 +121,11 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	case *DrawableRenderTexture:
 		// drawBorder(hoverable, moveable)
 		// maybe shrink texture to fit inside border instead of drawing on top?
-		rl.DrawTextureRec(t.Texture.Texture,
+		rl.DrawTexturePro(t.Texture.Texture,
 			rl.NewRectangle(0, 0, float32(t.Texture.Texture.Width), -float32(t.Texture.Texture.Height)),
-			rl.NewVector2(moveable.Bounds.X, moveable.Bounds.Y),
+			rl.NewRectangle(moveable.Bounds.X, moveable.Bounds.Y, moveable.Bounds.Width, moveable.Bounds.Height),
+			rl.NewVector2(0, 0),
+			0,
 			rl.White)
 	default:
 		panic("Drawable not supported")

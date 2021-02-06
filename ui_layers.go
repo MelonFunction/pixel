@@ -39,7 +39,7 @@ func LayersUIMakeList(bounds rl.Rectangle) {
 			// ignore hidden layer
 			continue
 		}
-		list.PushChild(LayersUIMakeBox(i, layer.Name))
+		list.PushChild(LayersUIMakeBox(i, layer))
 	}
 	list.FlowChildren()
 }
@@ -59,7 +59,7 @@ func LayersUIRebuildList() {
 
 }
 
-func LayersUIMakeBox(y int, name string) *Entity {
+func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	var bounds rl.Rectangle
 	if res, err := scene.QueryID(listContainer.ID); err == nil {
 		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -84,8 +84,18 @@ func LayersUIMakeBox(y int, name string) *Entity {
 				}
 			}
 		}, nil)
+
+	preview := NewRenderTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), nil, nil)
+	if res, err := scene.QueryID(preview.ID); err == nil {
+		drawable := res.Components[preview.Scene.ComponentsMap["drawable"]].(*Drawable)
+		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
+		if ok {
+			renderTexture.Texture = layer.Canvas
+		}
+	}
+
 	isCurrent := CurrentFile.CurrentLayer == y
-	label := NewButtonText(rl.NewRectangle(buttonHeight, 0, bounds.Width-buttonHeight*2, buttonHeight), name, isCurrent,
+	label := NewButtonText(rl.NewRectangle(0, 0, bounds.Width-buttonHeight*3, buttonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if res, err := scene.QueryID(entity.ID); err == nil {
@@ -114,6 +124,7 @@ func LayersUIMakeBox(y int, name string) *Entity {
 
 	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, buttonHeight), []*Entity{
 		hidden,
+		preview,
 		label,
 	}, FlowDirectionHorizontal)
 	return box
@@ -133,7 +144,7 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 				currentLayerHoverable.Selected = false
 			}
 
-			list.PushChild(LayersUIMakeBox(max-2, last.Name))
+			list.PushChild(LayersUIMakeBox(max-2, last))
 			list.FlowChildren()
 		}, nil)
 

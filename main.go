@@ -36,9 +36,7 @@ func main() {
 	}
 
 	CurrentFile = NewFile(64, 64, 8, 8)
-	anotherFile := NewFile(64, 64, 8, 8)
-	anotherFile.Filename = "another"
-	Files = []*File{CurrentFile, anotherFile}
+	Files = []*File{CurrentFile}
 	InitUI(NewKeymap(keymap))
 
 	for !rl.WindowShouldClose() {
