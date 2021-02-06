@@ -25,6 +25,7 @@ func NewUIFileSystem() *UIFileSystem {
 		UI: map[string]*Entity{
 			"editors": NewEditorsUI(rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), UIFontSize*2)),
 			"rgb":     NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
+			"tools":   NewToolsUI(rl.NewRectangle(0, UIFontSize*2, 128*1.5, buttonHeight*10)),
 			"layers":  NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2.5), float32(rl.GetScreenHeight()-128*3), 128*2.5, 128*3)),
 		},
 	}
@@ -49,8 +50,13 @@ func (s *UIFileSystem) Draw() {
 	// Draw temp layer
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
-	CurrentFile.RightTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
-	CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+	if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		CurrentFile.RightTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+
+	} else {
+		CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+	}
+
 	rl.EndTextureMode()
 
 	// Draw layers
@@ -159,12 +165,12 @@ func (s *UIFileSystem) Update(dt float32) {
 			CurrentFile.HasDoneMouseUpLeft = false
 
 			// Repeated action
-			CurrentFile.LeftTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
+			CurrentFile.LeftTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseLeftButton)
 		} else {
 			// Always fires once
 			if CurrentFile.HasDoneMouseUpLeft == false {
 				CurrentFile.HasDoneMouseUpLeft = true
-				CurrentFile.LeftTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
+				CurrentFile.LeftTool.MouseUp(int(s.cursor.X), int(s.cursor.Y), rl.MouseLeftButton)
 			}
 		}
 
@@ -173,11 +179,11 @@ func (s *UIFileSystem) Update(dt float32) {
 				CurrentFile.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 			}
 			CurrentFile.HasDoneMouseUpRight = false
-			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y))
+			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)
 		} else {
 			if CurrentFile.HasDoneMouseUpRight == false {
 				CurrentFile.HasDoneMouseUpRight = true
-				CurrentFile.RightTool.MouseUp(int(s.cursor.X), int(s.cursor.Y))
+				CurrentFile.RightTool.MouseUp(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)
 			}
 		}
 	}

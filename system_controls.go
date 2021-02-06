@@ -225,20 +225,30 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			}
 		}
 
+		button := MouseButtonNone
 		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+			button = rl.MouseLeftButton
+		}
+		if rl.IsMouseButtonDown(rl.MouseRightButton) {
+			button = rl.MouseRightButton
+		}
+		if button != MouseButtonNone {
 			UIHasControl = true
-			interactable.ButtonDown = true
+			interactable.ButtonDown = button
 			if interactable.OnMouseDown != nil {
 				UICompontentCapturedInput = interactable
 				UIEntityCapturedInput = entity
 				UIHasControl = true
-				interactable.OnMouseDown(entity, rl.MouseLeftButton)
+				interactable.OnMouseDown(entity, button)
 			}
 		} else {
-			if interactable.ButtonDown {
-				interactable.ButtonDown = false
+			if interactable.ButtonDown != MouseButtonNone {
+				// Get last button down from interactable since the current
+				// button isn't relevent
+				button = interactable.ButtonDown
+				interactable.ButtonDown = MouseButtonNone
 				if interactable.OnMouseUp != nil {
-					interactable.OnMouseUp(entity, rl.MouseLeftButton)
+					interactable.OnMouseUp(entity, button)
 				}
 				UICompontentCapturedInput = nil
 				UIEntityCapturedInput = nil
@@ -323,13 +333,14 @@ func (s *UIControlSystem) Update(dt float32) {
 				for waiting {
 					select {
 					case name := <-UIControlSystemReturns:
-						log.Println("open", name)
 						waiting = false
-						file := Open(name)
-						log.Println(file)
-						Files = append(Files, file)
-						CurrentFile = file
-						EditorsUIAddButton(file)
+						if len(name) > 0 {
+							file := Open(name)
+							log.Println(file)
+							Files = append(Files, file)
+							CurrentFile = file
+							EditorsUIAddButton(file)
+						}
 					}
 				}
 			case "save":
@@ -338,9 +349,10 @@ func (s *UIControlSystem) Update(dt float32) {
 				for waiting {
 					select {
 					case name := <-UIControlSystemReturns:
-						log.Println("save", name)
 						waiting = false
-						CurrentFile.Save(name)
+						if len(name) > 0 {
+							CurrentFile.Save(name)
+						}
 					}
 				}
 			case "export":
@@ -349,9 +361,10 @@ func (s *UIControlSystem) Update(dt float32) {
 				for waiting {
 					select {
 					case name := <-UIControlSystemReturns:
-						log.Println("export", name)
 						waiting = false
-						CurrentFile.Export(name)
+						if len(name) > 0 {
+							CurrentFile.Export(name)
+						}
 					}
 				}
 			case "undo":
@@ -432,7 +445,8 @@ func (s *UIControlSystem) Update(dt float32) {
 		UIHasControl = true
 		if UICompontentCapturedInput != nil {
 			if UICompontentCapturedInput.OnMouseDown != nil {
-				UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, MouseButtonNone)
+				// Use the last button down instead of passing MouseButtonNone
+				UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInput.ButtonDown)
 			}
 		}
 	} else {

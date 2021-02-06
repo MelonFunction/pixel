@@ -4,6 +4,10 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+var (
+	currentColor rl.Color
+)
+
 // NewRGBUI creates the UI representation of the color picker
 func NewRGBUI(bounds rl.Rectangle) *Entity {
 	// Hovers over the selected color in the color gradient area
@@ -24,9 +28,6 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 			// button up
 		},
 		func(entity *Entity, button rl.MouseButton) {
-			// TODO in case of MouseButtonNone, store the last physical button press
-			// so that the color can be changed on the correct tool
-
 			// button down
 			if res, err := scene.QueryID(rgb.ID); err == nil {
 				moveable := res.Components[rgb.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -60,7 +61,14 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				if ok {
 					// Set the current color in the file
 					lastColorLocation = loc
-					CurrentFile.LeftTool.SetColor(color)
+					currentColor = color
+
+					switch button {
+					case rl.MouseLeftButton:
+						CurrentFile.LeftColor = color
+					case rl.MouseRightButton:
+						CurrentFile.RightColor = color
+					}
 				}
 			}
 		})
@@ -128,7 +136,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					mx = int(moveable.Bounds.Width) - 1
 				}
 
-				// Move the areaSelector
+				// Move the colorSelector
 				if res, err := scene.QueryID(colorSelector.ID); err == nil {
 					sm := res.Components[colorSelector.Scene.ComponentsMap["moveable"]].(*Moveable)
 					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
@@ -143,7 +151,14 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					color, ok := areaColors[lastColorLocation]
 					if ok {
 						// Set the current color in the file
-						CurrentFile.LeftTool.SetColor(color)
+						currentColor = color
+
+						switch button {
+						case rl.MouseLeftButton:
+							CurrentFile.LeftColor = color
+						case rl.MouseRightButton:
+							CurrentFile.RightColor = color
+						}
 					}
 				}
 			}
@@ -207,7 +222,8 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 	// Selectors don't belong to the container, just let them be alone
 
-	makeSelector := func(e *Entity) {
+	makeSelector := func() *Entity {
+		e := NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16), nil, nil)
 		if res, err := scene.QueryID(e.ID); err == nil {
 			drawable := res.Components[e.Scene.ComponentsMap["drawable"]].(*Drawable)
 			renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
@@ -227,18 +243,15 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				rl.EndTextureMode()
 			}
 		}
+		return e
 	}
 
 	// Make the selector which floats around on top of the color gradient area
 	// Also move it off screen for now TODO starting position depending on starting color
-	areaSelector = NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16),
-		nil, nil)
-	makeSelector(areaSelector)
+	areaSelector = makeSelector()
 
 	// Make the selector which floats around on top of the color area
-	colorSelector = NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16),
-		nil, nil)
-	makeSelector(colorSelector)
+	colorSelector = makeSelector()
 
 	return container
 }

@@ -20,6 +20,7 @@ func main() {
 	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(1200, 800, "Pixel")
 	rl.SetTargetFPS(60)
+	// rl.SetExitKey(rl.KeyNumLock)
 
 	keymap := KeymapData{
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},

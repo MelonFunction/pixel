@@ -63,7 +63,7 @@ type Resizeable struct {
 // The callbacks are optional
 type Interactable struct {
 	// ButtonDown keeps track of if a button is down
-	ButtonDown bool
+	ButtonDown rl.MouseButton
 
 	// OnMouseDown fires every frame the mouse button is down on the element
 	OnMouseDown func(entity *Entity, button rl.MouseButton)
@@ -116,6 +116,12 @@ type Scrollable struct {
 type Hoverable struct {
 	Hovered  bool
 	Selected bool
+
+	// Split selection to display which tool is bound to which mouse button
+	// TODO implement
+	// TODO colors
+	SelectedLeft  bool
+	SelectedRight bool
 }
 
 // Drawable handles all drawing related information

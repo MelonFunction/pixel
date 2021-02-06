@@ -14,12 +14,8 @@ import (
 // Tool is the interface for Tool elements
 type Tool interface {
 	// Used by every tool
-	MouseDown(x, y int) // Called each frame the mouse is down
-	MouseUp(x, y int)   // Called once, when the mouse button is released
-
-	// Used by drawing tools
-	SetColor(rl.Color)
-	GetColor() rl.Color
+	MouseDown(x, y int, button rl.MouseButton) // Called each frame the mouse is down
+	MouseUp(x, y int, button rl.MouseButton)   // Called once, when the mouse button is released
 
 	String() string
 
@@ -71,6 +67,12 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 
 			// Change pixel data to the new color
 			layer.PixelData[IntVec2{x, y}] = color
+
+			// Erase pixel by redrawing the entire canvas since drawing is
+			//  additive only
+			if color == rl.Transparent {
+				f.DrawPixelDataToCanvas()
+			}
 		}
 
 	}
@@ -100,9 +102,12 @@ type File struct {
 	HistoryMaxActions int
 	historyOffset     int // How many undos have been made
 
-	Tools               []Tool // TODO Will be used by a Tool selector UI
-	LeftTool            Tool
-	RightTool           Tool
+	Tools      []Tool // TODO Will be used by a Tool selector UI
+	LeftTool   Tool
+	RightTool  Tool
+	LeftColor  rl.Color
+	RightColor rl.Color
+	// for preventing multiple event firing
 	HasDoneMouseUpLeft  bool
 	HasDoneMouseUpRight bool
 
@@ -120,6 +125,9 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		History:           make([]HistoryAction, 0, 5),
 		HistoryMaxActions: 5, // TODO get from config
 
+		LeftColor:  rl.Red,
+		RightColor: rl.Transparent,
+
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
 
@@ -128,8 +136,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
 	}
-	f.LeftTool = NewPixelBrushTool(rl.Red, f, "Pixel Brush L")
-	f.RightTool = NewPixelBrushTool(rl.Green, f, "Pixel Brush R")
+	f.LeftTool = NewPixelBrushTool("Pixel Brush L")
+	f.RightTool = NewPixelBrushTool("Pixel Brush R")
 
 	return f
 }
@@ -163,6 +171,20 @@ func (f *File) AppendHistory(action HistoryAction) {
 	} else {
 		f.History = append(f.History, action)
 	}
+}
+
+// DrawPixelDataToCanvas redraws the canvas using the pixel data
+// This is useful for removing pixels since DrawPixel is additive, meaning that
+// a pixel can never be erased
+func (f *File) DrawPixelDataToCanvas() {
+	layer := f.GetCurrentLayer()
+	rl.BeginTextureMode(layer.Canvas)
+	rl.ClearBackground(rl.Transparent)
+	for v, color := range layer.PixelData {
+		rl.DrawPixel(v.X, v.Y, color)
+	}
+	rl.EndTextureMode()
+
 }
 
 // Undo usdoes an action
@@ -236,6 +258,13 @@ func (f *File) Redo() {
 func (f *File) Destroy() {
 	for _, layer := range f.Layers {
 		layer.Canvas.Unload()
+	}
+
+	for i, file := range Files {
+		if file == f {
+			Files = append(Files[:i], Files[i+1:]...)
+			return
+		}
 	}
 }
 

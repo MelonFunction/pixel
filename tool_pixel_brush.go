@@ -7,44 +7,43 @@ import (
 type PixelBrushTool struct {
 	lastPos                IntVec2
 	shouldConnectToLastPos bool
-	color                  rl.Color
-	file                   *File
 	name                   string
 }
 
-func NewPixelBrushTool(color rl.Color, file *File, name string) *PixelBrushTool {
+func NewPixelBrushTool(name string) *PixelBrushTool {
 	return &PixelBrushTool{
-		color: color,
-		file:  file,
-		name:  name,
+		name: name,
 	}
 }
 
-func (t *PixelBrushTool) MouseDown(x, y int) {
+func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
+	var color rl.Color
+	switch button {
+	case rl.MouseLeftButton:
+		color = CurrentFile.LeftColor
+	case rl.MouseRightButton:
+		color = CurrentFile.RightColor
+	}
+
 	if !t.shouldConnectToLastPos {
 		t.shouldConnectToLastPos = true
-		t.file.DrawPixel(x, y, t.GetColor(), true)
+		CurrentFile.DrawPixel(x, y, color, true)
 	} else {
 		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
-			t.file.DrawPixel(x, y, t.GetColor(), true)
+			CurrentFile.DrawPixel(x, y, color, true)
 		})
 	}
 	t.lastPos.X = x
 	t.lastPos.Y = y
 }
-func (t *PixelBrushTool) MouseUp(x, y int) {
+func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.shouldConnectToLastPos = false
 }
-func (t *PixelBrushTool) SetColor(color rl.Color) {
-	t.color = color
-}
-func (t *PixelBrushTool) GetColor() rl.Color {
-	return t.color
-}
+
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
 	// Don't call file.DrawPixel as history isn't needed for this action
-	rl.DrawPixel(x, y, t.GetColor())
+	rl.DrawPixel(x, y, CurrentFile.LeftColor)
 }
 func (t *PixelBrushTool) SetFileReference(file *File) {
 

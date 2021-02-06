@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -25,8 +23,6 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			result = res
 		}
 	}
-
-	log.Println("rendering", result.Entity.Name, result.Entity.ID)
 
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
