@@ -23,11 +23,12 @@ func NewUIFileSystem() *UIFileSystem {
 		Camera: rl.Camera2D{Zoom: 8.0},
 
 		UI: map[string]*Entity{
-			"editors": NewEditorsUI(rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), UIFontSize*2)),
-			"rgb":     NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
-			"palette": NewPaletteUI(rl.NewRectangle(float32(rl.GetScreenWidth()-int(buttonHeight)*3-128*1.5), float32(0), buttonHeight*3, 128*1.8)),
-			"tools":   NewToolsUI(rl.NewRectangle(0, UIFontSize*2, 128*1.5, buttonHeight*10)),
-			"layers":  NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2.5), float32(rl.GetScreenHeight()-128*3), 128*2.5, 128*3)),
+			"editors":      NewEditorsUI(rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), UIFontSize*2)),
+			"rgb":          NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
+			"palette":      NewPaletteUI(rl.NewRectangle(float32(rl.GetScreenWidth()-int(buttonHeight)*2-128*1.5), float32(0), buttonHeight*2, 128*1.8-buttonHeight)),
+			"currentColor": NewCurrentColorUI(rl.NewRectangle(float32(rl.GetScreenWidth()-int(buttonHeight)*2-128*1.5), float32(128*1.8-buttonHeight), buttonHeight*2, buttonHeight)),
+			"tools":        NewToolsUI(rl.NewRectangle(0, UIFontSize*2, 128*1.5, buttonHeight*10)),
+			"layers":       NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2.5), float32(rl.GetScreenHeight()-128*2), 128*2.5, 128*2)),
 		},
 	}
 

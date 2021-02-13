@@ -66,8 +66,10 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					switch button {
 					case rl.MouseLeftButton:
 						CurrentFile.LeftColor = color
+						CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
 					case rl.MouseRightButton:
 						CurrentFile.RightColor = color
+						CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
 					}
 				}
 			}
@@ -156,8 +158,10 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 						switch button {
 						case rl.MouseLeftButton:
 							CurrentFile.LeftColor = color
+							CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
 						case rl.MouseRightButton:
 							CurrentFile.RightColor = color
+							CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
 						}
 					}
 				}
