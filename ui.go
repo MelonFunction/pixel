@@ -90,16 +90,16 @@ const (
 type FlowDirection int
 
 const (
+	// FlowDirectionNone doesn't reflow elements
+	FlowDirectionNone FlowDirection = iota
 	// FlowDirectionVertical flows vertically
-	FlowDirectionVertical FlowDirection = iota
+	FlowDirectionVertical
 	// FlowDirectionVerticalReversed flows vertically, in reverse order
 	FlowDirectionVerticalReversed
 	// FlowDirectionHorizontal flows horizontally
 	FlowDirectionHorizontal
 	// FlowDirectionHorizontalReversed flows horizontally, in reverse order
 	FlowDirectionHorizontalReversed
-	// FlowDirectionNone doesn't reflow elements
-	FlowDirectionNone
 )
 
 // Scrollable allows an element to render its children elements with an offset
@@ -117,9 +117,8 @@ type Hoverable struct {
 	Hovered  bool
 	Selected bool
 
-	// Split selection to display which tool is bound to which mouse button
+	// Split selection to display which tool/color is bound to which mouse button
 	// TODO implement
-	// TODO colors
 	SelectedLeft  bool
 	SelectedRight bool
 }
@@ -317,7 +316,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 }
 
 // FlowChildren aligns the children based on their FlowDirection and alignment
-// options (TODO actually do this)
+// options
 func (e *Entity) FlowChildren() {
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -350,20 +349,30 @@ func (e *Entity) FlowChildren() {
 					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 					childMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 
-					childMoveable.Bounds.X = parentMoveable.Bounds.X + childMoveable.OrigBounds.X
-					childMoveable.Bounds.Y = parentMoveable.Bounds.Y + childMoveable.OrigBounds.Y
-
 					childMoveable.Bounds.X = parentMoveable.Bounds.X
 					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
-
-					// TODO actually use directions
 
 					if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
 						childMoveable.Bounds.Y += offset.Y
 						offset.Y += childMoveable.Bounds.Height
+
+						// TODO check that this works
+						// Wrap
+						if childMoveable.Bounds.Y+childMoveable.Bounds.Height >
+							parentMoveable.Bounds.Y+parentMoveable.Bounds.Height {
+							childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+							childMoveable.Bounds.X += childMoveable.Bounds.Width
+						}
 					} else {
 						childMoveable.Bounds.X += offset.X
 						offset.X += childMoveable.Bounds.Width
+
+						// Wrap
+						if childMoveable.Bounds.X+childMoveable.Bounds.Width >
+							parentMoveable.Bounds.X+parentMoveable.Bounds.Width {
+							childMoveable.Bounds.X = parentMoveable.Bounds.X
+							childMoveable.Bounds.Y += childMoveable.Bounds.Height
+						}
 					}
 
 					fixNested(child, childDrawable, childMoveable)
