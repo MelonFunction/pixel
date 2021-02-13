@@ -136,8 +136,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
 	}
-	f.LeftTool = NewPixelBrushTool("Pixel Brush L")
-	f.RightTool = NewPixelBrushTool("Pixel Brush R")
+	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
 	return f
 }

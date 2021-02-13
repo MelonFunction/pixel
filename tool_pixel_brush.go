@@ -8,21 +8,29 @@ type PixelBrushTool struct {
 	lastPos                IntVec2
 	shouldConnectToLastPos bool
 	name                   string
+	eraser                 bool
 }
 
-func NewPixelBrushTool(name string) *PixelBrushTool {
+// NewPixelBrushTool returns the pixel brush tool. Requires a name and whether
+// the tool is in eraser mode (helpful to prevent the current color from being
+// lost)
+func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 	return &PixelBrushTool{
-		name: name,
+		name:   name,
+		eraser: eraser,
 	}
 }
 
 func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
-	var color rl.Color
-	switch button {
-	case rl.MouseLeftButton:
-		color = CurrentFile.LeftColor
-	case rl.MouseRightButton:
-		color = CurrentFile.RightColor
+	// Assume we are in eraser mode by setting transparent as default
+	color := rl.Transparent
+	if !t.eraser {
+		switch button {
+		case rl.MouseLeftButton:
+			color = CurrentFile.LeftColor
+		case rl.MouseRightButton:
+			color = CurrentFile.RightColor
+		}
 	}
 
 	if !t.shouldConnectToLastPos {
