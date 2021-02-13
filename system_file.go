@@ -25,6 +25,7 @@ func NewUIFileSystem() *UIFileSystem {
 		UI: map[string]*Entity{
 			"editors": NewEditorsUI(rl.NewRectangle(0, 0, float32(rl.GetScreenWidth()), UIFontSize*2)),
 			"rgb":     NewRGBUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*1.5), float32(0), 128*1.5, 128*1.8)),
+			"palette": NewPaletteUI(rl.NewRectangle(float32(rl.GetScreenWidth()-int(buttonHeight)*3-128*1.5), float32(0), buttonHeight*3, 128*1.8)),
 			"tools":   NewToolsUI(rl.NewRectangle(0, UIFontSize*2, 128*1.5, buttonHeight*10)),
 			"layers":  NewLayersUI(rl.NewRectangle(float32(rl.GetScreenWidth()-128*2.5), float32(rl.GetScreenHeight()-128*3), 128*2.5, 128*3)),
 		},
@@ -122,6 +123,10 @@ func (s *UIFileSystem) Update(dt float32) {
 				case "rgb":
 					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
 					entity.FlowChildren()
+				case "palette":
+					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(buttonHeight)*3 - 128*1.5)
+					entity.FlowChildren()
+
 				}
 			}
 
