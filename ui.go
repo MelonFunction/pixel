@@ -392,7 +392,7 @@ func NewRenderTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *E
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))}})
 	e.Name = "buttonTexture"
 	return e
@@ -403,7 +403,7 @@ func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, on
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: NewDrawableTexture(texturePath)})
 	e.Name = "buttonTexture"
 	return e
@@ -414,7 +414,7 @@ func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, 
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(interactable, &Interactable{OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
 	e.Name = "buttonText: " + label
 	return e
@@ -435,7 +435,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
 			IsPassthrough: true,
 			Children:      children,
@@ -452,7 +452,7 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection Fl
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
 			IsPassthrough: false,
