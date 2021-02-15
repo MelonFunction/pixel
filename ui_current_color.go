@@ -49,14 +49,22 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorLeft = CurrentColorUIAddColor(CurrentFile.LeftColor)
 	currentColorRight = CurrentColorUIAddColor(CurrentFile.RightColor)
 
-	currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
+	// currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
+	// 	func(entity *Entity, button rl.MouseButton) {
+	// 		// button up
+	// 		CurrentFile.LeftColor, CurrentFile.RightColor = CurrentFile.RightColor, CurrentFile.LeftColor
+	// 		CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+	// 		CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+	// 	}, nil)
+	// currentColorEntity.PushChild(currentColorSwap)
+	// currentColorEntity.FlowChildren()
+
+	currentColorAdd = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			CurrentFile.LeftColor, CurrentFile.RightColor = CurrentFile.RightColor, CurrentFile.LeftColor
-			CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
-			CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+			PaletteUIAddColor(CurrentFile.LeftColor)
 		}, nil)
-	currentColorEntity.PushChild(currentColorSwap)
+	currentColorEntity.PushChild(currentColorAdd)
 	currentColorEntity.FlowChildren()
 
 	return currentColorEntity

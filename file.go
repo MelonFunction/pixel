@@ -126,7 +126,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HistoryMaxActions: 5, // TODO get from config
 
 		LeftColor:  rl.Red,
-		RightColor: rl.Transparent,
+		RightColor: rl.Blue,
 
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,

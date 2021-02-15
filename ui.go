@@ -51,8 +51,8 @@ type Moveable struct {
 	OrigBounds rl.Rectangle
 	// Offset values from scrolling
 	Offset rl.Vector2
-	// FlowDirection is how the elements should be arranged
-	FlowDirection FlowDirection
+	// LayoutTag is how the elements should be arranged
+	LayoutTag LayoutTag
 }
 
 // Resizeable allows a component to be resized and stores some callbacks
@@ -86,12 +86,12 @@ const (
 	ScrollDirectionHorizontal
 )
 
-// FlowDirection states which direction the children elements should flow in
-type FlowDirection int
+// LayoutTag states which direction the children elements should flow in
+type LayoutTag int
 
 const (
 	// FlowDirectionNone doesn't reflow elements
-	FlowDirectionNone FlowDirection = iota
+	FlowDirectionNone LayoutTag = 1 << iota
 	// FlowDirectionVertical flows vertically
 	FlowDirectionVertical
 	// FlowDirectionVerticalReversed flows vertically, in reverse order
@@ -294,7 +294,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 					}
 				}
 				if !found {
-					if parentMoveable.FlowDirection == FlowDirectionHorizontalReversed || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+					if parentMoveable.LayoutTag == FlowDirectionHorizontalReversed || parentMoveable.LayoutTag == FlowDirectionVerticalReversed {
 						typed.Children = append([]*Entity{child}, typed.Children...)
 					} else {
 						typed.Children = append(typed.Children, child)
@@ -315,7 +315,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
-// FlowChildren aligns the children based on their FlowDirection and alignment
+// FlowChildren aligns the children based on their LayoutTag and alignment
 // options
 func (e *Entity) FlowChildren() {
 	if result, err := scene.QueryID(e.ID); err == nil {
@@ -344,6 +344,7 @@ func (e *Entity) FlowChildren() {
 			}
 
 			var offset rl.Vector2
+			log.Println(children)
 			for _, child := range children {
 				if result, err := scene.QueryID(child.ID); err == nil {
 					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -352,27 +353,31 @@ func (e *Entity) FlowChildren() {
 					childMoveable.Bounds.X = parentMoveable.Bounds.X
 					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
 
-					if parentMoveable.FlowDirection == FlowDirectionVertical || parentMoveable.FlowDirection == FlowDirectionVerticalReversed {
+					if parentMoveable.LayoutTag&FlowDirectionVertical == FlowDirectionVertical ||
+						parentMoveable.LayoutTag&FlowDirectionVerticalReversed == FlowDirectionVerticalReversed {
+
+						// Wrap
+						if offset.Y >= parentMoveable.Bounds.Height {
+							offset.Y = 0
+							offset.X += childMoveable.Bounds.Width
+						}
+
+						childMoveable.Bounds.X += offset.X
 						childMoveable.Bounds.Y += offset.Y
 						offset.Y += childMoveable.Bounds.Height
 
-						// TODO check that this works
-						// Wrap
-						if childMoveable.Bounds.Y+childMoveable.Bounds.Height >
-							parentMoveable.Bounds.Y+parentMoveable.Bounds.Height {
-							childMoveable.Bounds.Y = parentMoveable.Bounds.Y
-							childMoveable.Bounds.X += childMoveable.Bounds.Width
-						}
-					} else {
-						childMoveable.Bounds.X += offset.X
-						offset.X += childMoveable.Bounds.Width
+					} else if parentMoveable.LayoutTag&FlowDirectionHorizontal == FlowDirectionHorizontal ||
+						parentMoveable.LayoutTag&FlowDirectionHorizontalReversed == FlowDirectionHorizontalReversed {
 
 						// Wrap
-						if childMoveable.Bounds.X+childMoveable.Bounds.Width >
-							parentMoveable.Bounds.X+parentMoveable.Bounds.Width {
-							childMoveable.Bounds.X = parentMoveable.Bounds.X
-							childMoveable.Bounds.Y += childMoveable.Bounds.Height
+						if offset.X >= parentMoveable.Bounds.Width {
+							offset.X = 0
+							offset.Y += childMoveable.Bounds.Height
 						}
+
+						childMoveable.Bounds.X += offset.X
+						childMoveable.Bounds.Y += offset.Y
+						offset.X += childMoveable.Bounds.Width
 					}
 
 					fixNested(child, childDrawable, childMoveable)
@@ -431,7 +436,7 @@ func prepareChildren(entity *Entity, children []*Entity) {
 }
 
 // NewBox creates a box which can store children
-func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection) *Entity {
+func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
@@ -448,7 +453,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection
 
 // NewScrollableList creates a box, but it can scroll. Reversed is if the items
 // order should be reversed
-func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection FlowDirection) *Entity {
+func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).

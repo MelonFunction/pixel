@@ -50,5 +50,8 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	PaletteUIAddColor(rl.Blue)
 	PaletteUIAddColor(rl.Green)
 	PaletteUIAddColor(rl.Pink)
+	PaletteUIAddColor(rl.Orange)
+	PaletteUIAddColor(rl.Purple)
+	PaletteUIAddColor(rl.Aqua)
 	return paletteEntity
 }

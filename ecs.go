@@ -225,7 +225,7 @@ func (s *Scene) QueryTag(tags ...Tag) []*QueryResult {
 		for _, tag := range tags {
 			if entity.Tag.matches(tag) {
 				for _, component := range s.components {
-					if tag.matches(component.tag) { // t could be composite, so always bigger
+					if tag.matches(component.tag) {
 						for e, v := range component.entities {
 							if e == entity.ID {
 								q.Components[component] = v
