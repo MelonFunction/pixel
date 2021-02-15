@@ -265,11 +265,9 @@ func (e *Entity) DestroyNested() {
 		}
 
 		for _, child := range drawableParent.Children {
-			log.Println(e.Name, drawableParent.Children)
 			child.DestroyNested()
 		}
 		drawableParent.Children = nil
-		log.Println("done", e.Name, drawableParent.Children, e.ID)
 	}
 }
 
@@ -344,7 +342,6 @@ func (e *Entity) FlowChildren() {
 			}
 
 			var offset rl.Vector2
-			log.Println(children)
 			for _, child := range children {
 				if result, err := scene.QueryID(child.ID); err == nil {
 					childDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)

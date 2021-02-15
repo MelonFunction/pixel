@@ -100,8 +100,9 @@ func (s *UIFileSystem) Draw() {
 	// 	rl.DrawText(str, 0, 20*y, 20, rl.White)
 	// }
 
-	// rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, (CurrentFile.HistoryMaxActions+1)*20, 20, rl.White)
-	// rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, (CurrentFile.HistoryMaxActions+2)*20, 20, rl.White)
+	// rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
+	// rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
+	// rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
 }
 
 func (s *UIFileSystem) Update(dt float32) {
@@ -166,7 +167,7 @@ func (s *UIFileSystem) Update(dt float32) {
 			// Fires once
 			if CurrentFile.HasDoneMouseUpLeft {
 				// Create new history action
-				CurrentFile.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				CurrentFile.AppendHistory(HistoryAction{PixelChangeHistoryType, make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 			}
 			CurrentFile.HasDoneMouseUpLeft = false
 
@@ -182,7 +183,7 @@ func (s *UIFileSystem) Update(dt float32) {
 
 		if rl.IsMouseButtonDown(rl.MouseRightButton) {
 			if CurrentFile.HasDoneMouseUpRight {
-				CurrentFile.AppendHistory(HistoryAction{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				CurrentFile.AppendHistory(HistoryAction{PixelChangeHistoryType, make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 			}
 			CurrentFile.HasDoneMouseUpRight = false
 			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)

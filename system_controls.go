@@ -443,11 +443,9 @@ func (s *UIControlSystem) Update(dt float32) {
 	// Handle mouse events
 	if rl.IsMouseButtonDown(rl.MouseLeftButton) && UICompontentCapturedInput != nil {
 		UIHasControl = true
-		if UICompontentCapturedInput != nil {
-			if UICompontentCapturedInput.OnMouseDown != nil {
-				// Use the last button down instead of passing MouseButtonNone
-				UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInput.ButtonDown)
-			}
+		if UICompontentCapturedInput.OnMouseDown != nil {
+			// Use the last button down instead of passing MouseButtonNone
+			UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInput.ButtonDown)
 		}
 	} else {
 		UICompontentCapturedInput = nil

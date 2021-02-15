@@ -30,11 +30,23 @@ type PixelStateData struct {
 	Prev, Current rl.Color
 }
 
+// HistoryType defines what kind of action happened
+type HistoryType int
+
+const (
+	// PixelChangeHistoryType is used for pixel state changes
+	PixelChangeHistoryType HistoryType = iota
+	// AddLayerHistoryType is used when a layer is added
+	AddLayerHistoryType
+	// DeleteLayerHistoryType is used when a layer is deleted
+	DeleteLayerHistoryType
+)
+
 // HistoryAction stores information about the action
 type HistoryAction struct {
-	// Tool is the tool used for the action (GetName is used in history panel)
-	PixelState map[IntVec2]PixelStateData
-	LayerIndex int
+	HistoryType HistoryType // Defaults to PixelChangeHistoryType
+	PixelState  map[IntVec2]PixelStateData
+	LayerIndex  int
 }
 
 // DrawPixel draws a pixel. It records actions into history.
@@ -79,8 +91,7 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 
 }
 
-// ClearBackground fills out the initial PixelData. Probably shouldn't be
-// called every frame.
+// ClearBackground fills the initial PixelData
 func (f *File) ClearBackground(color rl.Color) {
 	rl.ClearBackground(color)
 
@@ -100,7 +111,8 @@ type File struct {
 
 	History           []HistoryAction
 	HistoryMaxActions int
-	historyOffset     int // How many undos have been made
+	historyOffset     int      // How many undos have been made
+	deletedLayers     []*Layer // stack of layers, AddNewLayer destroys history chain
 
 	Tools      []Tool // TODO Will be used by a Tool selector UI
 	LeftTool   Tool
@@ -122,8 +134,9 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray, true),
 			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
 		},
-		History:           make([]HistoryAction, 0, 5),
-		HistoryMaxActions: 5, // TODO get from config
+		History:           make([]HistoryAction, 0, 50),
+		HistoryMaxActions: 50, // TODO get from config
+		deletedLayers:     make([]*Layer, 0, 10),
 
 		LeftColor:  rl.Red,
 		RightColor: rl.Blue,
@@ -131,7 +144,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
 
-		CanvasWidth:  canvasWidth,
+		CanvasWidth:  canvasWidth, // TODO prompt
 		CanvasHeight: canvasHeight,
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
@@ -157,6 +170,8 @@ func (f *File) AddNewLayer() {
 	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent, true)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
+
+	f.AppendHistory(HistoryAction{AddLayerHistoryType, make(map[IntVec2]PixelStateData), f.CurrentLayer})
 }
 
 // AppendHistory inserts a new HistoryAction to f.History depending on the
@@ -190,35 +205,46 @@ func (f *File) DrawPixelDataToCanvas() {
 // Undo usdoes an action
 func (f *File) Undo() {
 	if f.historyOffset < len(f.History) {
-		current := f.CurrentLayer
 		f.historyOffset++
+		index := len(f.History) - f.historyOffset
+		history := f.History[index]
 
-		// TODO flatten the stuff below as it's mostly repeated
-		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
-		layer := f.GetCurrentLayer()
-		rl.BeginTextureMode(layer.Canvas)
-		rl.ClearBackground(rl.Transparent)
-		shouldDraw := true
-		for v, color := range layer.PixelData {
-			shouldDraw = true
-			for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
-				if v.X == pos.X && v.Y == pos.Y {
-					// Update current color with previous color
-					layer.PixelData[v] = psd.Prev
-					// Overwrite
-					color = psd.Prev
-					if psd.Prev == rl.Transparent {
-						shouldDraw = false
+		log.Println("undo", history)
+
+		switch history.HistoryType {
+		case PixelChangeHistoryType:
+			current := f.CurrentLayer
+			f.SetCurrentLayer(history.LayerIndex)
+			layer := f.GetCurrentLayer()
+			rl.BeginTextureMode(layer.Canvas)
+			rl.ClearBackground(rl.Transparent)
+			shouldDraw := true
+			for v, color := range layer.PixelData {
+				shouldDraw = true
+				for pos, psd := range history.PixelState {
+					if v.X == pos.X && v.Y == pos.Y {
+						// Update current color with previous color
+						layer.PixelData[v] = psd.Prev
+						// Overwrite
+						color = psd.Prev
+						if psd.Prev == rl.Transparent {
+							shouldDraw = false
+						}
 					}
 				}
+				if shouldDraw {
+					rl.DrawPixel(v.X, v.Y, color)
+				}
 			}
-			if shouldDraw {
-				rl.DrawPixel(v.X, v.Y, color)
-			}
+			rl.EndTextureMode()
+			f.SetCurrentLayer(current)
+		case AddLayerHistoryType:
+			f.deletedLayers = append(f.deletedLayers, f.Layers[history.LayerIndex])
+			f.Layers = append(f.Layers[:history.LayerIndex], f.Layers[history.LayerIndex+1:]...)
+			f.SetCurrentLayer(history.LayerIndex - 1)
+			LayersUIRebuildList() // TODO move UI stuff somewhere else
 		}
-		rl.EndTextureMode()
 
-		f.SetCurrentLayer(current)
 	}
 }
 
@@ -226,30 +252,43 @@ func (f *File) Undo() {
 func (f *File) Redo() {
 	if f.historyOffset > 0 {
 		current := f.CurrentLayer
+		index := len(f.History) - f.historyOffset
+		history := f.History[index]
 
-		f.SetCurrentLayer(f.History[len(f.History)-f.historyOffset].LayerIndex)
-		layer := f.GetCurrentLayer()
-		rl.BeginTextureMode(layer.Canvas)
-		rl.ClearBackground(rl.Transparent)
-		shouldDraw := true
-		for v, color := range layer.PixelData {
-			shouldDraw = true
-			for pos, psd := range f.History[len(f.History)-f.historyOffset].PixelState {
-				if v.X == pos.X && v.Y == pos.Y {
-					layer.PixelData[v] = psd.Current
-					color = psd.Current
-					if psd.Current == rl.Transparent {
-						shouldDraw = false
+		log.Println("redo", history)
+
+		switch history.HistoryType {
+		case PixelChangeHistoryType:
+			f.SetCurrentLayer(history.LayerIndex)
+			layer := f.GetCurrentLayer()
+			rl.BeginTextureMode(layer.Canvas)
+			rl.ClearBackground(rl.Transparent)
+			shouldDraw := true
+			for v, color := range layer.PixelData {
+				shouldDraw = true
+				for pos, psd := range history.PixelState {
+					if v.X == pos.X && v.Y == pos.Y {
+						layer.PixelData[v] = psd.Current
+						color = psd.Current
+						if psd.Current == rl.Transparent {
+							shouldDraw = false
+						}
 					}
 				}
+				if shouldDraw {
+					rl.DrawPixel(v.X, v.Y, color)
+				}
 			}
-			if shouldDraw {
-				rl.DrawPixel(v.X, v.Y, color)
-			}
+			rl.EndTextureMode()
+			f.SetCurrentLayer(current)
+		case AddLayerHistoryType:
+			layer := f.deletedLayers[len(f.deletedLayers)-1]
+			f.deletedLayers = f.deletedLayers[:len(f.deletedLayers)-1]
+			// TODO add to correct position on f.Layers
+			f.Layers = append(f.Layers[:len(f.Layers)-1], layer, f.Layers[len(f.Layers)-1])
+			LayersUIRebuildList()
 		}
-		rl.EndTextureMode()
 
-		f.SetCurrentLayer(current)
 		f.historyOffset--
 	}
 }
