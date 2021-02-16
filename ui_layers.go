@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -95,7 +97,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	}
 
 	isCurrent := CurrentFile.CurrentLayer == y
-	label := NewButtonText(rl.NewRectangle(0, 0, bounds.Width-buttonHeight*3, buttonHeight), layer.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-buttonHeight*3, buttonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if res, err := scene.QueryID(entity.ID); err == nil {
@@ -109,7 +111,26 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 
 				CurrentFile.SetCurrentLayer(y)
 			}
-		}, nil)
+		}, nil,
+		func(entity *Entity, key rl.Key) {
+			// key pressed
+			if res, err := scene.QueryID(entity.ID); err == nil {
+				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+				drawableParent, ok := drawable.DrawableType.(*DrawableText)
+				log.Println(key, string(key))
+				if ok {
+					switch {
+					case key >= 97 && key <= 97+26:
+						fallthrough
+					case key >= rl.KeyA && key <= rl.KeyZ:
+						drawableParent.Label += string(key)
+					case key == rl.KeyBackspace:
+						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
+					}
+				}
+			}
+
+		})
 
 	// Set current layer ref
 	if res, err := scene.QueryID(label.ID); err == nil {

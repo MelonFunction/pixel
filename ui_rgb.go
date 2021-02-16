@@ -247,6 +247,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				rl.EndTextureMode()
 			}
 		}
+		e.Name = "selector"
 		return e
 	}
 

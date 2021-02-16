@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -103,6 +105,8 @@ func (s *UIFileSystem) Draw() {
 	// rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
 	// rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
 	// rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
+	rl.DrawText(fmt.Sprintf("UICompontentCapturedInputInteractable: %v", UICompontentCapturedInputInteractable), 0, 260, 20, rl.White)
+	rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, 280, 20, rl.White)
 }
 
 func (s *UIFileSystem) Update(dt float32) {

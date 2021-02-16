@@ -13,8 +13,10 @@ type UI interface {
 var (
 	// UIHasControl lets the program know if input should go to the UI or not
 	UIHasControl = false
-	// UICompontentCapturedInput is the current Interactable with control
-	UICompontentCapturedInput *Interactable
+	// UIIsInputtingText allows click events to cancel out text input
+	UIIsInputtingText = false
+	// UICompontentCapturedInputInteractable is the current Interactable with control
+	UICompontentCapturedInputInteractable *Interactable
 	// UIEntityCapturedInput is the current Entity with control
 	UIEntityCapturedInput *Entity
 	// UIComponentWithControl is the current ui component with control
@@ -74,6 +76,9 @@ type Interactable struct {
 
 	// OnScroll is for mouse wheel actions
 	OnScroll func(direction int)
+
+	// OnKeyPress is called when a key is released
+	OnKeyPress func(entity *Entity, key rl.Key)
 }
 
 // ScrollDirection states the scroll direction of the component
@@ -206,7 +211,7 @@ func InitUI(keymap Keymap) {
 	scene.BuildTag("scrollable", scrollable)
 	scene.BuildTag("hoverable", hoverable)
 	scene.BuildTag("drawable", drawable)
-	scene.BuildTag("drawable, hoverable, moveable", drawable, moveable, hoverable)
+	scene.BuildTag("basic", drawable, moveable, hoverable)
 	scene.BuildTag("basicControl", drawable, moveable, hoverable, interactable)
 
 	controlSystem = NewUIControlSystem(keymap)
@@ -225,7 +230,6 @@ func DestroyUI() {
 
 // UpdateUI updates the systems (excluding the RenderSystem)
 func UpdateUI() {
-	UIHasControl = false
 	controlSystem.Update(rl.GetFrameTime())
 	fileSystem.Update(rl.GetFrameTime())
 }
@@ -422,6 +426,20 @@ func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, 
 	return e
 }
 
+// NewInput creates a button which renders text and can be edited
+func NewInput(
+	bounds rl.Rectangle, label string, selected bool,
+	onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton),
+	onKeyPress func(entity *Entity, key rl.Key)) *Entity {
+	e := scene.NewEntity(nil).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(hoverable, &Hoverable{Selected: selected}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
+		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
+	e.Name = "buttonText: " + label
+	return e
+}
+
 // prepareChildren moves children elements etc
 func prepareChildren(entity *Entity, children []*Entity) {
 	for _, child := range children {
@@ -437,7 +455,6 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
 			IsPassthrough: true,
 			Children:      children,
@@ -454,7 +471,6 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection La
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
 			IsPassthrough: false,

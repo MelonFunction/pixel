@@ -132,7 +132,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 }
 
 func (s *UIRenderSystem) Draw() {
-	for _, result := range s.Scene.QueryTag(s.Scene.Tags["drawable, hoverable, moveable"], s.Scene.Tags["scrollable"]) {
+	for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"]) {
 		s.draw(result, false, rl.Vector2{})
 	}
 }

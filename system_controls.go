@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -203,7 +204,11 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
 	hoverable := result.Components[s.Scene.ComponentsMap["hoverable"]].(*Hoverable)
-	interactable := result.Components[s.Scene.ComponentsMap["interactable"]].(*Interactable)
+	var interactable *Interactable
+	interactableInterface, ok := result.Components[s.Scene.ComponentsMap["interactable"]]
+	if ok {
+		interactable = interactableInterface.(*Interactable)
+	}
 	var scrollable *Scrollable
 	scrollableInterface, ok := result.Components[s.Scene.ComponentsMap["scrollable"]]
 	if ok {
@@ -228,31 +233,41 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		button := MouseButtonNone
 		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
 			button = rl.MouseLeftButton
-		}
-		if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		} else if rl.IsMouseButtonDown(rl.MouseRightButton) {
 			button = rl.MouseRightButton
 		}
-		if button != MouseButtonNone {
-			UIHasControl = true
-			interactable.ButtonDown = button
-			if interactable.OnMouseDown != nil {
-				UICompontentCapturedInput = interactable
-				UIEntityCapturedInput = entity
+
+		if interactable != nil {
+			if button != MouseButtonNone {
 				UIHasControl = true
-				interactable.OnMouseDown(entity, button)
-			}
-		} else {
-			if interactable.ButtonDown != MouseButtonNone {
-				// Get last button down from interactable since the current
-				// button isn't relevent
-				button = interactable.ButtonDown
-				interactable.ButtonDown = MouseButtonNone
-				if interactable.OnMouseUp != nil {
-					interactable.OnMouseUp(entity, button)
+				interactable.ButtonDown = button
+
+				if interactable.OnMouseDown != nil {
+					UICompontentCapturedInputInteractable = interactable
+					UIEntityCapturedInput = entity
+					interactable.OnMouseDown(entity, button)
 				}
-				UICompontentCapturedInput = nil
-				UIEntityCapturedInput = nil
-				UIHasControl = false
+			} else {
+				if interactable.ButtonDown != MouseButtonNone {
+					// Get last button down from interactable since the current
+					// button isn't relevent
+					button = interactable.ButtonDown
+					interactable.ButtonDown = MouseButtonNone
+					if interactable.OnMouseUp != nil {
+						interactable.OnMouseUp(entity, button)
+					}
+
+					if interactable.OnKeyPress != nil {
+						UICompontentCapturedInputInteractable = interactable
+						UIEntityCapturedInput = entity
+						UIIsInputtingText = true
+					} else {
+						UIHasControl = false
+						UICompontentCapturedInputInteractable = nil
+						UIEntityCapturedInput = nil
+						UIIsInputtingText = false
+					}
+				}
 			}
 		}
 
@@ -440,21 +455,43 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyMoveable = true
 	}
 
+	// TODO compress
 	// Handle mouse events
-	if rl.IsMouseButtonDown(rl.MouseLeftButton) && UICompontentCapturedInput != nil {
-		UIHasControl = true
-		if UICompontentCapturedInput.OnMouseDown != nil {
-			// Use the last button down instead of passing MouseButtonNone
-			UICompontentCapturedInput.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInput.ButtonDown)
+	if UICompontentCapturedInputInteractable != nil {
+		// do text input
+		if UIIsInputtingText {
+			if UICompontentCapturedInputInteractable.OnKeyPress != nil {
+				lastKey := rl.GetKeyPressed()
+				if rl.IsKeyPressed(rl.KeyBackspace) {
+					lastKey = rl.KeyBackspace
+				}
+				if uint32(lastKey) != math.MaxUint32 {
+					UICompontentCapturedInputInteractable.OnKeyPress(UIEntityCapturedInput, lastKey)
+				}
+			}
+		}
+		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+			if UICompontentCapturedInputInteractable.OnMouseDown != nil {
+				// Use the last button down instead of passing MouseButtonNone
+				UICompontentCapturedInputInteractable.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInputInteractable.ButtonDown)
+			}
+			if UIIsInputtingText {
+				// stop text input if clicked anywhere
+				UIIsInputtingText = false
+				UICompontentCapturedInputInteractable = nil
+				UIEntityCapturedInput = nil
+				UIHasControl = false
+			}
+		} else if !UIIsInputtingText {
+			UIIsInputtingText = false
+			UICompontentCapturedInputInteractable = nil
+			UIEntityCapturedInput = nil
+			UIHasControl = false
 		}
 	} else {
-		UICompontentCapturedInput = nil
-		UIEntityCapturedInput = nil
-		UIHasControl = false
-
-		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basicControl"], s.Scene.Tags["scrollable"]) {
+		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"]) {
 			s.process(result, false)
 		}
-
 	}
+
 }
