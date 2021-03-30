@@ -9,6 +9,11 @@ var (
 	selectedPaletteColor *Entity
 )
 
+func PaletteUIRemoveColor(child *Entity) {
+	paletteEntity.RemoveChild(child)
+	paletteEntity.FlowChildren()
+}
+
 func PaletteUIAddColor(color rl.Color) {
 	var w float32
 	var h float32
@@ -18,7 +23,8 @@ func PaletteUIAddColor(color rl.Color) {
 		h = moveable.Bounds.Width / 3
 	}
 
-	e := NewRenderTexture(rl.NewRectangle(0, 0, w, h),
+	var e *Entity
+	e = NewRenderTexture(rl.NewRectangle(0, 0, w, h),
 		func(entity *Entity, button rl.MouseButton) {
 			switch button {
 			case rl.MouseLeftButton:
@@ -27,6 +33,8 @@ func PaletteUIAddColor(color rl.Color) {
 			case rl.MouseRightButton:
 				CurrentFile.RightColor = color
 				CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+			case rl.MouseMiddleButton:
+				PaletteUIRemoveColor(e)
 			}
 		}, nil)
 	if res, err := scene.QueryID(e.ID); err == nil {

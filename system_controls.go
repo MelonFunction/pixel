@@ -235,6 +235,8 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			button = rl.MouseLeftButton
 		} else if rl.IsMouseButtonDown(rl.MouseRightButton) {
 			button = rl.MouseRightButton
+		} else if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
+			button = rl.MouseMiddleButton
 		}
 
 		if interactable != nil {
