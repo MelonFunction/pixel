@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -15,8 +16,8 @@ var (
 	UIHasControl = false
 	// UIIsInputtingText allows click events to cancel out text input
 	UIIsInputtingText = false
-	// UICompontentCapturedInputInteractable is the current Interactable with control
-	UICompontentCapturedInputInteractable *Interactable
+	// UIInteractableCapturedInput is the current Interactable with control
+	UIInteractableCapturedInput *Interactable
 	// UIEntityCapturedInput is the current Entity with control
 	UIEntityCapturedInput *Entity
 	// UIComponentWithControl is the current ui component with control
@@ -67,8 +68,18 @@ type Interactable struct {
 	// ButtonDown keeps track of if a button is down
 	ButtonDown rl.MouseButton
 
+	// ButtonDownAt is the time when the button was pressed
+	// Used to allow drag events after a certain amount of time has elapsed
+	ButtonDownAt time.Time
+
+	// ButtonReleased is used to prevent multiple up events from firing if the
+	// component has an OnKeyPress event stalling execution
+	ButtonReleased bool
+
 	// OnMouseDown fires every frame the mouse button is down on the element
-	OnMouseDown func(entity *Entity, button rl.MouseButton)
+	// isHeld can be used to work out if a drag event should happen, or if only
+	// one down event should be executed etc
+	OnMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool)
 	// OnMouseUp fires once when the mouse is released (doesn't fire if mouse
 	// is released while not within the bounds! Draggable should be used for
 	// this kind of event instead)
@@ -394,33 +405,48 @@ func (e *Entity) FlowChildren() {
 }
 
 // NewRenderTexture creates a render texture
-func NewRenderTexture(bounds rl.Rectangle, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
+func NewRenderTexture(
+	bounds rl.Rectangle,
+	onMouseUp func(entity *Entity, button rl.MouseButton),
+	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))}})
 	e.Name = "buttonTexture"
 	return e
 }
 
 // NewButtonTexture creates a button which renders a texture
-func NewButtonTexture(bounds rl.Rectangle, texturePath string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
+func NewButtonTexture(
+	bounds rl.Rectangle,
+	texturePath string,
+	selected bool,
+	onMouseUp func(entity *Entity, button rl.MouseButton),
+	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: NewDrawableTexture(texturePath)})
 	e.Name = "buttonTexture"
 	return e
 }
 
 // NewButtonText creates a button which renders text
-func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton)) *Entity {
+func NewButtonText(bounds rl.Rectangle,
+	label string,
+	selected bool,
+	onMouseUp func(entity *Entity, button rl.MouseButton),
+	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
 	e.Name = "buttonText: " + label
 	return e
@@ -428,13 +454,17 @@ func NewButtonText(bounds rl.Rectangle, label string, selected bool, onMouseUp, 
 
 // NewInput creates a button which renders text and can be edited
 func NewInput(
-	bounds rl.Rectangle, label string, selected bool,
-	onMouseUp, onMouseDown func(entity *Entity, button rl.MouseButton),
-	onKeyPress func(entity *Entity, key rl.Key)) *Entity {
+	bounds rl.Rectangle,
+	label string,
+	selected bool,
+	onMouseUp func(entity *Entity, button rl.MouseButton),
+	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+	onKeyPress func(entity *Entity, key rl.Key),
+) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
 	e.Name = "buttonText: " + label
 	return e

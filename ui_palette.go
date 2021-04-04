@@ -26,6 +26,7 @@ func PaletteUIAddColor(color rl.Color) {
 	var e *Entity
 	e = NewRenderTexture(rl.NewRectangle(0, 0, w, h),
 		func(entity *Entity, button rl.MouseButton) {
+			// Up
 			switch button {
 			case rl.MouseLeftButton:
 				CurrentFile.LeftColor = color
@@ -36,7 +37,13 @@ func PaletteUIAddColor(color rl.Color) {
 			case rl.MouseMiddleButton:
 				PaletteUIRemoveColor(e)
 			}
-		}, nil)
+		},
+		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+			// Down
+			switch button {
+			case rl.MouseLeftButton:
+			}
+		})
 	if res, err := scene.QueryID(e.ID); err == nil {
 		drawable := res.Components[e.Scene.ComponentsMap["drawable"]].(*Drawable)
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)

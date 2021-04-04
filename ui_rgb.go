@@ -27,7 +27,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
 			if res, err := scene.QueryID(rgb.ID); err == nil {
 				moveable := res.Components[rgb.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -122,7 +122,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
 			if res, err := scene.QueryID(slider.ID); err == nil {
 				moveable := res.Components[slider.Scene.ComponentsMap["moveable"]].(*Moveable)

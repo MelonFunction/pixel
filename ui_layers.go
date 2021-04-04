@@ -71,6 +71,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	hidden := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/eye_open.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
+
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
 				// hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)

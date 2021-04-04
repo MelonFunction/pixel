@@ -187,6 +187,19 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	}
 }
 
+func (s *UIControlSystem) getButtonDown() rl.MouseButton {
+	button := MouseButtonNone
+	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+		button = rl.MouseLeftButton
+	} else if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		button = rl.MouseRightButton
+	} else if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
+		button = rl.MouseMiddleButton
+	}
+
+	return button
+}
+
 func (s *UIControlSystem) process(component interface{}, isProcessingChildren bool) {
 	var result *QueryResult
 	var entity *Entity
@@ -230,49 +243,22 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			}
 		}
 
-		button := MouseButtonNone
-		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
-			button = rl.MouseLeftButton
-		} else if rl.IsMouseButtonDown(rl.MouseRightButton) {
-			button = rl.MouseRightButton
-		} else if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
-			button = rl.MouseMiddleButton
-		}
+		// Mouse button logic
+		button := s.getButtonDown()
 
 		if interactable != nil {
 			if button != MouseButtonNone {
-				UIHasControl = true
-				interactable.ButtonDown = button
-
-				if interactable.OnMouseDown != nil {
-					UICompontentCapturedInputInteractable = interactable
+				// Mouse events are handled by the caller function (Update)
+				if interactable.OnMouseDown != nil || interactable.OnMouseUp != nil {
+					UIHasControl = true
+					interactable.ButtonDown = button
 					UIEntityCapturedInput = entity
-					interactable.OnMouseDown(entity, button)
-				}
-			} else {
-				if interactable.ButtonDown != MouseButtonNone {
-					// Get last button down from interactable since the current
-					// button isn't relevent
-					button = interactable.ButtonDown
-					interactable.ButtonDown = MouseButtonNone
-					if interactable.OnMouseUp != nil {
-						interactable.OnMouseUp(entity, button)
-					}
-
-					if interactable.OnKeyPress != nil {
-						UICompontentCapturedInputInteractable = interactable
-						UIEntityCapturedInput = entity
-						UIIsInputtingText = true
-					} else {
-						UIHasControl = false
-						UICompontentCapturedInputInteractable = nil
-						UIEntityCapturedInput = nil
-						UIIsInputtingText = false
-					}
+					UIInteractableCapturedInput = interactable
 				}
 			}
 		}
 
+		// Scroll logic
 		if scrollable != nil {
 			scrollAmount := rl.GetMouseWheelMove()
 			if scrollAmount != 0 {
@@ -459,38 +445,95 @@ func (s *UIControlSystem) Update(dt float32) {
 
 	// TODO compress
 	// Handle mouse events
-	if UICompontentCapturedInputInteractable != nil {
-		// do text input
-		if UIIsInputtingText {
-			if UICompontentCapturedInputInteractable.OnKeyPress != nil {
-				lastKey := rl.GetKeyPressed()
-				if rl.IsKeyPressed(rl.KeyBackspace) {
-					lastKey = rl.KeyBackspace
-				}
-				if uint32(lastKey) != math.MaxUint32 {
-					UICompontentCapturedInputInteractable.OnKeyPress(UIEntityCapturedInput, lastKey)
-				}
+	// if UICompontentCapturedInputInteractable != nil {
+	// 	// do text input
+	// 	if UIIsInputtingText {
+	// 		if UICompontentCapturedInputInteractable.OnKeyPress != nil {
+	// 			lastKey := rl.GetKeyPressed()
+	// 			if rl.IsKeyPressed(rl.KeyBackspace) {
+	// 				lastKey = rl.KeyBackspace
+	// 			}
+	// 			if uint32(lastKey) != math.MaxUint32 {
+	// 				UICompontentCapturedInputInteractable.OnKeyPress(UIEntityCapturedInput, lastKey)
+	// 			}
+	// 		}
+	// 	}
+	// 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+	// 		if UICompontentCapturedInputInteractable.OnMouseDown != nil {
+	// 			// Use the last button down instead of passing MouseButtonNone
+	// 			UICompontentCapturedInputInteractable.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInputInteractable.ButtonDown)
+	// 		}
+	// 		if UIIsInputtingText {
+	// 			// stop text input if clicked anywhere
+	// 			UIIsInputtingText = false
+	// 			UICompontentCapturedInputInteractable = nil
+	// 			UIEntityCapturedInput = nil
+	// 			UIHasControl = false
+	// 		}
+	// 	} else if !UIIsInputtingText {
+	// 		UIIsInputtingText = false
+	// 		UICompontentCapturedInputInteractable = nil
+	// 		UIEntityCapturedInput = nil
+	// 		UIHasControl = false
+	// 	}
+	// } else {
+	// }
+
+	// shouldProcess prevents more events when a mouse button is down
+	shouldProcess := true
+	if UIEntityCapturedInput != nil {
+		shouldProcess = false
+		button := s.getButtonDown()
+		lastButton := UIInteractableCapturedInput.ButtonDown
+
+		if lastButton != MouseButtonNone && button == lastButton {
+			// Continuously send mouse down event
+			if UIInteractableCapturedInput.ButtonReleased == true {
+				UIInteractableCapturedInput.ButtonDownAt = time.Now()
+				UIInteractableCapturedInput.ButtonReleased = false
 			}
-		}
-		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
-			if UICompontentCapturedInputInteractable.OnMouseDown != nil {
-				// Use the last button down instead of passing MouseButtonNone
-				UICompontentCapturedInputInteractable.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInputInteractable.ButtonDown)
+			// TODO set isHeld to true after certain amount of time
+
+			if UIInteractableCapturedInput.OnMouseDown != nil {
+				UIInteractableCapturedInput.OnMouseDown(UIEntityCapturedInput, lastButton, false)
 			}
-			if UIIsInputtingText {
-				// stop text input if clicked anywhere
-				UIIsInputtingText = false
-				UICompontentCapturedInputInteractable = nil
-				UIEntityCapturedInput = nil
+		} else if button == MouseButtonNone {
+			// Handle mouse up event
+			if UIInteractableCapturedInput.OnMouseUp != nil && UIInteractableCapturedInput.ButtonReleased == false {
+				UIInteractableCapturedInput.ButtonReleased = true
+				UIInteractableCapturedInput.OnMouseUp(UIEntityCapturedInput, lastButton)
+			}
+
+			if UIInteractableCapturedInput.OnKeyPress == nil {
 				UIHasControl = false
+				UIEntityCapturedInput = nil
+				UIInteractableCapturedInput.ButtonDown = MouseButtonNone
+				UIInteractableCapturedInput = nil
 			}
-		} else if !UIIsInputtingText {
-			UIIsInputtingText = false
-			UICompontentCapturedInputInteractable = nil
-			UIEntityCapturedInput = nil
-			UIHasControl = false
 		}
-	} else {
+
+		// Handle keyboard events
+		if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
+			shouldProcess = true
+			lastKey := rl.GetKeyPressed()
+			if rl.IsKeyPressed(rl.KeyBackspace) {
+				lastKey = rl.KeyBackspace
+			}
+			if uint32(lastKey) != math.MaxUint32 {
+				UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, lastKey)
+			}
+
+			if button != MouseButtonNone {
+				UIHasControl = false
+				UIEntityCapturedInput = nil
+				UIInteractableCapturedInput.ButtonDown = MouseButtonNone
+				UIInteractableCapturedInput = nil
+			}
+		}
+
+	}
+
+	if shouldProcess {
 		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"]) {
 			s.process(result, false)
 		}

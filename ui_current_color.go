@@ -50,7 +50,7 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorRight = CurrentColorUIAddColor(CurrentFile.RightColor)
 
 	// currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
-	// 	func(entity *Entity, button rl.MouseButton) {
+	// 	func(entity *Entity, button rl.MouseButton, isHeld bool) {
 	// 		// button up
 	// 		CurrentFile.LeftColor, CurrentFile.RightColor = CurrentFile.RightColor, CurrentFile.LeftColor
 	// 		CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
