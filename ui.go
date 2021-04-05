@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -251,6 +252,19 @@ func DrawUI() {
 	renderSystem.Draw() // draw ui components
 }
 
+// GetChildren returns a copy of all of the children entities from an entity
+func (e *Entity) GetChildren() ([]*Entity, error) {
+	if result, err := scene.QueryID(e.ID); err == nil {
+		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
+
+		if ok {
+			return drawableParent.Children[:], nil
+		}
+	}
+	return nil, fmt.Errorf("No children")
+}
+
 // RemoveChild removes a child from the DrawableParent and returns true if
 // something was removed
 func (e *Entity) RemoveChild(child *Entity) bool {
@@ -268,6 +282,21 @@ func (e *Entity) RemoveChild(child *Entity) bool {
 		}
 	}
 	return false
+}
+
+// RemoveChildren removes all of the children from an entity
+func (e *Entity) RemoveChildren() error {
+	children, err := e.GetChildren()
+	if err != nil {
+		return err
+	}
+
+	for i := len(children) - 1; i > -1; i-- {
+		child := children[i]
+		log.Println(i, child, e.RemoveChild(child))
+	}
+
+	return nil
 }
 
 func (e *Entity) DestroyNested() {
@@ -391,6 +420,10 @@ func (e *Entity) FlowChildren() {
 						childMoveable.Bounds.Y += offset.Y
 						offset.X += childMoveable.Bounds.Width
 					}
+
+					// Reset the OrigBounds
+					childMoveable.OrigBounds.X = childMoveable.Bounds.X
+					childMoveable.OrigBounds.Y = childMoveable.Bounds.Y
 
 					fixNested(child, childDrawable, childMoveable)
 				}
