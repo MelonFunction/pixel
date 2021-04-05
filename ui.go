@@ -293,7 +293,7 @@ func (e *Entity) RemoveChildren() error {
 
 	for i := len(children) - 1; i > -1; i-- {
 		child := children[i]
-		log.Println(i, child, e.RemoveChild(child))
+		e.RemoveChild(child)
 	}
 
 	return nil
