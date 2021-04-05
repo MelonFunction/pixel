@@ -130,7 +130,10 @@ func (s *UIFileSystem) Update(dt float32) {
 					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
 					entity.FlowChildren()
 				case "palette":
-					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(buttonHeight)*3 - 128*1.5)
+					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(buttonHeight)*2 - 128*1.5)
+					entity.FlowChildren()
+				case "currentColor":
+					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(buttonHeight)*2 - 128*1.5)
 					entity.FlowChildren()
 
 				}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -31,6 +33,51 @@ func PaletteUIAddColor(color rl.Color) {
 			case rl.MouseLeftButton:
 				CurrentFile.LeftColor = color
 				CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+
+				children, err := paletteEntity.GetChildren()
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				// Get the element the cursor is over
+				moveToPosition := 0
+				// The index of the dragged child
+				childPosition := 0
+				// isMoveBefore is true if the cursor was on the left
+				// half of the item
+				isMoveBefore := true
+
+				collision := false
+				for i, child := range children {
+					if child == entity {
+						childPosition = i
+					} else {
+						if res, err := scene.QueryID(child.ID); err == nil {
+							childMoveable := res.Components[child.Scene.ComponentsMap["moveable"]].(*Moveable)
+							cur := rl.GetMousePosition()
+							bounds := childMoveable.Bounds
+							if rl.CheckCollisionPointRec(cur, bounds) {
+								collision = true
+								moveToPosition = i
+								isMoveBefore = cur.X < (bounds.X + bounds.Width/2)
+							}
+						}
+					}
+
+				}
+
+				if collision {
+					moved := children[childPosition]
+					children = append(children[:childPosition], children[childPosition+1:]...)
+					if childPosition < moveToPosition {
+						moveToPosition--
+					}
+					if isMoveBefore == false {
+						moveToPosition++
+					}
+					children = append(children[:moveToPosition], append([]*Entity{moved}, children[moveToPosition:]...)...)
+				}
+				paletteEntity.FlowChildren()
 			case rl.MouseRightButton:
 				CurrentFile.RightColor = color
 				CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
@@ -40,8 +87,15 @@ func PaletteUIAddColor(color rl.Color) {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// Down
-			switch button {
-			case rl.MouseLeftButton:
+			if isHeld {
+				switch button {
+				case rl.MouseLeftButton:
+					if res, err := scene.QueryID(entity.ID); err == nil {
+						moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
+						moveable.Bounds.X = rl.GetMousePosition().X - moveable.Bounds.Width/2
+						moveable.Bounds.Y = rl.GetMousePosition().Y - moveable.Bounds.Height/2
+					}
+				}
 			}
 		})
 	if res, err := scene.QueryID(e.ID); err == nil {

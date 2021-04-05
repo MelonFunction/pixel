@@ -492,10 +492,14 @@ func (s *UIControlSystem) Update(dt float32) {
 				UIInteractableCapturedInput.ButtonDownAt = time.Now()
 				UIInteractableCapturedInput.ButtonReleased = false
 			}
-			// TODO set isHeld to true after certain amount of time
+
+			isHeld := false
+			if time.Now().Sub(UIInteractableCapturedInput.ButtonDownAt) > time.Second/2 {
+				isHeld = true
+			}
 
 			if UIInteractableCapturedInput.OnMouseDown != nil {
-				UIInteractableCapturedInput.OnMouseDown(UIEntityCapturedInput, lastButton, false)
+				UIInteractableCapturedInput.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
 			}
 		} else if button == MouseButtonNone {
 			// Handle mouse up event
