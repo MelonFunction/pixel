@@ -27,6 +27,11 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	moveable := result.Components[s.Scene.ComponentsMap["moveable"]].(*Moveable)
 	drawable := result.Components[s.Scene.ComponentsMap["drawable"]].(*Drawable)
 	hoverable := result.Components[s.Scene.ComponentsMap["hoverable"]].(*Hoverable)
+	var interactable *Interactable
+	interactableInterface, ok := result.Components[s.Scene.ComponentsMap["interactable"]]
+	if ok {
+		interactable = interactableInterface.(*Interactable)
+	}
 	var scrollable *Scrollable
 	scrollableInterface, ok := result.Components[s.Scene.ComponentsMap["scrollable"]]
 	if ok {
@@ -108,10 +113,16 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 	case *DrawableText:
 		drawBorder(hoverable, moveable)
-		fo := rl.MeasureTextEx(*Font, t.Label, UIFontSize, 1)
+		text := t.Label
+		if interactable != nil && UIInteractableCapturedInput == interactable {
+			text += "|"
+		}
+
+		fo := rl.MeasureTextEx(*Font, text, UIFontSize, 1)
 		x := moveable.Bounds.X + moveable.Bounds.Width/2 - fo.X/2
 		y := moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
-		rl.DrawTextEx(*Font, t.Label, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
+		rl.DrawTextEx(*Font, text, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
+
 	case *DrawableTexture:
 		drawBorder(hoverable, moveable)
 		x := moveable.Bounds.X + moveable.Bounds.Width/2 - float32(t.Texture.Width)/2
@@ -132,7 +143,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 }
 
 func (s *UIRenderSystem) Draw() {
-	for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"]) {
+	for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"]) {
 		s.draw(result, false, rl.Vector2{})
 	}
 }
