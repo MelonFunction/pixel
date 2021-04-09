@@ -6,6 +6,11 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+var (
+	// ShowDebug enables debug overlays when true
+	ShowDebug = false
+)
+
 type UIFileSystem struct {
 	BasicSystem
 
@@ -95,18 +100,20 @@ func (s *UIFileSystem) Draw() {
 	rl.EndMode2D()
 
 	// Debug text
-	// for y, history := range CurrentFile.History {
-	// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
-	// 		history.LayerIndex,
-	// 		len(history.PixelState))
-	// 	rl.DrawText(str, 0, 20*y, 20, rl.White)
-	// }
+	if ShowDebug {
+		for y, history := range CurrentFile.History {
+			str := fmt.Sprintf("Layer: %d, Diff: %d",
+				history.LayerIndex,
+				len(history.PixelState))
+			rl.DrawText(str, 20, 20*y+260, 20, rl.White)
+		}
 
-	// rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
-	// rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
-	// rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
-	rl.DrawText(fmt.Sprintf("UIInteractableCapturedInput: %v", UIInteractableCapturedInput), 0, 260, 20, rl.White)
-	rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, 280, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInput: %v", UIInteractableCapturedInput), 0, 160, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, 180, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
+	}
 }
 
 func (s *UIFileSystem) Update(dt float32) {

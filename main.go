@@ -23,6 +23,7 @@ func main() {
 	// rl.SetExitKey(rl.KeyNumLock)
 
 	keymap := KeymapData{
+		"showDebug": {{rl.KeyD}},
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
 		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},
 		"toolLeft":  {{rl.KeyH}, {rl.KeyLeft}},

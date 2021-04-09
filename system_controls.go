@@ -30,6 +30,9 @@ var (
 		rl.KeyRightShift,
 		rl.KeyRightAlt,
 	}
+
+	UIControlSystemCmds    chan string
+	UIControlSystemReturns chan string
 )
 
 // NewKeymap returns a new Keymap
@@ -79,11 +82,6 @@ type UIControlSystem struct {
 	keysDown            map[rl.Key]bool // current keys down, used for combinations
 	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
 }
-
-var (
-	UIControlSystemCmds    chan string
-	UIControlSystemReturns chan string
-)
 
 func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	UIControlSystemCmds = make(chan string)
@@ -317,7 +315,14 @@ func (s *UIControlSystem) Update(dt float32) {
 		if checkDown(s.Keymap.Data[key]) {
 			setAwaitingRelease(s.Keymap.Data[key])
 
+			// Don't allow events to happen if a component is inputting text
+			if UIEntityCapturedInput != nil {
+				break
+			}
+
 			switch key {
+			case "showDebug":
+				ShowDebug = !ShowDebug
 			case "layerUp":
 				CurrentFile.CurrentLayer++
 				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {
@@ -443,42 +448,7 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyMoveable = true
 	}
 
-	// TODO compress
 	// Handle mouse events
-	// if UICompontentCapturedInputInteractable != nil {
-	// 	// do text input
-	// 	if UIIsInputtingText {
-	// 		if UICompontentCapturedInputInteractable.OnKeyPress != nil {
-	// 			lastKey := rl.GetKeyPressed()
-	// 			if rl.IsKeyPressed(rl.KeyBackspace) {
-	// 				lastKey = rl.KeyBackspace
-	// 			}
-	// 			if uint32(lastKey) != math.MaxUint32 {
-	// 				UICompontentCapturedInputInteractable.OnKeyPress(UIEntityCapturedInput, lastKey)
-	// 			}
-	// 		}
-	// 	}
-	// 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
-	// 		if UICompontentCapturedInputInteractable.OnMouseDown != nil {
-	// 			// Use the last button down instead of passing MouseButtonNone
-	// 			UICompontentCapturedInputInteractable.OnMouseDown(UIEntityCapturedInput, UICompontentCapturedInputInteractable.ButtonDown)
-	// 		}
-	// 		if UIIsInputtingText {
-	// 			// stop text input if clicked anywhere
-	// 			UIIsInputtingText = false
-	// 			UICompontentCapturedInputInteractable = nil
-	// 			UIEntityCapturedInput = nil
-	// 			UIHasControl = false
-	// 		}
-	// 	} else if !UIIsInputtingText {
-	// 		UIIsInputtingText = false
-	// 		UICompontentCapturedInputInteractable = nil
-	// 		UIEntityCapturedInput = nil
-	// 		UIHasControl = false
-	// 	}
-	// } else {
-	// }
-
 	// shouldProcess prevents more events when a mouse button is down
 	shouldProcess := true
 	if UIEntityCapturedInput != nil {
