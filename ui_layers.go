@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -118,13 +116,12 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
 				drawableParent, ok := drawable.DrawableType.(*DrawableText)
-				log.Println(key, string(key))
 				if ok {
 					switch {
 					case key >= 97 && key <= 97+26:
 						fallthrough
 					case key >= rl.KeyA && key <= rl.KeyZ:
-						drawableParent.Label += string(key)
+						drawableParent.Label += string(rune(key))
 					case key == rl.KeyBackspace:
 						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
 					}

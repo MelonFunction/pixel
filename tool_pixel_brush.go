@@ -51,7 +51,7 @@ func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
 	// Don't call file.DrawPixel as history isn't needed for this action
-	rl.DrawPixel(x, y, CurrentFile.LeftColor)
+	rl.DrawPixel(x, y, rl.Color{0, 0, 0, 128})
 }
 func (t *PixelBrushTool) SetFileReference(file *File) {
 

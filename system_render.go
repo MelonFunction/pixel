@@ -39,7 +39,8 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	}
 
 	// Don't render children until the texture mode is set by the parent
-	if drawable.IsChild && !isDrawingChildren {
+	// Also don't render hidden components
+	if (drawable.IsChild && !isDrawingChildren) || drawable.Hidden {
 		return
 	}
 
@@ -64,6 +65,19 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 				rl.DrawRectangleRec(moveable.Bounds, rl.Black)
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.Gray)
 			}
+		}
+	}
+
+	// Do OnMouseEnter callback
+	if hoverable.Hovered && hoverable.DidMouseLeave {
+		hoverable.DidMouseLeave = false
+		if hoverable.OnMouseEnter != nil {
+			hoverable.OnMouseEnter()
+		}
+	} else if !hoverable.Hovered && !hoverable.DidMouseLeave {
+		hoverable.DidMouseLeave = true
+		if hoverable.OnMouseLeave != nil {
+			hoverable.OnMouseLeave()
 		}
 	}
 
@@ -114,7 +128,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	case *DrawableText:
 		drawBorder(hoverable, moveable)
 		text := t.Label
-		if interactable != nil && UIInteractableCapturedInput == interactable {
+		if interactable != nil && UIInteractableCapturedInput == interactable && interactable.OnKeyPress != nil {
 			text += "|"
 		}
 

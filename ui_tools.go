@@ -38,7 +38,7 @@ func ToolsUIAddButton() {
 }
 
 func NewToolsUI(bounds rl.Rectangle) *Entity {
-	toolsButtons = NewBox(bounds, []*Entity{}, FlowDirectionVertical)
+	toolsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 	ToolsUIAddButton()
 	return toolsButtons
 }

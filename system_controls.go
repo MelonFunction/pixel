@@ -198,7 +198,7 @@ func (s *UIControlSystem) getButtonDown() rl.MouseButton {
 	return button
 }
 
-func (s *UIControlSystem) process(component interface{}, isProcessingChildren bool) {
+func (s *UIControlSystem) process(component interface{}, isProcessingChildren bool) bool {
 	var result *QueryResult
 	var entity *Entity
 	switch typed := component.(type) {
@@ -229,7 +229,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 
 	// Don't render children until the texture mode is set by the parent
 	if drawable.IsChild && !isProcessingChildren {
-		return
+		return false
 	}
 
 	if moveable.Bounds.Contains(rl.GetMousePosition().Subtract(moveable.Offset)) {
@@ -238,6 +238,15 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		case *DrawableParent:
 			for _, child := range t.Children {
 				s.process(child, true)
+			}
+		}
+
+		// Scroll logic
+		if scrollable != nil {
+			scrollAmount := rl.GetMouseWheelMove()
+			if scrollAmount != 0 {
+				UIHasControl = true
+				scrollable.ScrollOffset += scrollAmount
 			}
 		}
 
@@ -252,19 +261,12 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 					interactable.ButtonDown = button
 					UIEntityCapturedInput = entity
 					UIInteractableCapturedInput = interactable
+					return true
 				}
 			}
 		}
-
-		// Scroll logic
-		if scrollable != nil {
-			scrollAmount := rl.GetMouseWheelMove()
-			if scrollAmount != 0 {
-				UIHasControl = true
-				scrollable.ScrollOffset += scrollAmount
-			}
-		}
 	}
+	return false
 }
 
 func (s *UIControlSystem) Update(dt float32) {
@@ -509,7 +511,10 @@ func (s *UIControlSystem) Update(dt float32) {
 
 	if shouldProcess {
 		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"]) {
-			s.process(result, false)
+			// Clicked on something, stop processing
+			if s.process(result, false) {
+				return
+			}
 		}
 	}
 

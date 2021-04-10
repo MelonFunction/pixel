@@ -258,5 +258,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	// Make the selector which floats around on top of the color area
 	colorSelector = makeSelector()
 
+	container.FlowChildren()
+
 	return container
 }
