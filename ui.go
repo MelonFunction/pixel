@@ -134,6 +134,11 @@ type Hoverable struct {
 	Hovered  bool
 	Selected bool
 
+	OnMouseEnter func()
+	OnMouseLeave func()
+	// Prevent multiple leave events
+	DidMouseLeave bool
+
 	// Split selection to display which tool/color is bound to which mouse button
 	// TODO implement
 	SelectedLeft  bool
@@ -144,6 +149,9 @@ type Hoverable struct {
 type Drawable struct {
 	// DrawableType can be DrawableText, DrawableTexture or DrawableParent
 	DrawableType interface{}
+
+	// Hidden will prevent rendering when true
+	Hidden bool
 
 	// IsChild prevents normal rendering and instead renders to its
 	// DrawableParent Texture
@@ -250,6 +258,18 @@ func UpdateUI() {
 func DrawUI() {
 	fileSystem.Draw()   // draw layer canvases etc
 	renderSystem.Draw() // draw ui components
+}
+
+// Hide sets the drawable component's Hidden value to true
+func (e *Entity) Hide() error {
+	if result, err := scene.QueryID(e.ID); err == nil {
+		drawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		if !ok {
+			return fmt.Errorf("No drawable component on entity")
+		}
+		drawable.Hidden = true
+	}
+	return nil
 }
 
 // GetChildren returns a copy of all of the children entities from an entity
@@ -524,7 +544,6 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 		}})
 	e.Name = "box"
 	prepareChildren(e, children)
-	e.FlowChildren()
 	return e
 }
 
