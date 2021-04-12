@@ -59,8 +59,22 @@ type Moveable struct {
 	LayoutTag LayoutTag
 }
 
+func (entity *Entity) GetMoveable() (t *Moveable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+	}
+	return t, ok
+}
+
 // Resizeable allows a component to be resized and stores some callbacks
 type Resizeable struct {
+}
+
+func (entity *Entity) GetResizeable() (t *Resizeable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["resizeable"]].(*Resizeable)
+	}
+	return t, ok
 }
 
 // Interactable is for storing all callbacks which can be procced by user inputs
@@ -91,6 +105,13 @@ type Interactable struct {
 
 	// OnKeyPress is called when a key is released
 	OnKeyPress func(entity *Entity, key rl.Key)
+}
+
+func (entity *Entity) GetInteractable() (t *Interactable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["interactable"]].(*Interactable)
+	}
+	return t, ok
 }
 
 // ScrollDirection states the scroll direction of the component
@@ -129,6 +150,13 @@ type Scrollable struct {
 	// TODO stuff for rendering scrollbars differently
 }
 
+func (entity *Entity) GetScrollable() (t *Scrollable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["scrollable"]].(*Scrollable)
+	}
+	return t, ok
+}
+
 // Hoverable stores the hovered and seleceted states
 type Hoverable struct {
 	Hovered  bool
@@ -145,6 +173,13 @@ type Hoverable struct {
 	SelectedRight bool
 }
 
+func (entity *Entity) GetHoverable() (t *Hoverable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
+	}
+	return t, ok
+}
+
 // Drawable handles all drawing related information
 type Drawable struct {
 	// DrawableType can be DrawableText, DrawableTexture or DrawableParent
@@ -156,6 +191,13 @@ type Drawable struct {
 	// IsChild prevents normal rendering and instead renders to its
 	// DrawableParent Texture
 	IsChild bool
+}
+
+func (entity *Entity) GetDrawable() (t *Drawable, ok bool) {
+	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
+		t, ok = result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+	}
+	return t, ok
 }
 
 // DrawableText draws text
@@ -268,6 +310,18 @@ func (e *Entity) Hide() error {
 			return fmt.Errorf("No drawable component on entity")
 		}
 		drawable.Hidden = true
+	}
+	return nil
+}
+
+// Show sets the drawable component's Hidden value to true
+func (e *Entity) Show() error {
+	if result, err := scene.QueryID(e.ID); err == nil {
+		drawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		if !ok {
+			return fmt.Errorf("No drawable component on entity")
+		}
+		drawable.Hidden = false
 	}
 	return nil
 }
