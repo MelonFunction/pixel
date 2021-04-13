@@ -155,8 +155,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
 
-		CanvasWidthResizePreview:  32,
-		CanvasHeightResizePreview: 32,
+		CanvasWidthResizePreview:  canvasWidth,
+		CanvasHeightResizePreview: canvasHeight,
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
 	}

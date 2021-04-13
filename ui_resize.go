@@ -98,7 +98,7 @@ func NewResizeUI() *Entity {
 	}, FlowDirectionHorizontal)
 	anchorBox.FlowChildren()
 
-	widthInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasWidth), false,
+	widthInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasWidthResizePreview), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		}, nil,
@@ -139,7 +139,7 @@ func NewResizeUI() *Entity {
 
 		})
 
-	heightInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasHeight), false,
+	heightInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasHeightResizePreview), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		}, nil,
