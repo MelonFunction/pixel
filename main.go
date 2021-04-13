@@ -24,6 +24,7 @@ func main() {
 
 	keymap := KeymapData{
 		"showDebug": {{rl.KeyD}},
+		"resize":    {{rl.KeyLeftControl, rl.KeyR}},
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
 		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},
 		"toolLeft":  {{rl.KeyH}, {rl.KeyLeft}},

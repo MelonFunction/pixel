@@ -228,7 +228,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 	// hoverable.Hovered = false
 
 	// Don't render children until the texture mode is set by the parent
-	if drawable.IsChild && !isProcessingChildren {
+	if (drawable.IsChild && !isProcessingChildren) || drawable.Hidden {
 		return false
 	}
 
@@ -315,6 +315,10 @@ func UISave() {
 	}
 }
 
+func UIResize() {
+
+}
+
 func (s *UIControlSystem) Update(dt float32) {
 	// Handle keyboard events
 	for key := range s.keysAwaitingRelease {
@@ -371,6 +375,8 @@ func (s *UIControlSystem) Update(dt float32) {
 			switch key {
 			case "showDebug":
 				ShowDebug = !ShowDebug
+			case "resize":
+				ResizeUIShowDialog()
 			case "layerUp":
 				CurrentFile.CurrentLayer++
 				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {
@@ -493,10 +499,7 @@ func (s *UIControlSystem) Update(dt float32) {
 			}
 
 			if UIInteractableCapturedInput.OnKeyPress == nil {
-				UIHasControl = false
-				UIEntityCapturedInput = nil
-				UIInteractableCapturedInput.ButtonDown = MouseButtonNone
-				UIInteractableCapturedInput = nil
+				RemoveCapturedInput()
 			}
 		}
 
@@ -504,18 +507,23 @@ func (s *UIControlSystem) Update(dt float32) {
 		if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
 			shouldProcess = true
 			lastKey := rl.GetKeyPressed()
+			// GetKeyPressed doesn't get some keys for some reason
 			if rl.IsKeyPressed(rl.KeyBackspace) {
 				lastKey = rl.KeyBackspace
 			}
+			if rl.IsKeyPressed(rl.KeyEnter) {
+				lastKey = rl.KeyEnter
+			}
+			if rl.IsKeyPressed(rl.KeyTab) {
+				lastKey = rl.KeyTab
+			}
+
 			if uint32(lastKey) != math.MaxUint32 {
 				UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, lastKey)
 			}
 
 			if button != MouseButtonNone {
-				UIHasControl = false
-				UIEntityCapturedInput = nil
-				UIInteractableCapturedInput.ButtonDown = MouseButtonNone
-				UIInteractableCapturedInput = nil
+				RemoveCapturedInput()
 			}
 		}
 

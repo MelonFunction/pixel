@@ -155,6 +155,11 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	return f
 }
 
+func (f *File) Resize(width, height int) {
+	f.CanvasWidth = width
+	f.CanvasHeight = height
+}
+
 // SetCurrentLayer sets the current layer
 func (f *File) SetCurrentLayer(index int) {
 	f.CurrentLayer = index

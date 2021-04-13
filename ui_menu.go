@@ -13,11 +13,6 @@ var (
 	menuContexts *Entity
 )
 
-type MenuContextOptions struct {
-	Entity  *Entity
-	Visible bool
-}
-
 func NewMenuUI(bounds rl.Rectangle) *Entity {
 	menuButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 	var saveButton, exportButton, openButton, resizeButton, fileButton *Entity
@@ -69,30 +64,30 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 
 	fo := rl.MeasureTextEx(*Font, "resize", UIFontSize, 1)
 	saveButton = NewButtonText(
-		rl.NewRectangle(0, UIFontSize*2, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
 		"save", false, func(entity *Entity, button rl.MouseButton) {
 			UISave()
 		}, nil)
 	saveButton.Hide()
 
 	exportButton = NewButtonText(
-		rl.NewRectangle(0, UIFontSize*4, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
 		"export", false, func(entity *Entity, button rl.MouseButton) {
 			UIExport()
 		}, nil)
 	exportButton.Hide()
 
 	openButton = NewButtonText(
-		rl.NewRectangle(0, UIFontSize*6, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
 		"open", false, func(entity *Entity, button rl.MouseButton) {
 			UIOpen()
 		}, nil)
 	openButton.Hide()
 
 	resizeButton = NewButtonText(
-		rl.NewRectangle(0, UIFontSize*8, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
 		"resize", false, func(entity *Entity, button rl.MouseButton) {
-			UIExport()
+			ResizeUIShowDialog()
 		}, nil)
 	resizeButton.Hide()
 
@@ -112,12 +107,14 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	}
 
 	// Added to scene on first hover
+	bounds.Y += UIFontSize * 2
 	menuContexts = NewBox(bounds, []*Entity{
 		saveButton,
 		exportButton,
 		openButton,
 		resizeButton,
-	}, FlowDirectionNone)
+	}, FlowDirectionVertical)
+	menuContexts.FlowChildren()
 
 	menuButtons.FlowChildren()
 	return menuButtons

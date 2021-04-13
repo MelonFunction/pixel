@@ -5,8 +5,6 @@ import (
 )
 
 var (
-	buttonHeight float32 = 48.0
-
 	currentLayerHoverable *Hoverable
 	interactables         = make(map[int]*Entity)
 
@@ -32,7 +30,7 @@ func LayersUISetCurrentLayer(index int) {
 }
 
 func LayersUIMakeList(bounds rl.Rectangle) {
-	list = NewScrollableList(rl.NewRectangle(0, buttonHeight, bounds.Width, bounds.Height-buttonHeight), []*Entity{}, FlowDirectionVerticalReversed)
+	list = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the layers
 	for i, layer := range CurrentFile.Layers {
 		if i == len(CurrentFile.Layers)-1 {
@@ -65,7 +63,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		bounds = moveable.Bounds
 	}
 
-	hidden := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/eye_open.png", false,
+	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), "./res/icons/eye_open.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 
@@ -85,7 +83,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 			}
 		}, nil)
 
-	preview := NewRenderTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), nil, nil)
+	preview := NewRenderTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), nil, nil)
 	if res, err := scene.QueryID(preview.ID); err == nil {
 		drawable := res.Components[preview.Scene.ComponentsMap["drawable"]].(*Drawable)
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
@@ -95,7 +93,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	}
 
 	isCurrent := CurrentFile.CurrentLayer == y
-	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-buttonHeight*3, buttonHeight), layer.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*3, UIButtonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if res, err := scene.QueryID(entity.ID); err == nil {
@@ -140,7 +138,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		interactables[y] = label
 	}
 
-	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, buttonHeight), []*Entity{
+	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight), []*Entity{
 		hidden,
 		preview,
 		label,
@@ -151,7 +149,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 // NewLayersUI creates the UI representation of the CurrentFile's layers
 func NewLayersUI(bounds rl.Rectangle) *Entity {
 	// New layer button
-	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight), "./res/icons/plus.png", false,
+	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			CurrentFile.AddNewLayer()

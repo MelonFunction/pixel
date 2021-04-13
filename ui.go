@@ -29,6 +29,8 @@ var (
 	Font *rl.Font
 	// UIFontSize is the size of the font
 	UIFontSize float32 = 14
+	// UIButtonHeight is the size of the buttons
+	UIButtonHeight float32 = 48.0
 
 	uiCamera               = rl.Camera2D{Zoom: 1}
 	mouseX, mouseY         int
@@ -433,8 +435,16 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
+func RemoveCapturedInput() {
+	UIHasControl = false
+	UIEntityCapturedInput = nil
+	UIInteractableCapturedInput.ButtonDown = MouseButtonNone
+	UIInteractableCapturedInput = nil
+}
+
 // FlowChildren aligns the children based on their LayoutTag and alignment
 // options
+// TODO clip child bounds if they overflow parent
 func (e *Entity) FlowChildren() {
 	if result, err := scene.QueryID(e.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)

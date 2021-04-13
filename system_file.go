@@ -47,25 +47,26 @@ func NewUIFileSystem() *UIFileSystem {
 				128*1.5,
 				128*1.8)),
 			"palette": NewPaletteUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(buttonHeight)*2-128*1.5),
+				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
 				float32(0),
-				buttonHeight*2,
-				128*1.8-buttonHeight)),
+				UIButtonHeight*2,
+				128*1.8-UIButtonHeight)),
 			"currentColor": NewCurrentColorUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(buttonHeight)*2-128*1.5),
-				float32(128*1.8-buttonHeight*0.66),
-				buttonHeight*2,
-				buttonHeight)),
+				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
+				float32(128*1.8-UIButtonHeight*0.66),
+				UIButtonHeight*2,
+				UIButtonHeight)),
 			"tools": NewToolsUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(buttonHeight)*2-128*1.5),
+				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
 				128*1.8,
 				128*1.5,
-				buttonHeight)),
+				UIButtonHeight)),
 			"layers": NewLayersUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-128*2.5),
 				float32(rl.GetScreenHeight()-128*2),
 				128*2.5,
 				128*2)),
+			"resize": NewResizeUI(),
 		},
 	}
 
@@ -171,7 +172,7 @@ func (s *UIFileSystem) Update(dt float32) {
 				case "palette":
 					fallthrough
 				case "currentColor":
-					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(buttonHeight)*2 - 128*1.5)
+					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(UIButtonHeight)*2 - 128*1.5)
 					entity.FlowChildren()
 
 				}

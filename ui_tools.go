@@ -13,7 +13,7 @@ func ToolsUICloseEditor() {
 }
 
 func ToolsUIAddButton() {
-	pencil := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight),
+	pencil := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		"./res/icons/pencil.png", true, func(entity *Entity, button rl.MouseButton) {
 			switch button {
 			case rl.MouseLeftButton:
@@ -22,7 +22,7 @@ func ToolsUIAddButton() {
 				CurrentFile.RightTool = NewPixelBrushTool("Pixel Brush", false)
 			}
 		}, nil)
-	eraser := NewButtonTexture(rl.NewRectangle(0, 0, buttonHeight, buttonHeight),
+	eraser := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		"./res/icons/eraser.png", true, func(entity *Entity, button rl.MouseButton) {
 			switch button {
 			case rl.MouseLeftButton:
