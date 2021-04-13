@@ -56,7 +56,6 @@ func LayersUIRebuildList() {
 		listContainer.PushChild(list)
 		listContainer.FlowChildren()
 	}
-
 }
 
 func LayersUIMakeBox(y int, layer *Layer) *Entity {

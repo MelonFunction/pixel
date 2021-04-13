@@ -36,12 +36,11 @@ func NewUIFileSystem() *UIFileSystem {
 				float32(rl.GetScreenWidth()),
 				UIFontSize*20,
 			)),
-			"menuContexts": MenuContexts,
-			// "editors": NewEditorsUI(rl.NewRectangle(
-			// 	0,
-			// 	UIFontSize*2,
-			// 	float32(rl.GetScreenWidth()),
-			// 	UIFontSize*2)),
+			"editors": NewEditorsUI(rl.NewRectangle(
+				0,
+				UIFontSize*2,
+				float32(rl.GetScreenWidth()),
+				UIFontSize*2)),
 			"rgb": NewRGBUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-128*1.5),
 				float32(0),

@@ -11,6 +11,14 @@ func EditorsUICloseEditor() {
 
 }
 
+func EditorsUIRebuild() {
+	editorsButtons.RemoveChildren()
+
+	for _, f := range Files {
+		EditorsUIAddButton(f)
+	}
+}
+
 func EditorsUIAddButton(file *File) {
 	isCurrent := file == CurrentFile
 
@@ -52,7 +60,7 @@ func EditorsUIAddButton(file *File) {
 }
 
 func NewEditorsUI(bounds rl.Rectangle) *Entity {
-	editorsButtons = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
+	editorsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 	for _, f := range Files {
 		EditorsUIAddButton(f)
 	}

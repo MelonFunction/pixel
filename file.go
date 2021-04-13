@@ -350,6 +350,10 @@ func (f *File) Export(path string) {
 		log.Fatal(err)
 	}
 
+	// Change name in the tab
+	spl := strings.Split(path, "/")
+	f.Filename = spl[len(spl)-1]
+	EditorsUIRebuild()
 }
 
 // Open a file
@@ -384,6 +388,7 @@ func Open(path string) *File {
 		editedLayer,
 		NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
 	}
+	// Change name in the tab
 	spl := strings.Split(path, "/")
 	f.Filename = spl[len(spl)-1]
 	return f

@@ -322,6 +322,8 @@ func (e *Entity) Show() error {
 			return fmt.Errorf("No drawable component on entity")
 		}
 		drawable.Hidden = false
+
+		scene.MoveEntityToEnd(e)
 	}
 	return nil
 }

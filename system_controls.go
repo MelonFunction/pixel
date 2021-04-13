@@ -253,7 +253,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		// Mouse button logic
 		button := s.getButtonDown()
 
-		if interactable != nil {
+		if interactable != nil && drawable.Hidden == false {
 			if button != MouseButtonNone {
 				// Mouse events are handled by the caller function (Update)
 				if interactable.OnMouseDown != nil || interactable.OnMouseUp != nil {
@@ -267,6 +267,52 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		}
 	}
 	return false
+}
+
+func UIOpen() {
+	UIControlSystemCmds <- "open"
+	waiting := true
+	for waiting {
+		select {
+		case name := <-UIControlSystemReturns:
+			waiting = false
+			if len(name) > 0 {
+				file := Open(name)
+				log.Println(file)
+				Files = append(Files, file)
+				CurrentFile = file
+				EditorsUIAddButton(file)
+			}
+		}
+	}
+}
+
+func UIExport() {
+	UIControlSystemCmds <- "save"
+	waiting := true
+	for waiting {
+		select {
+		case name := <-UIControlSystemReturns:
+			waiting = false
+			if len(name) > 0 {
+				CurrentFile.Export(name)
+			}
+		}
+	}
+}
+
+func UISave() {
+	UIControlSystemCmds <- "save"
+	waiting := true
+	for waiting {
+		select {
+		case name := <-UIControlSystemReturns:
+			waiting = false
+			if len(name) > 0 {
+				CurrentFile.Save(name)
+			}
+		}
+	}
 }
 
 func (s *UIControlSystem) Update(dt float32) {
@@ -338,45 +384,11 @@ func (s *UIControlSystem) Update(dt float32) {
 				}
 				LayersUISetCurrentLayer(CurrentFile.CurrentLayer)
 			case "open":
-				UIControlSystemCmds <- "open"
-				waiting := true
-				for waiting {
-					select {
-					case name := <-UIControlSystemReturns:
-						waiting = false
-						if len(name) > 0 {
-							file := Open(name)
-							log.Println(file)
-							Files = append(Files, file)
-							CurrentFile = file
-							EditorsUIAddButton(file)
-						}
-					}
-				}
+				UIOpen()
 			case "save":
-				UIControlSystemCmds <- "save"
-				waiting := true
-				for waiting {
-					select {
-					case name := <-UIControlSystemReturns:
-						waiting = false
-						if len(name) > 0 {
-							CurrentFile.Save(name)
-						}
-					}
-				}
+				UISave()
 			case "export":
-				UIControlSystemCmds <- "save"
-				waiting := true
-				for waiting {
-					select {
-					case name := <-UIControlSystemReturns:
-						waiting = false
-						if len(name) > 0 {
-							CurrentFile.Export(name)
-						}
-					}
-				}
+				UIExport()
 			case "undo":
 				CurrentFile.Undo()
 			case "redo":
