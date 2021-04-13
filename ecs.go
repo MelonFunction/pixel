@@ -277,3 +277,22 @@ func (s *Scene) QueryID(id EntityID) (*QueryResult, error) {
 	}
 	return nil, fmt.Errorf("Entity with ID %d not found", int(id))
 }
+
+func (s *Scene) MoveEntityToEnd(entity *Entity) error {
+	found := false
+	for i, e := range s.entities {
+		if e == entity {
+			found = true
+			s.entities = append(s.entities[:i], s.entities[i+1:]...)
+			break
+		}
+	}
+
+	if found {
+		s.entities = append(s.entities, entity)
+	} else {
+		return fmt.Errorf("Entity not found")
+	}
+
+	return nil
+}
