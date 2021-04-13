@@ -315,10 +315,6 @@ func UISave() {
 	}
 }
 
-func UIResize() {
-
-}
-
 func (s *UIControlSystem) Update(dt float32) {
 	// Handle keyboard events
 	for key := range s.keysAwaitingRelease {

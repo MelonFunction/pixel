@@ -128,6 +128,54 @@ func (s *UIFileSystem) Draw() {
 			-CurrentFile.CanvasHeight/2+y,
 			rl.White)
 	}
+
+	// Show outline for canvas resize preview
+	if CurrentFile.DoingResize {
+		var x, y float32
+		w := float32(CurrentFile.CanvasWidthResizePreview)
+		h := float32(CurrentFile.CanvasHeightResizePreview)
+
+		// Move offset
+		dw := (w - float32(CurrentFile.CanvasWidth)) / 2
+		dh := (h - float32(CurrentFile.CanvasHeight)) / 2
+
+		switch CurrentFile.CanvasDirectionResizePreview {
+		case ResizeTL:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 + dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 + dh
+		case ResizeTC:
+			x = -float32(CurrentFile.CanvasWidthResizePreview) / 2
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 + dh
+		case ResizeTR:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 - dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 + dh
+		case ResizeCL:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 + dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview) / 2
+		case ResizeCC:
+			x = -float32(CurrentFile.CanvasWidthResizePreview) / 2
+			y = -float32(CurrentFile.CanvasHeightResizePreview) / 2
+		case ResizeCR:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 - dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview) / 2
+		case ResizeBL:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 + dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 - dh
+		case ResizeBC:
+			x = -float32(CurrentFile.CanvasWidthResizePreview) / 2
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 - dh
+		case ResizeBR:
+			x = -float32(CurrentFile.CanvasWidthResizePreview)/2 - dw
+			y = -float32(CurrentFile.CanvasHeightResizePreview)/2 - dh
+		}
+
+		rl.DrawRectangleLinesEx(
+			rl.NewRectangle(x, y, w, h),
+			1,
+			rl.Red,
+		)
+	}
+
 	rl.EndMode2D()
 
 	// Debug text

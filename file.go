@@ -124,6 +124,12 @@ type File struct {
 	HasDoneMouseUpRight bool
 
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
+
+	// for previewing what would happen if a resize occured
+	DoingResize                                                                                          bool
+	CanvasWidthResizePreview, CanvasHeightResizePreview, TileWidthResizePreview, TileHeightResizePreview int
+	// direction of resize event
+	CanvasDirectionResizePreview ResizeDirection
 }
 
 // NewFile returns a pointer to a new File
@@ -148,6 +154,11 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		CanvasHeight: canvasHeight,
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
+
+		CanvasWidthResizePreview:  32,
+		CanvasHeightResizePreview: 32,
+		TileWidthResizePreview:    tileWidth,
+		TileHeightResizePreview:   tileHeight,
 	}
 	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
 	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
@@ -155,9 +166,30 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	return f
 }
 
-func (f *File) Resize(width, height int) {
+type ResizeDirection int
+
+const (
+	ResizeTL ResizeDirection = iota
+	ResizeTC
+	ResizeTR
+	ResizeCL
+	ResizeCC
+	ResizeCR
+	ResizeBL
+	ResizeBC
+	ResizeBR
+)
+
+func (f *File) Resize(width, height int, direction ResizeDirection) {
+	// TODO history
+	for _, layer := range f.Layers {
+		layer.Resize(width, height, direction)
+	}
+
 	f.CanvasWidth = width
 	f.CanvasHeight = height
+
+	LayersUIRebuildList()
 }
 
 // SetCurrentLayer sets the current layer

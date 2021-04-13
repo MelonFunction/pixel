@@ -13,6 +13,12 @@ var (
 
 func ResizeUIShowDialog() {
 	resizeButtons.Show()
+	CurrentFile.DoingResize = true
+}
+
+func ResizeUIHideDialog() {
+	resizeButtons.Hide()
+	CurrentFile.DoingResize = false
 }
 
 func NewResizeUI() *Entity {
@@ -31,9 +37,11 @@ func NewResizeUI() *Entity {
 	closeResizeButton = NewButtonText(
 		rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		"X", false, func(entity *Entity, button rl.MouseButton) {
-			resizeButtons.Hide()
+			ResizeUIHideDialog()
 		}, nil)
 	// closeResizeButton.Hide()
+
+	var widthInput, heightInput *Entity
 
 	// Controls for resizing from a particular side
 	anchorBox := NewBox(rl.NewRectangle(
@@ -45,44 +53,50 @@ func NewResizeUI() *Entity {
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			".", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeTL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			"^", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeTC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			".", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeTR
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			"<", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeCL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			".", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeCC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			">", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeCR
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			".", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeBL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			"v", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeBC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
 			".", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.CanvasDirectionResizePreview = ResizeBR
 			}, nil),
 	}, FlowDirectionHorizontal)
 	anchorBox.FlowChildren()
-
-	var widthInput, heightInput *Entity
-	var newCanvasWidth, newCanvasHeight int
 
 	widthInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasWidth), false,
 		func(entity *Entity, button rl.MouseButton) {
@@ -96,28 +110,29 @@ func NewResizeUI() *Entity {
 				drawableParent, ok := drawable.DrawableType.(*DrawableText)
 
 				if ok {
-					finishedEditing := func() {
+					alterValue := func() {
 						if parsed, err := strconv.ParseInt(drawableParent.Label, 10, 64); err == nil {
-							newCanvasWidth = int(parsed)
-							// TODO call layer resize function
+							CurrentFile.CanvasWidthResizePreview = int(parsed)
 						}
-						RemoveCapturedInput()
 					}
 
 					switch {
 					case key >= 48 && key <= 57:
 						drawableParent.Label += string(rune(key))
-					case key == rl.KeyBackspace:
+						alterValue()
+					case key == rl.KeyBackspace && len(drawableParent.Label) > 0:
 						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
+						alterValue()
 					case key == rl.KeyTab:
-						finishedEditing()
+						RemoveCapturedInput()
+
 						// Set control to heightInput
 						if hi, ok := heightInput.GetInteractable(); ok {
 							UIEntityCapturedInput = heightInput
 							UIInteractableCapturedInput = hi
 						}
 					case key == rl.KeyEnter:
-						finishedEditing()
+						RemoveCapturedInput()
 					}
 				}
 			}
@@ -136,24 +151,24 @@ func NewResizeUI() *Entity {
 				drawableParent, ok := drawable.DrawableType.(*DrawableText)
 
 				if ok {
-					finishedEditing := func() {
+					alterValue := func() {
 						if parsed, err := strconv.ParseInt(drawableParent.Label, 10, 64); err == nil {
-							newCanvasHeight = int(parsed)
-							// TODO call layer resize function
+							CurrentFile.CanvasHeightResizePreview = int(parsed)
 						}
-						RemoveCapturedInput()
 					}
 
 					switch {
 					case key >= 48 && key <= 57:
 						drawableParent.Label += string(rune(key))
-					case key == rl.KeyBackspace:
+						alterValue()
+					case key == rl.KeyBackspace && len(drawableParent.Label) > 0:
 						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
+						alterValue()
 					case key == rl.KeyTab:
-						finishedEditing()
+						RemoveCapturedInput()
 					case key == rl.KeyEnter:
 						// TODO make this do resize event and then close resize dialogue
-						finishedEditing()
+						RemoveCapturedInput()
 					}
 				}
 			}
@@ -171,6 +186,7 @@ func NewResizeUI() *Entity {
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight),
 			"Resize", false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.Resize(CurrentFile.CanvasWidthResizePreview, CurrentFile.CanvasHeightResizePreview, CurrentFile.CanvasDirectionResizePreview)
 			}, nil),
 	}, FlowDirectionVertical)
 
@@ -185,6 +201,8 @@ func NewResizeUI() *Entity {
 		FlowDirectionHorizontal,
 	)
 	resizeButtons.FlowChildren()
+
+	ResizeUIShowDialog()
 
 	return resizeButtons
 }
