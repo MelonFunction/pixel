@@ -41,8 +41,6 @@ func NewResizeUI() *Entity {
 		}, nil)
 	// closeResizeButton.Hide()
 
-	var widthInput, heightInput *Entity
-
 	// Controls for resizing from a particular side
 	anchorBox := NewBox(rl.NewRectangle(
 		float32(cx),
@@ -98,84 +96,53 @@ func NewResizeUI() *Entity {
 	}, FlowDirectionHorizontal)
 	anchorBox.FlowChildren()
 
-	widthInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasWidthResizePreview), false,
-		func(entity *Entity, button rl.MouseButton) {
-			// button up
-		}, nil,
-		func(entity *Entity, key rl.Key) {
+	makeInput := func(linkedValue *int, tabNext *Entity) *Entity {
+		return NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(*linkedValue), false,
+			func(entity *Entity, button rl.MouseButton) {
+				// button up
+			}, nil,
+			func(entity *Entity, key rl.Key) {
+				// key pressed
+				if res, err := scene.QueryID(entity.ID); err == nil {
+					drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+					drawableParent, ok := drawable.DrawableType.(*DrawableText)
 
-			// key pressed
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-				drawableParent, ok := drawable.DrawableType.(*DrawableText)
-
-				if ok {
-					alterValue := func() {
-						if parsed, err := strconv.ParseInt(drawableParent.Label, 10, 64); err == nil {
-							CurrentFile.CanvasWidthResizePreview = int(parsed)
+					if ok {
+						alterValue := func() {
+							if parsed, err := strconv.ParseInt(drawableParent.Label, 10, 64); err == nil {
+								*linkedValue = int(parsed)
+							}
 						}
-					}
 
-					switch {
-					case key >= 48 && key <= 57:
-						drawableParent.Label += string(rune(key))
-						alterValue()
-					case key == rl.KeyBackspace && len(drawableParent.Label) > 0:
-						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
-						alterValue()
-					case key == rl.KeyTab:
-						RemoveCapturedInput()
+						switch {
+						case key >= 48 && key <= 57:
+							drawableParent.Label += string(rune(key))
+							alterValue()
+						case key == rl.KeyBackspace && len(drawableParent.Label) > 0:
+							drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
+							alterValue()
+						case key == rl.KeyTab:
+							RemoveCapturedInput()
 
-						// Set control to heightInput
-						if hi, ok := heightInput.GetInteractable(); ok {
-							UIEntityCapturedInput = heightInput
-							UIInteractableCapturedInput = hi
+							// Set control to tabNext
+							if tabNext != nil {
+								if hi, ok := tabNext.GetInteractable(); ok {
+									UIEntityCapturedInput = tabNext
+									UIInteractableCapturedInput = hi
+								}
+							}
+						case key == rl.KeyEnter:
+							RemoveCapturedInput()
 						}
-					case key == rl.KeyEnter:
-						RemoveCapturedInput()
 					}
 				}
-			}
+			})
+	}
 
-		})
+	heightInput := makeInput(&CurrentFile.CanvasHeightResizePreview, nil)
+	widthInput := makeInput(&CurrentFile.CanvasWidthResizePreview, heightInput)
 
-	heightInput = NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(CurrentFile.CanvasHeightResizePreview), false,
-		func(entity *Entity, button rl.MouseButton) {
-			// button up
-		}, nil,
-		func(entity *Entity, key rl.Key) {
-
-			// key pressed
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-				drawableParent, ok := drawable.DrawableType.(*DrawableText)
-
-				if ok {
-					alterValue := func() {
-						if parsed, err := strconv.ParseInt(drawableParent.Label, 10, 64); err == nil {
-							CurrentFile.CanvasHeightResizePreview = int(parsed)
-						}
-					}
-
-					switch {
-					case key >= 48 && key <= 57:
-						drawableParent.Label += string(rune(key))
-						alterValue()
-					case key == rl.KeyBackspace && len(drawableParent.Label) > 0:
-						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
-						alterValue()
-					case key == rl.KeyTab:
-						RemoveCapturedInput()
-					case key == rl.KeyEnter:
-						// TODO make this do resize event and then close resize dialogue
-						RemoveCapturedInput()
-					}
-				}
-			}
-
-		})
-
-	textBoxes := NewBox(rl.NewRectangle(
+	canvasTextBoxes := NewBox(rl.NewRectangle(
 		float32(cx),
 		float32(cy),
 		float32(UIFontSize*2*10),
@@ -196,7 +163,7 @@ func NewResizeUI() *Entity {
 		[]*Entity{
 			closeResizeButton,
 			anchorBox,
-			textBoxes,
+			canvasTextBoxes,
 		},
 		FlowDirectionHorizontal,
 	)

@@ -150,7 +150,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
 
-		CanvasWidth:  canvasWidth, // TODO prompt
+		CanvasWidth:  canvasWidth,
 		CanvasHeight: canvasHeight,
 		TileWidth:    tileWidth,
 		TileHeight:   tileHeight,
