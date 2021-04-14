@@ -180,18 +180,22 @@ func (s *UIFileSystem) Draw() {
 
 	// Debug text
 	if ShowDebug {
-		for y, history := range CurrentFile.History {
-			str := fmt.Sprintf("Layer: %d, Diff: %d",
-				history.LayerIndex,
-				len(history.PixelState))
-			rl.DrawText(str, 20, 20*y+260, 20, rl.White)
-		}
+		rl.DrawText(fmt.Sprintf("CanvasWidthResizePreview: %v", CurrentFile.CanvasWidthResizePreview), 0, 80, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("CanvasHeightResizePreview: %v", CurrentFile.CanvasHeightResizePreview), 0, 100, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("TileWidthResizePreview: %v", CurrentFile.TileWidthResizePreview), 0, 120, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("TileHeightResizePreview: %v", CurrentFile.TileHeightResizePreview), 0, 140, 20, rl.White)
 
 		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInput: %v", UIInteractableCapturedInput), 0, 160, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, 180, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
+		for y, history := range CurrentFile.History {
+			str := fmt.Sprintf("Layer: %d, Diff: %d",
+				history.LayerIndex,
+				len(history.PixelState))
+			rl.DrawText(str, 20, 20*y+260, 20, rl.White)
+		}
 	}
 }
 

@@ -72,12 +72,12 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	if hoverable.Hovered && hoverable.DidMouseLeave {
 		hoverable.DidMouseLeave = false
 		if hoverable.OnMouseEnter != nil {
-			hoverable.OnMouseEnter()
+			hoverable.OnMouseEnter(result.Entity)
 		}
 	} else if !hoverable.Hovered && !hoverable.DidMouseLeave {
 		hoverable.DidMouseLeave = true
 		if hoverable.OnMouseLeave != nil {
-			hoverable.OnMouseLeave()
+			hoverable.OnMouseLeave(result.Entity)
 		}
 	}
 

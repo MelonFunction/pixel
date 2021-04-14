@@ -192,6 +192,11 @@ func (f *File) Resize(width, height int, direction ResizeDirection) {
 	LayersUIRebuildList()
 }
 
+func (f *File) ResizeTileSize(width, height int) {
+	f.TileWidth = width
+	f.TileHeight = height
+}
+
 // SetCurrentLayer sets the current layer
 func (f *File) SetCurrentLayer(index int) {
 	f.CurrentLayer = index

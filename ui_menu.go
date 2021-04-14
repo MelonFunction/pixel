@@ -18,50 +18,6 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	var saveButton, exportButton, openButton, resizeButton, fileButton *Entity
 	hoveredButtons := make([]*Entity, 0, 4)
 
-	// Show all of the buttons when file button or its contents are hovered
-	showFileButtons := func(entity *Entity) func() {
-		return func() {
-			found := false
-			for _, e := range hoveredButtons {
-				if e == entity {
-					found = true
-				}
-			}
-			if !found {
-				hoveredButtons = append(hoveredButtons, entity)
-			}
-
-			if len(hoveredButtons) > 0 {
-				saveButton.Show()
-				exportButton.Show()
-				openButton.Show()
-				resizeButton.Show()
-				menuContexts.Scene.MoveEntityToEnd(menuContexts)
-			}
-		}
-	}
-
-	hideFileButtons := func(entity *Entity) func() {
-		return func() {
-			for i, e := range hoveredButtons {
-				if e == entity {
-					hoveredButtons = append(hoveredButtons[:i], hoveredButtons[i+1:]...)
-				}
-			}
-
-			// Hide everything if nothing is being hovered
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				if len(hoveredButtons) == 0 {
-					saveButton.Hide()
-					exportButton.Hide()
-					openButton.Hide()
-					resizeButton.Hide()
-				}
-			}()
-		}
-	}
-
 	fo := rl.MeasureTextEx(*Font, "resize", UIFontSize, 1)
 	saveButton = NewButtonText(
 		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
@@ -101,8 +57,43 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 
 	for _, button := range []*Entity{saveButton, exportButton, openButton, resizeButton, fileButton} {
 		if hoverable, ok := button.GetHoverable(); ok {
-			hoverable.OnMouseEnter = showFileButtons(button)
-			hoverable.OnMouseLeave = hideFileButtons(button)
+			hoverable.OnMouseEnter = func(entity *Entity) {
+				found := false
+				for _, e := range hoveredButtons {
+					if e == entity {
+						found = true
+					}
+				}
+				if !found {
+					hoveredButtons = append(hoveredButtons, entity)
+				}
+
+				if len(hoveredButtons) > 0 {
+					saveButton.Show()
+					exportButton.Show()
+					openButton.Show()
+					resizeButton.Show()
+					menuContexts.Scene.MoveEntityToEnd(menuContexts)
+				}
+			}
+			hoverable.OnMouseLeave = func(entity *Entity) {
+				for i, e := range hoveredButtons {
+					if e == entity {
+						hoveredButtons = append(hoveredButtons[:i], hoveredButtons[i+1:]...)
+					}
+				}
+
+				// Hide everything if nothing is being hovered
+				go func() {
+					time.Sleep(500 * time.Millisecond)
+					if len(hoveredButtons) == 0 {
+						saveButton.Hide()
+						exportButton.Hide()
+						openButton.Hide()
+						resizeButton.Hide()
+					}
+				}()
+			}
 		}
 	}
 
