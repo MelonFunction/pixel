@@ -164,8 +164,8 @@ type Hoverable struct {
 	Hovered  bool
 	Selected bool
 
-	OnMouseEnter func()
-	OnMouseLeave func()
+	OnMouseEnter func(entity *Entity)
+	OnMouseLeave func(entity *Entity)
 	// Prevent multiple leave events
 	DidMouseLeave bool
 
@@ -189,6 +189,9 @@ type Drawable struct {
 
 	// Hidden will prevent rendering when true
 	Hidden bool
+
+	OnHide func(entity *Entity)
+	OnShow func(entity *Entity)
 
 	// IsChild prevents normal rendering and instead renders to its
 	// DrawableParent Texture
@@ -312,6 +315,17 @@ func (e *Entity) Hide() error {
 			return fmt.Errorf("No drawable component on entity")
 		}
 		drawable.Hidden = true
+
+		if drawable.OnHide != nil {
+			drawable.OnHide(e)
+		}
+
+		// Recursively call Hide on each child
+		if children, err := e.GetChildren(); err == nil {
+			for _, child := range children {
+				child.Hide()
+			}
+		}
 	}
 	return nil
 }
@@ -324,6 +338,17 @@ func (e *Entity) Show() error {
 			return fmt.Errorf("No drawable component on entity")
 		}
 		drawable.Hidden = false
+
+		if drawable.OnShow != nil {
+			drawable.OnShow(e)
+		}
+
+		// Recursively call Show on each child
+		if children, err := e.GetChildren(); err == nil {
+			for _, child := range children {
+				child.Show()
+			}
+		}
 
 		scene.MoveEntityToEnd(e)
 	}
