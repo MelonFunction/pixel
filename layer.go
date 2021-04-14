@@ -61,16 +61,19 @@ func (l *Layer) Resize(width, height int, direction ResizeDirection) {
 		dy = h - nh
 	}
 
+	newPixelData := make(map[IntVec2]rl.Color)
 	rl.BeginTextureMode(l.Canvas)
 	rl.ClearBackground(rl.Transparent)
 	for x := dx; x < w; x++ {
 		for y := dy; y < h; y++ {
 			if color, ok := l.PixelData[IntVec2{x, y}]; ok {
 				rl.DrawPixel(x-dx, y-dy, color)
+				newPixelData[IntVec2{x - dx, y - dy}] = color
 			}
 		}
 	}
 	rl.EndTextureMode()
+	l.PixelData = newPixelData
 }
 
 // NewLayer returns a pointer to a new Layer
