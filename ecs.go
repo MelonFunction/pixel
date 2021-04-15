@@ -52,7 +52,6 @@ type Scene struct {
 
 	ComponentsMap map[string]*Component // allows for querying without a ref to the component
 	Tags          map[string]Tag        // tags cache, allows searching for tag by string
-
 }
 
 type Tag struct {
