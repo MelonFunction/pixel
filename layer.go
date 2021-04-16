@@ -24,8 +24,8 @@ func (l *Layer) Resize(width, height int, direction ResizeDirection) {
 	w := CurrentFile.CanvasWidth
 	h := CurrentFile.CanvasHeight
 
-	nw := CurrentFile.CanvasWidthResizePreview
-	nh := CurrentFile.CanvasHeightResizePreview
+	nw := width
+	nh := height
 
 	// offsets
 	dx := 0

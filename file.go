@@ -45,6 +45,14 @@ type HistoryState struct {
 	LayerIndex int
 }
 
+type HistoryResize struct {
+	// PrevLayerState is a slice consisting of all layer's PixelData
+	PrevLayerState, CurrentLayerState []map[IntVec2]rl.Color
+	// Used for calling Layer.Resize. ResizeDirection doesn't matter
+	PrevWidth, PrevHeight       int
+	CurrentWidth, CurrentHeight int
+}
+
 // DrawPixel draws a pixel. It records actions into history.
 func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 	// Set the pixel data in the current layer
@@ -108,6 +116,8 @@ type File struct {
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
 
+	// History uses empty interfaces because I don't want to use nested structs
+	// to defer the base type
 	History           []interface{}
 	HistoryMaxActions int
 	historyOffset     int      // How many undos have been made
@@ -180,11 +190,16 @@ const (
 )
 
 func (f *File) Resize(width, height int, direction ResizeDirection) {
-	// TODO history
+	prevLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
+	currentLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
+
 	for _, layer := range f.Layers {
+		prevLayerDatas = append(prevLayerDatas, layer.PixelData)
 		layer.Resize(width, height, direction)
+		currentLayerDatas = append(currentLayerDatas, layer.PixelData)
 	}
 
+	f.AppendHistory(HistoryResize{prevLayerDatas, currentLayerDatas, f.CanvasWidth, f.CanvasHeight, width, height})
 	f.CanvasWidth = width
 	f.CanvasHeight = height
 
@@ -250,8 +265,6 @@ func (f *File) Undo() {
 		index := len(f.History) - f.historyOffset
 		history := f.History[index]
 
-		log.Println("undo", history)
-
 		switch typed := history.(type) {
 		case HistoryPixel:
 			current := f.CurrentLayer
@@ -288,8 +301,18 @@ func (f *File) Undo() {
 				f.SetCurrentLayer(typed.LayerIndex - 1)
 			}
 			LayersUIRebuildList()
+		case HistoryResize:
+			f.CanvasWidthResizePreview = typed.PrevWidth
+			f.CanvasHeightResizePreview = typed.PrevHeight
+			f.CanvasWidth = typed.PrevWidth
+			f.CanvasHeight = typed.PrevHeight
+			for i, layer := range typed.PrevLayerState {
+				f.Layers[i].PixelData = layer
+				f.Layers[i].Resize(typed.PrevWidth, typed.PrevHeight, ResizeTL)
+			}
 		}
 
+		LayersUIRebuildList()
 	}
 }
 
@@ -332,9 +355,19 @@ func (f *File) Redo() {
 			// TODO add to correct position on f.Layers
 			f.Layers = append(f.Layers[:len(f.Layers)-1], layer, f.Layers[len(f.Layers)-1])
 			LayersUIRebuildList()
+		case HistoryResize:
+			f.CanvasWidthResizePreview = typed.CurrentWidth
+			f.CanvasHeightResizePreview = typed.CurrentHeight
+			f.CanvasWidth = typed.CurrentWidth
+			f.CanvasHeight = typed.CurrentHeight
+			for i, layer := range typed.CurrentLayerState {
+				f.Layers[i].PixelData = layer
+				f.Layers[i].Resize(typed.CurrentWidth, typed.CurrentHeight, ResizeTL)
+			}
 		}
 
 		f.historyOffset--
+		LayersUIRebuildList()
 	}
 }
 
