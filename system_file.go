@@ -34,7 +34,7 @@ func NewUIFileSystem() *UIFileSystem {
 				0,
 				0,
 				float32(rl.GetScreenWidth()),
-				UIFontSize*20,
+				float32(rl.GetScreenHeight()),
 			)),
 			"editors": NewEditorsUI(rl.NewRectangle(
 				0,
@@ -45,21 +45,21 @@ func NewUIFileSystem() *UIFileSystem {
 				float32(rl.GetScreenWidth()-128*1.5),
 				float32(0),
 				128*1.5,
-				128*1.8)),
+				128*1.5+UIButtonHeight*1.5)),
 			"palette": NewPaletteUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
 				float32(0),
 				UIButtonHeight*2,
-				128*1.8-UIButtonHeight)),
+				128*1.5+UIButtonHeight*0.5)),
 			"currentColor": NewCurrentColorUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
-				float32(128*1.8-UIButtonHeight*0.66),
+				128*1.5+UIButtonHeight*1.5-UIButtonHeight,
 				UIButtonHeight*2,
 				UIButtonHeight)),
 			"tools": NewToolsUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
-				128*1.8,
-				128*1.5,
+				128*1.5+UIButtonHeight*1.5,
+				128*1.5+UIButtonHeight*2,
 				UIButtonHeight)),
 			"layers": NewLayersUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-128*2.5),

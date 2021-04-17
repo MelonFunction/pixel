@@ -201,7 +201,7 @@ func NewResizeUI() *Entity {
 	)
 	resizeButtons.FlowChildren()
 
-	ResizeUIShowDialog()
+	ResizeUIHideDialog()
 
 	return resizeButtons
 }
