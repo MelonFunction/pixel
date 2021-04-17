@@ -47,14 +47,14 @@ func NewUIFileSystem() *UIFileSystem {
 				128*1.5,
 				128*1.5+UIButtonHeight*1.5)),
 			"palette": NewPaletteUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
+				float32(rl.GetScreenWidth()-128*2.5),
 				float32(0),
-				UIButtonHeight*2,
+				128,
 				128*1.5+UIButtonHeight*0.5)),
 			"currentColor": NewCurrentColorUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
-				128*1.5+UIButtonHeight*1.5-UIButtonHeight,
-				UIButtonHeight*2,
+				float32(rl.GetScreenWidth()-128*2.5),
+				128*1.5+UIButtonHeight*1.5-UIButtonHeight+4,
+				128,
 				UIButtonHeight)),
 			"tools": NewToolsUI(rl.NewRectangle(
 				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),

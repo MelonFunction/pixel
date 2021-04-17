@@ -225,6 +225,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 	if ok {
 		scrollable = scrollableInterface.(*Scrollable)
 	}
+	// TODO see drawBorder in system_render.go
 	// hoverable.Hovered = false
 
 	// Don't render children until the texture mode is set by the parent

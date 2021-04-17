@@ -21,8 +21,8 @@ func PaletteUIAddColor(color rl.Color) {
 	var h float32
 	if res, err := scene.QueryID(paletteEntity.ID); err == nil {
 		moveable := res.Components[paletteEntity.Scene.ComponentsMap["moveable"]].(*Moveable)
-		w = moveable.Bounds.Width / 3
-		h = moveable.Bounds.Width / 3
+		w = moveable.Bounds.Width / 4
+		h = moveable.Bounds.Width / 4
 	}
 
 	var e *Entity
