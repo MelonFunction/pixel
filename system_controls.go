@@ -237,7 +237,9 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		switch t := drawable.DrawableType.(type) {
 		case *DrawableParent:
 			for _, child := range t.Children {
-				s.process(child, true)
+				if s.process(child, true) {
+					return true
+				}
 			}
 		}
 
@@ -247,6 +249,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			if scrollAmount != 0 {
 				UIHasControl = true
 				scrollable.ScrollOffset += scrollAmount
+				return true
 			}
 		}
 
@@ -266,6 +269,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			}
 		}
 	}
+
 	return false
 }
 
@@ -526,12 +530,20 @@ func (s *UIControlSystem) Update(dt float32) {
 	}
 
 	if shouldProcess {
-		for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"]) {
+		res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"])
+		// Reverse order so that entities that are on top can get input and return
+		for i := len(res)/2 - 1; i >= 0; i-- {
+			opp := len(res) - 1 - i
+			res[i], res[opp] = res[opp], res[i]
+		}
+
+		for _, result := range res {
 			// Clicked on something, stop processing
 			if s.process(result, false) {
 				return
 			}
 		}
+		UIHasControl = false
 	}
 
 }
