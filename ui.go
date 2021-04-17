@@ -68,8 +68,49 @@ func (entity *Entity) GetMoveable() (t *Moveable, ok bool) {
 	return t, ok
 }
 
+// Side is the side of the component to snap to
+type Side int
+
+const (
+	// SideLeft is the left side
+	SideLeft Side = iota
+	// SideRight is the right side
+	SideRight
+	// SideTop is the top side
+	SideTop
+	// SideBottom is the bottom side
+	SideBottom
+)
+
 // Resizeable allows a component to be resized and stores some callbacks
 type Resizeable struct {
+	SnappedTo []SnapData
+
+	// OnResize is called when a resize event happens, after the snapping operation
+	OnResize func(entity *Entity)
+}
+
+// SnapData describes which entities to snap to
+type SnapData struct {
+	// Parent is the parent entity (both Moveable and Resizeable need to be present)
+	Parent *Entity
+	// Snap a specified side of a child to the specified side of the parent.
+	// SideLeft cannot snap to a SideTop or SideBottom. Use the correct axis.
+	SnapSideChild, SnapSideParent Side
+}
+
+// Snap snaps an entity to another entity.
+// To snap to screen edges, make an entity which is always offscreen (manually
+// move it using the OnResize callback) and Snap to it
+func (entity *Entity) Snap(data []SnapData) error {
+	resizeable, ok := entity.GetResizeable()
+	if !ok {
+		return fmt.Errorf("Resizeable not found on entity")
+	}
+
+	resizeable.SnappedTo = data
+
+	return nil
 }
 
 func (entity *Entity) GetResizeable() (t *Resizeable, ok bool) {
@@ -472,8 +513,14 @@ func RemoveCapturedInput() {
 // TODO clip child bounds if they overflow parent
 func (e *Entity) FlowChildren() {
 	if result, err := scene.QueryID(e.ID); err == nil {
-		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
-		parentMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+		parentDrawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
+		if !ok {
+			return
+		}
+		parentMoveable, ok := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
+		if !ok {
+			return
+		}
 
 		children := make([]*Entity, 0, 16)
 
@@ -482,7 +529,7 @@ func (e *Entity) FlowChildren() {
 		case *DrawableParent:
 			children = typed.Children
 		default:
-			panic("Entity doesn't support flowing as it doesn't have child elements (must be a box or scroll!)")
+			return
 		}
 
 		var fixNested func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable)
@@ -548,6 +595,17 @@ func (e *Entity) FlowChildren() {
 	}
 }
 
+// NewBlock is mostly used for snapping purposes
+func NewBlock(
+	bounds rl.Rectangle,
+) *Entity {
+	e := scene.NewEntity(nil).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(resizeable, &Resizeable{})
+	e.Name = "Block"
+	return e
+}
+
 // NewRenderTexture creates a render texture
 func NewRenderTexture(
 	bounds rl.Rectangle,
@@ -556,6 +614,7 @@ func NewRenderTexture(
 ) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))}})
@@ -573,6 +632,7 @@ func NewButtonTexture(
 ) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: NewDrawableTexture(texturePath)})
@@ -589,6 +649,7 @@ func NewButtonText(bounds rl.Rectangle,
 ) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
@@ -607,6 +668,7 @@ func NewInput(
 ) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
@@ -628,6 +690,7 @@ func prepareChildren(entity *Entity, children []*Entity) {
 func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
 			IsPassthrough: true,
@@ -643,6 +706,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
+		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{

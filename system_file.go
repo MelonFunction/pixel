@@ -14,66 +14,118 @@ var (
 type UIFileSystem struct {
 	BasicSystem
 
-	UI map[string]*Entity
-
 	Camera rl.Camera2D
 	target rl.Vector2
 
 	// Used for relational mouse movement
 	mouseX, mouseY, mouseLastX, mouseLastY int
 
+	// workaround for resizing after AddSystem call has been made
+	hasDoneFirstFrameResize bool
+
 	cursor rl.Vector2
 }
 
 func NewUIFileSystem() *UIFileSystem {
-	f := &UIFileSystem{
-		Camera: rl.Camera2D{Zoom: 8.0},
-
-		UI: map[string]*Entity{
-			"menu": NewMenuUI(rl.NewRectangle(
-				0,
-				0,
-				float32(rl.GetScreenWidth()),
-				float32(rl.GetScreenHeight()),
-			)),
-			"editors": NewEditorsUI(rl.NewRectangle(
-				0,
-				UIFontSize*2,
-				float32(rl.GetScreenWidth()),
-				UIFontSize*2)),
-			"rgb": NewRGBUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-128*1.5),
-				float32(0),
-				128*1.5,
-				128*1.5+UIButtonHeight*1.5)),
-			"palette": NewPaletteUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-128*2.5),
-				float32(0),
-				128,
-				128*1.5+UIButtonHeight*0.5)),
-			"currentColor": NewCurrentColorUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-128*2.5),
-				128*1.5+UIButtonHeight*1.5-UIButtonHeight+4,
-				128,
-				UIButtonHeight)),
-			"tools": NewToolsUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-int(UIButtonHeight)*2-128*1.5),
-				128*1.5+UIButtonHeight*1.5,
-				128*1.5+UIButtonHeight*2,
-				UIButtonHeight)),
-			"layers": NewLayersUI(rl.NewRectangle(
-				float32(rl.GetScreenWidth()-128*2.5),
-				float32(rl.GetScreenHeight()-128*2),
-				128*2.5,
-				128*2)),
-			"resize": NewResizeUI(),
-		},
+	s := &UIFileSystem{
+		Camera:                  rl.Camera2D{Zoom: 8.0},
+		hasDoneFirstFrameResize: false,
 	}
 
-	f.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
-	f.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	// Screen edges, left and top aren't needed since 0 stays constant
+	screenRight := NewBlock(rl.NewRectangle(
+		float32(rl.GetScreenWidth()),
+		0,
+		0,
+		0,
+	))
+	if res, ok := screenRight.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			if mov, ok := entity.GetMoveable(); ok {
+				// Move bounds to right side of the screen
+				mov.Bounds.X = float32(rl.GetScreenWidth())
+			}
+		}
+	}
+	screenBottom := NewBlock(rl.NewRectangle(
+		float32(rl.GetScreenWidth()),
+		0,
+		0,
+		0,
+	))
+	if res, ok := screenBottom.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			if mov, ok := entity.GetMoveable(); ok {
+				// Move bounds to right side of the screen
+				mov.Bounds.Y = float32(rl.GetScreenHeight())
+			}
+		}
+	}
 
-	return f
+	// UI Components
+	NewMenuUI(rl.NewRectangle(
+		0,
+		0,
+		float32(rl.GetScreenWidth()),
+		float32(rl.GetScreenHeight()),
+	))
+
+	NewEditorsUI(rl.NewRectangle(
+		0,
+		UIFontSize*2,
+		float32(rl.GetScreenWidth()),
+		UIFontSize*2))
+
+	rgb := NewRGBUI(rl.NewRectangle(
+		float32(rl.GetScreenWidth()-128*1.5),
+		float32(0),
+		128*1.5,
+		128*1.5+UIButtonHeight*1.5))
+	rgb.Snap([]SnapData{
+		{screenRight, SideRight, SideLeft},
+	})
+
+	palette := NewPaletteUI(rl.NewRectangle(
+		float32(rl.GetScreenWidth()-128*2.5),
+		float32(0),
+		128,
+		128*1.5+UIButtonHeight*0.5))
+	palette.Snap([]SnapData{
+		{rgb, SideRight, SideLeft},
+	})
+
+	currentColor := NewCurrentColorUI(rl.NewRectangle(
+		float32(rl.GetScreenWidth()-128*2.5),
+		128*1.5+UIButtonHeight*1.5-UIButtonHeight+6,
+		128,
+		UIButtonHeight))
+	currentColor.Snap([]SnapData{
+		{rgb, SideRight, SideLeft},
+	})
+
+	tools := NewToolsUI(rl.NewRectangle(
+		float32(rl.GetScreenWidth()-128*2.5),
+		128*1.5+UIButtonHeight*1.5,
+		128*1.5+UIButtonHeight*2,
+		UIButtonHeight))
+	tools.Snap([]SnapData{
+		{currentColor, SideTop, SideBottom},
+		{currentColor, SideLeft, SideLeft},
+	})
+
+	layers := NewLayersUI(rl.NewRectangle(
+		float32(rl.GetScreenWidth()-128*2.5),
+		float32(rl.GetScreenHeight()-128*2),
+		128*2.5,
+		128*2))
+	layers.Snap([]SnapData{
+		{screenRight, SideRight, SideLeft},
+		{screenBottom, SideBottom, SideTop},
+	})
+
+	NewResizeUI()
+
+	return s
 }
 
 func (s *UIFileSystem) Draw() {
@@ -199,38 +251,93 @@ func (s *UIFileSystem) Draw() {
 	}
 }
 
+func recursiveResize(entity *Entity) {
+	if res, ok := entity.GetResizeable(); ok {
+		if len(res.SnappedTo) > 0 {
+			for _, snapData := range res.SnappedTo {
+				recursiveResize(snapData.Parent)
+
+				if childMoveable, ok := entity.GetMoveable(); ok {
+					if parentMoveable, ok := snapData.Parent.GetMoveable(); ok {
+						switch snapData.SnapSideChild {
+						case SideLeft:
+							childMoveable.Bounds.X = parentMoveable.Bounds.X
+							if snapData.SnapSideParent == SideRight {
+								childMoveable.Bounds.X += parentMoveable.Bounds.Width
+							}
+						case SideRight:
+							childMoveable.Bounds.X = parentMoveable.Bounds.X
+							if snapData.SnapSideParent == SideLeft {
+								childMoveable.Bounds.X -= childMoveable.Bounds.Width
+							}
+						case SideTop:
+							childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+							if snapData.SnapSideParent == SideBottom {
+								childMoveable.Bounds.Y += parentMoveable.Bounds.Height
+							}
+						case SideBottom:
+							childMoveable.Bounds.Y = parentMoveable.Bounds.Y
+							if snapData.SnapSideParent == SideTop {
+								childMoveable.Bounds.Y -= childMoveable.Bounds.Height
+							}
+						}
+					}
+				}
+			}
+		}
+
+		entity.FlowChildren()
+
+		if res.OnResize != nil {
+			res.OnResize(entity)
+		}
+	}
+}
+
+func (s *UIFileSystem) Resize() {
+	s.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
+	s.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+
+	s.hasDoneFirstFrameResize = true
+
+	for _, result := range s.Scene.QueryTag(s.Scene.Tags["resizeable"], s.Scene.Tags["moveable"]) {
+		_ = result
+		recursiveResize(result.Entity)
+	}
+
+}
+
 func (s *UIFileSystem) Update(dt float32) {
 	// Move target
-	if rl.IsWindowResized() {
-		s.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
-		s.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	if rl.IsWindowResized() || s.hasDoneFirstFrameResize == false {
+		s.Resize()
 
 		// Should probably make something that snaps components to others or
 		// to the window edge but that's a problem for another day (TODO)
-		for name, entity := range s.UI {
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
+		// for name, entity := range s.UI {
+		// 	if res, err := scene.QueryID(entity.ID); err == nil {
+		// 		moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
 
-				switch name {
-				case "layers":
-					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
-					moveable.Bounds.Y = float32(rl.GetScreenHeight()) - moveable.Bounds.Height
-					entity.FlowChildren()
-				case "rgb":
-					moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
-					entity.FlowChildren()
-				case "tools":
-					fallthrough
-				case "palette":
-					fallthrough
-				case "currentColor":
-					moveable.Bounds.X = float32(rl.GetScreenWidth() - int(UIButtonHeight)*2 - 128*1.5)
-					entity.FlowChildren()
+		// 		switch name {
+		// 		case "layers":
+		// 			moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
+		// 			moveable.Bounds.Y = float32(rl.GetScreenHeight()) - moveable.Bounds.Height
+		// 			entity.FlowChildren()
+		// 		case "rgb":
+		// 			moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
+		// 			entity.FlowChildren()
+		// 		case "tools":
+		// 			fallthrough
+		// 		case "palette":
+		// 			fallthrough
+		// 		case "currentColor":
+		// 			moveable.Bounds.X = float32(rl.GetScreenWidth() - int(UIButtonHeight)*2 - 128*1.5)
+		// 			entity.FlowChildren()
 
-				}
-			}
+		// 		}
+		// 	}
 
-		}
+		// }
 
 	}
 
