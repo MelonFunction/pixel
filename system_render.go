@@ -53,16 +53,16 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			// area. Elements aren't hovered when they are added via a button but they can
 			// still be clicked etc. Appears that only hover is broken
 			hoverable.Hovered = false
-			rl.DrawRectangleRec(moveable.Bounds, rl.Black)
+			rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 			rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 		} else {
 			if hoverable.Selected {
 				// TODO colorscheme
 				// Same as hover for now
-				rl.DrawRectangleRec(moveable.Bounds, rl.Black)
+				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 			} else {
-				rl.DrawRectangleRec(moveable.Bounds, rl.Black)
+				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.Gray)
 			}
 		}
