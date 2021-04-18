@@ -44,6 +44,7 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 	t.lastPos.X = x
 	t.lastPos.Y = y
 }
+
 func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.shouldConnectToLastPos = false
 }
@@ -51,11 +52,13 @@ func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
 	// Don't call file.DrawPixel as history isn't needed for this action
-	rl.DrawPixel(x, y, rl.Color{0, 0, 0, 128})
+	rl.DrawPixel(x, y, rl.Color{255, 255, 255, 128})
 }
+
 func (t *PixelBrushTool) SetFileReference(file *File) {
 
 }
+
 func (t *PixelBrushTool) String() string {
 	return t.name
 }

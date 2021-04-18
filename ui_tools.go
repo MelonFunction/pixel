@@ -31,9 +31,19 @@ func ToolsUIAddButton() {
 				CurrentFile.RightTool = NewPixelBrushTool("Eraser", true)
 			}
 		}, nil)
+	fill := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
+		"./res/icons/fill.png", true, func(entity *Entity, button rl.MouseButton) {
+			switch button {
+			case rl.MouseLeftButton:
+				CurrentFile.LeftTool = NewFillTool("Fill")
+			case rl.MouseRightButton:
+				CurrentFile.RightTool = NewFillTool("Fill")
+			}
+		}, nil)
 
 	toolsButtons.PushChild(pencil)
 	toolsButtons.PushChild(eraser)
+	toolsButtons.PushChild(fill)
 	toolsButtons.FlowChildren()
 }
 

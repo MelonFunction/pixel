@@ -8,21 +8,61 @@ var (
 	currentColor rl.Color
 )
 
+// TODO keep opacity on color change
+// TODO move selectors on start
+
 // NewRGBUI creates the UI representation of the color picker
 func NewRGBUI(bounds rl.Rectangle) *Entity {
-	// Hovers over the selected color in the color gradient area
+	// Hovers over the selected color/opacity
 	var areaSelector *Entity
-	// Same but for the color bar
 	var colorSelector *Entity
+	var opacitySelector *Entity
+
+	var hexInput *Entity
+	var rgb *Entity
+	var colorSlider *Entity
+	var opacitySlider *Entity
+
+	opacityColors := make(map[int]rl.Color)
 
 	// The main color gradient area, fading from white to the current color
 	// horizontally, then vertically down to black
 	areaBounds := bounds
 	areaBounds.Height = areaBounds.Width
-	var rgb *Entity
 	var areaColors = make(map[IntVec2]rl.Color)
 	// Used by slider to set tool color when slider is moved
 	var lastColorLocation IntVec2
+
+	makeOpacitySliderArea := func(color rl.Color) {
+		// Setup the opacitySlider texture
+		if drawable, ok := opacitySlider.GetDrawable(); ok {
+			renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
+			if ok {
+				texture := renderTexture.Texture
+				rl.BeginTextureMode(texture)
+				w := texture.Texture.Width
+				fraction := int(w)
+				for px := 0; px < int(texture.Texture.Width); px++ {
+					drawColor := color
+
+					p := (float32(px%fraction) / (float32(fraction) - 1))
+					color.A = uint8(float32(255) * p)
+
+					drawColor.A = 255
+					drawColor.R = uint8(float32(drawColor.R) * p)
+					drawColor.G = uint8(float32(drawColor.G) * p)
+					drawColor.B = uint8(float32(drawColor.B) * p)
+
+					for py := 0; py < int(texture.Texture.Height); py++ {
+						rl.DrawPixel(px, py, drawColor)
+						opacityColors[px] = color
+					}
+				}
+				rl.EndTextureMode()
+			}
+		}
+	}
+
 	rgb = NewRenderTexture(areaBounds,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
@@ -50,8 +90,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				}
 
 				// Move the areaSelector
-				if res, err := scene.QueryID(areaSelector.ID); err == nil {
-					sm := res.Components[areaSelector.Scene.ComponentsMap["moveable"]].(*Moveable)
+				if sm, ok := areaSelector.GetMoveable(); ok {
 					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
 					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 				}
@@ -71,9 +110,12 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 						CurrentFile.RightColor = color
 						CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
 					}
+
+					makeOpacitySliderArea(color)
 				}
 			}
-		})
+		},
+	)
 
 	// Generates the gradient for the color area
 	makeBlendArea := func(origColor rl.Color) {
@@ -113,19 +155,18 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	}
 	makeBlendArea(rl.NewColor(255, 0, 0, 255))
 
-	// The slider of colors
+	// The slider for colors
 	sliderBounds := bounds
-	sliderBounds.Height = bounds.Height - areaBounds.Height
-	var slider *Entity
-	var sliderColors = make(map[int]rl.Color)
-	slider = NewRenderTexture(sliderBounds,
+	sliderBounds.Height = UIButtonHeight / 2
+	sliderColors := make(map[int]rl.Color)
+	colorSlider = NewRenderTexture(sliderBounds,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
-			if res, err := scene.QueryID(slider.ID); err == nil {
-				moveable := res.Components[slider.Scene.ComponentsMap["moveable"]].(*Moveable)
+			if res, err := scene.QueryID(colorSlider.ID); err == nil {
+				moveable := res.Components[colorSlider.Scene.ComponentsMap["moveable"]].(*Moveable)
 
 				mx := rl.GetMouseX()
 				mx -= int(moveable.Bounds.X)
@@ -148,6 +189,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				color, ok := sliderColors[mx]
 				if ok {
 					makeBlendArea(color)
+					makeOpacitySliderArea(color)
 
 					// Update the current color with the last color location
 					color, ok := areaColors[lastColorLocation]
@@ -166,10 +208,58 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					}
 				}
 			}
-		})
+		},
+	)
 
-	if res, err := scene.QueryID(slider.ID); err == nil {
-		drawable := res.Components[slider.Scene.ComponentsMap["drawable"]].(*Drawable)
+	// The slider for opacity
+	opacitySlider = NewRenderTexture(sliderBounds,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+		},
+		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+			// button down
+			if res, err := scene.QueryID(opacitySlider.ID); err == nil {
+				moveable := res.Components[opacitySlider.Scene.ComponentsMap["moveable"]].(*Moveable)
+
+				mx := rl.GetMouseX()
+				mx -= int(moveable.Bounds.X)
+				my := int(moveable.Bounds.Height) / 2
+
+				if mx < 0 {
+					mx = 0
+				}
+				if mx > int(moveable.Bounds.Width)-1 {
+					mx = int(moveable.Bounds.Width) - 1
+				}
+
+				// Move the opacitySelector
+				if sm, ok := opacitySelector.GetMoveable(); ok {
+					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
+					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+				}
+
+				if color, ok := opacityColors[mx]; ok {
+					switch button {
+					case rl.MouseLeftButton:
+						CurrentFile.LeftColor = color
+						CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+					case rl.MouseRightButton:
+						CurrentFile.RightColor = color
+						CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+					}
+				}
+			}
+		},
+	)
+	makeOpacitySliderArea(rl.Red)
+
+	hexInputBounds := sliderBounds
+	hexInput = NewInput(hexInputBounds, "#000000", false, func(entity *Entity, button rl.MouseButton) {}, nil, func(entity *Entity, key rl.Key) {
+
+	})
+
+	// Setup the colorSlider texture
+	if drawable, ok := colorSlider.GetDrawable(); ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 		if ok {
 			texture := renderTexture.Texture
@@ -217,11 +307,11 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		}
 	}
 
-	_ = rgb
-	_ = slider
 	container := NewBox(bounds, []*Entity{
 		rgb,
-		slider,
+		colorSlider,
+		opacitySlider,
+		hexInput,
 	}, FlowDirectionVertical)
 
 	// Selectors don't belong to the container, just let them be alone
@@ -257,6 +347,8 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 	// Make the selector which floats around on top of the color area
 	colorSelector = makeSelector()
+
+	opacitySelector = makeSelector()
 
 	container.FlowChildren()
 
