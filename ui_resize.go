@@ -25,6 +25,8 @@ func ResizeUIHideDialog() {
 	CurrentFile.DoingResize = false
 }
 
+// TODO input eval sums, maybe after =, so =16*8 will eval on blur/on submit
+
 // ResizeUIMakeInput is a helper function which binds to a value. Optionally,
 //an *Entity can be provided to switch focus to when tab is pressed.
 func ResizeUIMakeInput(linkedValueCallback func() *int, tabNext *Entity) *Entity {

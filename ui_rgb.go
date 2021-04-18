@@ -69,8 +69,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
-			if res, err := scene.QueryID(rgb.ID); err == nil {
-				moveable := res.Components[rgb.Scene.ComponentsMap["moveable"]].(*Moveable)
+			if moveable, ok := rgb.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				my := rl.GetMouseY()
 				mx -= int(moveable.Bounds.X)
@@ -119,8 +118,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 	// Generates the gradient for the color area
 	makeBlendArea := func(origColor rl.Color) {
-		if res, err := scene.QueryID(rgb.ID); err == nil {
-			drawable := res.Components[rgb.Scene.ComponentsMap["drawable"]].(*Drawable)
+		if drawable, ok := rgb.GetDrawable(); ok {
 			renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 			if ok {
 				texture := renderTexture.Texture
@@ -165,9 +163,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
-			if res, err := scene.QueryID(colorSlider.ID); err == nil {
-				moveable := res.Components[colorSlider.Scene.ComponentsMap["moveable"]].(*Moveable)
-
+			if moveable, ok := colorSlider.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				mx -= int(moveable.Bounds.X)
 				my := int(moveable.Bounds.Height) / 2
@@ -180,8 +176,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				}
 
 				// Move the colorSelector
-				if res, err := scene.QueryID(colorSelector.ID); err == nil {
-					sm := res.Components[colorSelector.Scene.ComponentsMap["moveable"]].(*Moveable)
+				if sm, ok := colorSelector.GetMoveable(); ok {
 					sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
 					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 				}
@@ -218,9 +213,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
-			if res, err := scene.QueryID(opacitySlider.ID); err == nil {
-				moveable := res.Components[opacitySlider.Scene.ComponentsMap["moveable"]].(*Moveable)
-
+			if moveable, ok := opacitySlider.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				mx -= int(moveable.Bounds.X)
 				my := int(moveable.Bounds.Height) / 2
@@ -318,8 +311,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 	makeSelector := func() *Entity {
 		e := NewRenderTexture(rl.NewRectangle(-64, -64, 16, 16), nil, nil)
-		if res, err := scene.QueryID(e.ID); err == nil {
-			drawable := res.Components[e.Scene.ComponentsMap["drawable"]].(*Drawable)
+		if drawable, ok := e.GetDrawable(); ok {
 			renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 			if ok {
 				texture := renderTexture.Texture

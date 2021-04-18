@@ -62,7 +62,7 @@ func NewUIFileSystem() *UIFileSystem {
 		}
 	}
 
-	// UI Components
+	// // UI Components
 	NewMenuUI(rl.NewRectangle(
 		0,
 		0,
@@ -72,13 +72,13 @@ func NewUIFileSystem() *UIFileSystem {
 
 	NewEditorsUI(rl.NewRectangle(
 		0,
-		UIFontSize*2,
+		0,
 		float32(rl.GetScreenWidth()),
 		UIFontSize*2))
 
 	rgb := NewRGBUI(rl.NewRectangle(
-		float32(rl.GetScreenWidth()-128*1.5),
-		float32(0),
+		0,
+		0,
 		128*1.5,
 		128*1.5+UIButtonHeight*1.5))
 	rgb.Snap([]SnapData{
@@ -86,8 +86,8 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 
 	palette := NewPaletteUI(rl.NewRectangle(
-		float32(rl.GetScreenWidth()-128*2.5),
-		float32(0),
+		0,
+		0,
 		128,
 		128*1.5+UIButtonHeight*0.5))
 	palette.Snap([]SnapData{
@@ -95,17 +95,18 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 
 	currentColor := NewCurrentColorUI(rl.NewRectangle(
-		float32(rl.GetScreenWidth()-128*2.5),
-		128*1.5+UIButtonHeight*1.5-UIButtonHeight+6,
+		0,
+		0,
 		128,
 		UIButtonHeight))
 	currentColor.Snap([]SnapData{
 		{rgb, SideRight, SideLeft},
+		{palette, SideTop, SideBottom},
 	})
 
 	tools := NewToolsUI(rl.NewRectangle(
-		float32(rl.GetScreenWidth()-128*2.5),
-		128*1.5+UIButtonHeight*1.5,
+		0,
+		0,
 		128*1.5+UIButtonHeight*2,
 		UIButtonHeight))
 	tools.Snap([]SnapData{
@@ -114,14 +115,32 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 
 	layers := NewLayersUI(rl.NewRectangle(
-		float32(rl.GetScreenWidth()-128*2.5),
-		float32(rl.GetScreenHeight()-128*2),
+		0,
+		0,
 		128*2.5,
 		128*2))
 	layers.Snap([]SnapData{
 		{screenRight, SideRight, SideLeft},
-		{screenBottom, SideBottom, SideTop},
+		{tools, SideTop, SideBottom},
 	})
+	if res, ok := layers.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			// Resize container and inner list to fill the remaining height
+			if mov, ok := entity.GetMoveable(); ok {
+				mov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y
+
+				if lmov, ok := layerList.GetMoveable(); ok {
+					lmov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y - UIButtonHeight
+					if ldraw, ok := layerList.GetDrawable(); ok {
+						if lparentDrawable, ok := ldraw.DrawableType.(*DrawableParent); ok {
+							// Make a new texture for rendering the items to
+							lparentDrawable.Texture = rl.LoadRenderTexture(int(lmov.Bounds.Width), int(lmov.Bounds.Height))
+						}
+					}
+				}
+			}
+		}
+	}
 
 	NewResizeUI()
 

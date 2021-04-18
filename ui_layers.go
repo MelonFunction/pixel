@@ -8,7 +8,7 @@ var (
 	currentLayerHoverable *Hoverable
 	interactables         = make(map[int]*Entity)
 
-	list          *Entity
+	layerList     *Entity
 	listContainer *Entity
 )
 
@@ -30,28 +30,28 @@ func LayersUISetCurrentLayer(index int) {
 }
 
 func LayersUIMakeList(bounds rl.Rectangle) {
-	list = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
+	layerList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the layers
 	for i, layer := range CurrentFile.Layers {
 		if i == len(CurrentFile.Layers)-1 {
 			// ignore hidden layer
 			continue
 		}
-		list.PushChild(LayersUIMakeBox(i, layer))
+		layerList.PushChild(LayersUIMakeBox(i, layer))
 	}
-	list.FlowChildren()
+	layerList.FlowChildren()
 }
 
 func LayersUIRebuildList() {
-	list.DestroyNested()
-	list.Destroy()
-	listContainer.RemoveChild(list)
+	layerList.DestroyNested()
+	layerList.Destroy()
+	listContainer.RemoveChild(layerList)
 
 	if res, err := scene.QueryID(listContainer.ID); err == nil {
 		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
 		bounds := moveable.Bounds
 		LayersUIMakeList(bounds)
-		listContainer.PushChild(list)
+		listContainer.PushChild(layerList)
 		listContainer.FlowChildren()
 	}
 }
@@ -160,8 +160,8 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 				currentLayerHoverable.Selected = false
 			}
 
-			list.PushChild(LayersUIMakeBox(max-2, last))
-			list.FlowChildren()
+			layerList.PushChild(LayersUIMakeBox(max-2, last))
+			layerList.FlowChildren()
 		}, nil)
 
 	listContainer = NewBox(bounds, []*Entity{
@@ -169,7 +169,7 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 	}, FlowDirectionVertical)
 
 	LayersUIMakeList(bounds)
-	listContainer.PushChild(list)
+	listContainer.PushChild(layerList)
 	listContainer.FlowChildren()
 
 	return listContainer
