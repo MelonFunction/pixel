@@ -374,6 +374,8 @@ func (s *UIControlSystem) Update(dt float32) {
 			}
 
 			switch key {
+			case "toggleGrid":
+				CurrentFile.DrawGrid = !CurrentFile.DrawGrid
 			case "showDebug":
 				ShowDebug = !ShowDebug
 			case "resize":

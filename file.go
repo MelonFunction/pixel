@@ -128,9 +128,12 @@ type File struct {
 	RightTool  Tool
 	LeftColor  rl.Color
 	RightColor rl.Color
-	// for preventing multiple event firing
+	// For preventing multiple event firing
 	HasDoneMouseUpLeft  bool
 	HasDoneMouseUpRight bool
+
+	// If grid should be drawn
+	DrawGrid bool
 
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
@@ -158,6 +161,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
+
+		DrawGrid: true,
 
 		CanvasWidth:  canvasWidth,
 		CanvasHeight: canvasHeight,
@@ -391,6 +396,7 @@ func (f *File) Save(path string) {
 }
 
 // Export the file into .png etc
+// TODO remember last save path so resaving/exporting is faster
 func (f *File) Export(path string) {
 	// Create a colored image of the given width and height.
 	img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))

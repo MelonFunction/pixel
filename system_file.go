@@ -164,21 +164,23 @@ func (s *UIFileSystem) Draw() {
 
 	// Grid drawing
 	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
-	for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
-		rl.DrawLine(
-			-CurrentFile.CanvasWidth/2+x,
-			-CurrentFile.CanvasHeight/2,
-			-CurrentFile.CanvasWidth/2+x,
-			CurrentFile.CanvasHeight/2,
-			rl.White)
-	}
-	for y := 0; y <= CurrentFile.CanvasHeight; y += CurrentFile.TileHeight {
-		rl.DrawLine(
-			-CurrentFile.CanvasWidth/2,
-			-CurrentFile.CanvasHeight/2+y,
-			CurrentFile.CanvasWidth/2,
-			-CurrentFile.CanvasHeight/2+y,
-			rl.White)
+	if CurrentFile.DrawGrid {
+		for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
+			rl.DrawLine(
+				-CurrentFile.CanvasWidth/2+x,
+				-CurrentFile.CanvasHeight/2,
+				-CurrentFile.CanvasWidth/2+x,
+				CurrentFile.CanvasHeight/2,
+				rl.White)
+		}
+		for y := 0; y <= CurrentFile.CanvasHeight; y += CurrentFile.TileHeight {
+			rl.DrawLine(
+				-CurrentFile.CanvasWidth/2,
+				-CurrentFile.CanvasHeight/2+y,
+				CurrentFile.CanvasWidth/2,
+				-CurrentFile.CanvasHeight/2+y,
+				rl.White)
+		}
 	}
 
 	// Show outline for canvas resize preview
@@ -311,34 +313,6 @@ func (s *UIFileSystem) Update(dt float32) {
 	// Move target
 	if rl.IsWindowResized() || s.hasDoneFirstFrameResize == false {
 		s.Resize()
-
-		// Should probably make something that snaps components to others or
-		// to the window edge but that's a problem for another day (TODO)
-		// for name, entity := range s.UI {
-		// 	if res, err := scene.QueryID(entity.ID); err == nil {
-		// 		moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
-
-		// 		switch name {
-		// 		case "layers":
-		// 			moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
-		// 			moveable.Bounds.Y = float32(rl.GetScreenHeight()) - moveable.Bounds.Height
-		// 			entity.FlowChildren()
-		// 		case "rgb":
-		// 			moveable.Bounds.X = float32(rl.GetScreenWidth()) - moveable.Bounds.Width
-		// 			entity.FlowChildren()
-		// 		case "tools":
-		// 			fallthrough
-		// 		case "palette":
-		// 			fallthrough
-		// 		case "currentColor":
-		// 			moveable.Bounds.X = float32(rl.GetScreenWidth() - int(UIButtonHeight)*2 - 128*1.5)
-		// 			entity.FlowChildren()
-
-		// 		}
-		// 	}
-
-		// }
-
 	}
 
 	layer := CurrentFile.GetCurrentLayer()
