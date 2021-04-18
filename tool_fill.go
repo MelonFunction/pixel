@@ -37,7 +37,7 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 
 	var recFill func(rx, ry int)
 	recFill = func(rx, ry int) {
-		if pd[IntVec2{rx, ry}] == clickedColor {
+		if pd[IntVec2{rx, ry}] == clickedColor && color != clickedColor {
 			CurrentFile.DrawPixel(rx, ry, color, true)
 			if rx+1 < CurrentFile.CanvasWidth {
 				recFill(rx+1, ry)
