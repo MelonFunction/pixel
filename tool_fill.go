@@ -4,6 +4,7 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// FillTool fills an area of the same colored pixels
 type FillTool struct {
 	lastPos IntVec2
 	name    string
@@ -17,9 +18,11 @@ func NewFillTool(name string) *FillTool {
 	}
 }
 
+// MouseDown is for mouse down events
 func (t *FillTool) MouseDown(x, y int, button rl.MouseButton) {
 }
 
+// MouseUp is for mouse up events
 func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 	color := rl.Transparent
 	switch button {
@@ -54,14 +57,17 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 	recFill(x, y)
 }
 
+// DrawPreview is for drawing the preview
 func (t *FillTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
-	// Don't call file.DrawPixel as history isn't needed for this action
-	rl.DrawPixel(x, y, rl.Color{255, 255, 255, 128})
-}
-
-func (t *FillTool) SetFileReference(file *File) {
-
+	// Preview pixel location with a suitable color
+	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
+	avg := (c.R + c.G + c.B) / 3
+	if avg > 255/2 {
+		rl.DrawPixel(x, y, rl.Color{0, 0, 0, 192})
+	} else {
+		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
+	}
 }
 
 func (t *FillTool) String() string {

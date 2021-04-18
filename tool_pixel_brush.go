@@ -4,6 +4,8 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// PixelBrushTool draws a single pixel at a time and can also double as an
+// eraser if eraser is true
 type PixelBrushTool struct {
 	lastPos                IntVec2
 	shouldConnectToLastPos bool
@@ -21,6 +23,7 @@ func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 	}
 }
 
+// MouseDown is for mouse down events
 func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Assume we are in eraser mode by setting transparent as default
 	color := rl.Transparent
@@ -45,18 +48,22 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 	t.lastPos.Y = y
 }
 
+// MouseUp is for mouse up events
 func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.shouldConnectToLastPos = false
 }
 
+// DrawPreview is for drawing the preview
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
-	// Don't call file.DrawPixel as history isn't needed for this action
-	rl.DrawPixel(x, y, rl.Color{255, 255, 255, 128})
-}
-
-func (t *PixelBrushTool) SetFileReference(file *File) {
-
+	// Preview pixel location with a suitable color
+	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
+	avg := (c.R + c.G + c.B) / 3
+	if avg > 255/2 {
+		rl.DrawPixel(x, y, rl.Color{0, 0, 0, 192})
+	} else {
+		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
+	}
 }
 
 func (t *PixelBrushTool) String() string {
