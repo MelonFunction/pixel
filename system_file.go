@@ -63,18 +63,20 @@ func NewUIFileSystem() *UIFileSystem {
 	}
 
 	// // UI Components
-	NewMenuUI(rl.NewRectangle(
-		0,
-		0,
-		float32(rl.GetScreenWidth()),
-		float32(rl.GetScreenHeight()),
-	))
-
-	NewEditorsUI(rl.NewRectangle(
+	menu := NewMenuUI(rl.NewRectangle(
 		0,
 		0,
 		float32(rl.GetScreenWidth()),
 		UIFontSize*2))
+
+	editors := NewEditorsUI(rl.NewRectangle(
+		0,
+		0,
+		float32(rl.GetScreenWidth()),
+		UIFontSize*2))
+	editors.Snap([]SnapData{
+		{menu, SideTop, SideBottom},
+	})
 
 	rgb := NewRGBUI(rl.NewRectangle(
 		0,

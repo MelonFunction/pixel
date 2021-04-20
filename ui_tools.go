@@ -8,11 +8,11 @@ var (
 	toolsButtons *Entity
 )
 
-func ToolsUICloseEditor() {
+// NewToolsUI creates and returns the tools UI entity
+func NewToolsUI(bounds rl.Rectangle) *Entity {
+	toolsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
-}
-
-func ToolsUIAddButton() {
+	// TODO allow right click to be replaced with selector if alt is pressed
 	pencil := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		"./res/icons/pencil.png", true, func(entity *Entity, button rl.MouseButton) {
 			CurrentFile.LeftTool = NewPixelBrushTool("Pixel Brush", false)
@@ -33,10 +33,5 @@ func ToolsUIAddButton() {
 	toolsButtons.PushChild(eraser)
 	toolsButtons.PushChild(fill)
 	toolsButtons.FlowChildren()
-}
-
-func NewToolsUI(bounds rl.Rectangle) *Entity {
-	toolsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
-	ToolsUIAddButton()
 	return toolsButtons
 }

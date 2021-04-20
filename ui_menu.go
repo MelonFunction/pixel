@@ -99,6 +99,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 
 	// Added to scene on first hover
 	bounds.Y += UIFontSize * 2
+	bounds.Height = float32(rl.GetScreenHeight())
 	menuContexts = NewBox(bounds, []*Entity{
 		saveButton,
 		exportButton,
