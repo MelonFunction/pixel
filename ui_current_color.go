@@ -13,11 +13,26 @@ var (
 	currentColorAdd   *Entity
 )
 
-func CurrentColorSetColor(entity *Entity, color rl.Color) {
-	if res, err := scene.QueryID(entity.ID); err == nil {
-		drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+func CurrentColorSetLeftColor(color rl.Color) {
+	if drawable, ok := currentColorLeft.GetDrawable(); ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 		if ok {
+			CurrentFile.LeftColor = color
+
+			texture := renderTexture.Texture
+			rl.BeginTextureMode(texture)
+			rl.ClearBackground(color)
+			rl.EndTextureMode()
+		}
+	}
+}
+
+func CurrentColorSetRightColor(color rl.Color) {
+	if drawable, ok := currentColorRight.GetDrawable(); ok {
+		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
+		if ok {
+			CurrentFile.RightColor = color
+
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
 			rl.ClearBackground(color)
@@ -36,7 +51,6 @@ func CurrentColorUIAddColor(color rl.Color) *Entity {
 	}
 
 	e := NewRenderTexture(rl.NewRectangle(0, 0, w, h), nil, nil)
-	CurrentColorSetColor(e, color)
 
 	currentColorEntity.PushChild(e)
 	currentColorEntity.FlowChildren()
@@ -47,7 +61,9 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorEntity = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
 	currentColorLeft = CurrentColorUIAddColor(CurrentFile.LeftColor)
+	CurrentColorSetLeftColor(CurrentFile.LeftColor)
 	currentColorRight = CurrentColorUIAddColor(CurrentFile.RightColor)
+	CurrentColorSetRightColor(CurrentFile.RightColor)
 
 	// currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
 	// 	func(entity *Entity, button rl.MouseButton, isHeld bool) {

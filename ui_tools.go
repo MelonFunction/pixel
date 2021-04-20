@@ -28,10 +28,16 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			CurrentFile.LeftTool = NewFillTool("Fill")
 			CurrentFile.RightTool = NewFillTool("Fill")
 		}, nil)
+	picker := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
+		"./res/icons/picker.png", true, func(entity *Entity, button rl.MouseButton) {
+			CurrentFile.LeftTool = NewPickerTool("Picker")
+			CurrentFile.RightTool = NewPickerTool("Picker")
+		}, nil)
 
 	toolsButtons.PushChild(pencil)
 	toolsButtons.PushChild(eraser)
 	toolsButtons.PushChild(fill)
+	toolsButtons.PushChild(picker)
 	toolsButtons.FlowChildren()
 	return toolsButtons
 }

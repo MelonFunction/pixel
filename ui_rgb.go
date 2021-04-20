@@ -103,11 +103,9 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 					switch button {
 					case rl.MouseLeftButton:
-						CurrentFile.LeftColor = color
-						CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+						CurrentColorSetLeftColor(color)
 					case rl.MouseRightButton:
-						CurrentFile.RightColor = color
-						CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+						CurrentColorSetRightColor(color)
 					}
 
 					makeOpacitySliderArea(color)
@@ -194,11 +192,9 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 						switch button {
 						case rl.MouseLeftButton:
-							CurrentFile.LeftColor = color
-							CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+							CurrentColorSetLeftColor(color)
 						case rl.MouseRightButton:
-							CurrentFile.RightColor = color
-							CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+							CurrentColorSetRightColor(color)
 						}
 					}
 				}
@@ -234,11 +230,9 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				if color, ok := opacityColors[mx]; ok {
 					switch button {
 					case rl.MouseLeftButton:
-						CurrentFile.LeftColor = color
-						CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
+						CurrentColorSetLeftColor(color)
 					case rl.MouseRightButton:
-						CurrentFile.RightColor = color
-						CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
+						CurrentColorSetRightColor(color)
 					}
 				}
 			}
