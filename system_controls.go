@@ -380,6 +380,25 @@ func (s *UIControlSystem) Update(dt float32) {
 				ShowDebug = !ShowDebug
 			case "resize":
 				ResizeUIShowDialog()
+
+			case "pixelBrush":
+				// Simulate click event
+				if interactable, ok := toolPencil.GetInteractable(); ok {
+					interactable.OnMouseUp(toolPencil, rl.MouseRightButton)
+				}
+			case "eraser":
+				if interactable, ok := toolEraser.GetInteractable(); ok {
+					interactable.OnMouseUp(toolEraser, rl.MouseRightButton)
+				}
+			case "fill":
+				if interactable, ok := toolFill.GetInteractable(); ok {
+					interactable.OnMouseUp(toolFill, rl.MouseRightButton)
+				}
+			case "picker":
+				if interactable, ok := toolPicker.GetInteractable(); ok {
+					interactable.OnMouseUp(toolPicker, rl.MouseRightButton)
+				}
+
 			case "layerUp":
 				CurrentFile.CurrentLayer++
 				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {

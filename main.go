@@ -26,17 +26,25 @@ func main() {
 		"toggleGrid": {{rl.KeyG}},
 		"showDebug":  {{rl.KeyD}},
 		"resize":     {{rl.KeyLeftControl, rl.KeyR}},
-		"layerUp":    {{rl.KeyLeftShift, rl.KeyUp}},
-		"layerDown":  {{rl.KeyLeftShift, rl.KeyDown}},
-		"toolLeft":   {{rl.KeyH}, {rl.KeyLeft}},
-		"toolRight":  {{rl.KeyN}, {rl.KeyRight}},
-		"toolUp":     {{rl.KeyC}, {rl.KeyUp}},
-		"toolDown":   {{rl.KeyT}, {rl.KeyDown}},
-		"open":       {{rl.KeyLeftControl, rl.KeyO}},
-		"save":       {{rl.KeyLeftControl, rl.KeyS}},
-		"export":     {{rl.KeyLeftControl, rl.KeyE}},
-		"undo":       {{rl.KeyLeftControl, rl.KeyZ}},
-		"redo":       {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},
+
+		"pixelBrush": {{rl.KeyB}},
+		"eraser":     {{rl.KeyE}},
+		"fill":       {{rl.KeyF}},
+		"picker":     {{rl.KeyS}},
+
+		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
+		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},
+
+		"toolLeft":  {{rl.KeyH}, {rl.KeyLeft}},
+		"toolRight": {{rl.KeyN}, {rl.KeyRight}},
+		"toolUp":    {{rl.KeyC}, {rl.KeyUp}},
+		"toolDown":  {{rl.KeyT}, {rl.KeyDown}},
+
+		"open":   {{rl.KeyLeftControl, rl.KeyO}},
+		"save":   {{rl.KeyLeftControl, rl.KeyS}},
+		"export": {{rl.KeyLeftControl, rl.KeyE}},
+		"undo":   {{rl.KeyLeftControl, rl.KeyZ}},
+		"redo":   {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},
 	}
 
 	CurrentFile = NewFile(64, 64, 8, 8)
