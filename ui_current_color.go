@@ -46,8 +46,8 @@ func CurrentColorUIAddColor(color rl.Color) *Entity {
 	var h float32
 	if res, err := scene.QueryID(currentColorEntity.ID); err == nil {
 		moveable := res.Components[currentColorEntity.Scene.ComponentsMap["moveable"]].(*Moveable)
-		w = moveable.Bounds.Width / 3
-		h = moveable.Bounds.Width / 3
+		w = moveable.Bounds.Width / 4
+		h = moveable.Bounds.Width / 4
 	}
 
 	e := NewRenderTexture(rl.NewRectangle(0, 0, w, h), nil, nil)
@@ -65,17 +65,17 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorRight = CurrentColorUIAddColor(CurrentFile.RightColor)
 	CurrentColorSetRightColor(CurrentFile.RightColor)
 
-	// currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
-	// 	func(entity *Entity, button rl.MouseButton, isHeld bool) {
-	// 		// button up
-	// 		CurrentFile.LeftColor, CurrentFile.RightColor = CurrentFile.RightColor, CurrentFile.LeftColor
-	// 		CurrentColorSetColor(currentColorLeft, CurrentFile.LeftColor)
-	// 		CurrentColorSetColor(currentColorRight, CurrentFile.RightColor)
-	// 	}, nil)
-	// currentColorEntity.PushChild(currentColorSwap)
-	// currentColorEntity.FlowChildren()
+	currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), "./res/icons/swap.png", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			left := CurrentFile.LeftColor
+			right := CurrentFile.RightColor
+			CurrentColorSetLeftColor(right)
+			CurrentColorSetRightColor(left)
+		}, nil)
+	currentColorEntity.PushChild(currentColorSwap)
 
-	currentColorAdd = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/3, bounds.Width/3), "./res/icons/plus.png", false,
+	currentColorAdd = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), "./res/icons/plus.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			PaletteUIAddColor(CurrentFile.LeftColor)

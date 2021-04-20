@@ -91,7 +91,7 @@ func NewUIFileSystem() *UIFileSystem {
 		0,
 		0,
 		128,
-		128*1.5+UIButtonHeight*0.5))
+		(128*1.5+UIButtonHeight*1.5)-128/4))
 	palette.Snap([]SnapData{
 		{rgb, SideRight, SideLeft},
 	})
@@ -100,7 +100,7 @@ func NewUIFileSystem() *UIFileSystem {
 		0,
 		0,
 		128,
-		UIButtonHeight))
+		128/4))
 	currentColor.Snap([]SnapData{
 		{rgb, SideRight, SideLeft},
 		{palette, SideTop, SideBottom},
@@ -112,8 +112,8 @@ func NewUIFileSystem() *UIFileSystem {
 		128*1.5+UIButtonHeight*2,
 		UIButtonHeight))
 	tools.Snap([]SnapData{
-		{currentColor, SideTop, SideBottom},
 		{currentColor, SideLeft, SideLeft},
+		{currentColor, SideTop, SideBottom},
 	})
 
 	layers := NewLayersUI(rl.NewRectangle(
