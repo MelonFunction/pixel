@@ -11,6 +11,7 @@ var (
 	toolEraser           *Entity
 	toolFill             *Entity
 	toolPicker           *Entity
+	toolSelector         *Entity
 )
 
 func ToolsUISetCurrentToolSelected(entity *Entity) {
@@ -52,11 +53,18 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			CurrentFile.RightTool = NewPickerTool("Picker")
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
+	toolSelector = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
+		"./res/icons/selector.png", false, func(entity *Entity, button rl.MouseButton) {
+			CurrentFile.LeftTool = NewSelectorTool("Selector")
+			CurrentFile.RightTool = NewSelectorTool("Selector")
+			ToolsUISetCurrentToolSelected(entity)
+		}, nil)
 
 	toolsButtons.PushChild(toolPencil)
 	toolsButtons.PushChild(toolEraser)
 	toolsButtons.PushChild(toolFill)
 	toolsButtons.PushChild(toolPicker)
+	toolsButtons.PushChild(toolSelector)
 	toolsButtons.FlowChildren()
 
 	ToolsUISetCurrentToolSelected(toolPencil)

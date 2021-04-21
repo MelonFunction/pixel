@@ -398,6 +398,10 @@ func (s *UIControlSystem) Update(dt float32) {
 				if interactable, ok := toolPicker.GetInteractable(); ok {
 					interactable.OnMouseUp(toolPicker, rl.MouseRightButton)
 				}
+			case "selector":
+				if interactable, ok := toolSelector.GetInteractable(); ok {
+					interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
+				}
 
 			case "layerUp":
 				CurrentFile.CurrentLayer++

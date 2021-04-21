@@ -30,7 +30,8 @@ func main() {
 		"pixelBrush": {{rl.KeyB}},
 		"eraser":     {{rl.KeyE}},
 		"fill":       {{rl.KeyF}},
-		"picker":     {{rl.KeyS}},
+		"picker":     {{rl.KeyM}},
+		"selector":   {{rl.KeyS}},
 
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
 		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},

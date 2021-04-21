@@ -170,6 +170,13 @@ func (s *UIFileSystem) Draw() {
 		CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
 	}
 
+	// Draw selection overlay on temp layer
+	if len(CurrentFile.Selection) > 0 {
+		for _, vec := range CurrentFile.Selection {
+			rl.DrawPixel(vec.X, vec.Y, rl.Color{255, 255, 255, 192})
+		}
+	}
+
 	rl.EndTextureMode()
 
 	// Draw layers
@@ -187,6 +194,8 @@ func (s *UIFileSystem) Draw() {
 	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
 	if CurrentFile.DrawGrid {
 		for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
+			// TODO find out why DrawLineEx draws an entire pixel to the canvas
+			// but DrawLine draws 1px consistently regardless of zoom
 			rl.DrawLine(
 				-CurrentFile.CanvasWidth/2+x,
 				-CurrentFile.CanvasHeight/2,

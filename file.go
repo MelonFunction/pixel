@@ -135,6 +135,10 @@ type File struct {
 	// If grid should be drawn
 	DrawGrid bool
 
+	// Selection
+	Selection []IntVec2
+
+	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
 	// for previewing what would happen if a resize occured
@@ -163,6 +167,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HasDoneMouseUpRight: true,
 
 		DrawGrid: true,
+
+		Selection: make([]IntVec2, 0, 64),
 
 		CanvasWidth:  canvasWidth,
 		CanvasHeight: canvasHeight,
