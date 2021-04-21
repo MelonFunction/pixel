@@ -123,7 +123,6 @@ type File struct {
 	historyOffset     int      // How many undos have been made
 	deletedLayers     []*Layer // stack of layers, AddNewLayer destroys history chain
 
-	Tools      []Tool // TODO Will be used by a Tool selector UI
 	LeftTool   Tool
 	RightTool  Tool
 	LeftColor  rl.Color
@@ -138,6 +137,8 @@ type File struct {
 	// Selection
 	DoingSelection bool
 	Selection      []IntVec2
+	//Bounds can be moved if dragged within this area
+	SelectionBounds [4]int
 
 	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
@@ -221,6 +222,64 @@ func (f *File) Resize(width, height int, direction ResizeDirection) {
 func (f *File) ResizeTileSize(width, height int) {
 	f.TileWidth = width
 	f.TileHeight = height
+}
+
+type Direction int
+
+const (
+	DirectionLeft = iota
+	DirectionRight
+	DirectionUp
+	DirectionDown
+)
+
+// MoveSelection moves the selection in the specified direction by one pixel
+func (f *File) MoveSelection(dir Direction) {
+	log.Println(f.Selection)
+	cl := f.GetCurrentLayer()
+	if !f.DoingSelection && len(f.Selection) > 0 {
+
+		switch dir {
+		case DirectionLeft:
+			for i, vec := range f.Selection {
+				if vec.X > 0 {
+					f.Selection[i].X--
+				}
+			}
+		case DirectionRight:
+			for i, vec := range f.Selection {
+				if vec.X < f.CanvasWidth-1 {
+					f.Selection[i].X++
+				}
+			}
+		case DirectionUp:
+			for i, vec := range f.Selection {
+				if vec.Y > 0 {
+					f.Selection[i].Y--
+				}
+			}
+		case DirectionDown:
+			for i, vec := range f.Selection {
+				if vec.Y < f.CanvasHeight-1 {
+					f.Selection[i].Y++
+				}
+			}
+		}
+
+		// cursor := IntVec2{}
+		// for _, vec := range f.Selection {
+		// 	cursor = vec
+		// 	switch dir {
+		// 	case DirectionLeft:
+		// 		if vec.X-1 >= 0 {
+		// 			cursor.X = vec.X - 1
+		// 			cl.PixelData[cursor] = cl.PixelData[vec]
+		// 		}
+		// 	}
+		// }
+	}
+
+	cl.Redraw()
 }
 
 // SetCurrentLayer sets the current layer

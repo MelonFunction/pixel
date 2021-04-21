@@ -476,13 +476,30 @@ func (s *UIControlSystem) Update(dt float32) {
 			}
 			switch {
 			case matches(last, s.Keymap.Data["toolRight"]):
-				rl.SetMousePosition(x+moveAmount, y)
+				// Move selection
+				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+					CurrentFile.MoveSelection(DirectionRight)
+				} else {
+					rl.SetMousePosition(x+moveAmount, y)
+				}
 			case matches(last, s.Keymap.Data["toolLeft"]):
-				rl.SetMousePosition(x-moveAmount, y)
+				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+					CurrentFile.MoveSelection(DirectionLeft)
+				} else {
+					rl.SetMousePosition(x-moveAmount, y)
+				}
 			case matches(last, s.Keymap.Data["toolDown"]):
-				rl.SetMousePosition(x, y+moveAmount)
+				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+					CurrentFile.MoveSelection(DirectionDown)
+				} else {
+					rl.SetMousePosition(x, y+moveAmount)
+				}
 			case matches(last, s.Keymap.Data["toolUp"]):
-				rl.SetMousePosition(x, y-moveAmount)
+				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+					CurrentFile.MoveSelection(DirectionUp)
+				} else {
+					rl.SetMousePosition(x, y-moveAmount)
+				}
 			}
 		}
 	} else {

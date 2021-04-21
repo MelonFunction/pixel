@@ -213,6 +213,8 @@ func (s *UIFileSystem) Draw() {
 	// Draw selection overlay with handles after selection has finished
 	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
 		pa, pb := CurrentFile.Selection[0], CurrentFile.Selection[len(CurrentFile.Selection)-1]
+		CurrentFile.SelectionBounds = [4]int{pa.X, pa.Y, pb.X, pb.Y}
+
 		// top
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pa.Y-CurrentFile.CanvasHeight/2)),

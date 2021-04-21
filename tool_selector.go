@@ -67,8 +67,8 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 			t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
 		}
 
-		for px := firstPosClone.X; px <= t.lastPos.X; px++ {
-			for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
+		for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
+			for px := firstPosClone.X; px <= t.lastPos.X; px++ {
 				CurrentFile.Selection = append(CurrentFile.Selection, IntVec2{px, py})
 			}
 		}
