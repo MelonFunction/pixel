@@ -220,25 +220,25 @@ func (s *UIFileSystem) Draw() {
 			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pa.Y-CurrentFile.CanvasHeight/2)),
 			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
 			1,
-			rl.White)
+			rl.Color{255, 255, 255, 192})
 		// bottom
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
 			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
 			1,
-			rl.White)
+			rl.Color{255, 255, 255, 192})
 		// left
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
 			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
 			1,
-			rl.White)
+			rl.Color{255, 255, 255, 192})
 		// right
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
 			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
 			1,
-			rl.White)
+			rl.Color{255, 255, 255, 192})
 	}
 
 	// Show outline for canvas resize preview
@@ -404,7 +404,14 @@ func (s *UIFileSystem) Update(dt float32) {
 			// Fires once
 			if CurrentFile.HasDoneMouseUpLeft {
 				// Create new history action
-				CurrentFile.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				switch CurrentFile.LeftTool.(type) {
+				case *PickerTool:
+					// ignore
+				case *SelectorTool:
+					// ignore
+				default:
+					CurrentFile.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				}
 			}
 			CurrentFile.HasDoneMouseUpLeft = false
 
@@ -420,7 +427,15 @@ func (s *UIFileSystem) Update(dt float32) {
 
 		if rl.IsMouseButtonDown(rl.MouseRightButton) {
 			if CurrentFile.HasDoneMouseUpRight {
-				CurrentFile.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				// Create new history action
+				switch CurrentFile.LeftTool.(type) {
+				case *PickerTool:
+					// ignore
+				case *SelectorTool:
+					// ignore
+				default:
+					CurrentFile.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+				}
 			}
 			CurrentFile.HasDoneMouseUpRight = false
 			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)
