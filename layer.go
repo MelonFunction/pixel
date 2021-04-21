@@ -17,6 +17,19 @@ type Layer struct {
 	PixelData map[IntVec2]rl.Color
 }
 
+func (l *Layer) Redraw() {
+	rl.BeginTextureMode(l.Canvas)
+	rl.ClearBackground(rl.Transparent)
+	for x := 0; x < CurrentFile.CanvasWidth; x++ {
+		for y := 0; y < CurrentFile.CanvasHeight; y++ {
+			if color, ok := l.PixelData[IntVec2{x, y}]; ok {
+				rl.DrawPixel(x, y, color)
+			}
+		}
+	}
+	rl.EndTextureMode()
+}
+
 // Resize the layer to the specified width, height and direction
 func (l *Layer) Resize(width, height int, direction ResizeDirection) {
 	l.Canvas = rl.LoadRenderTexture(width, height)
