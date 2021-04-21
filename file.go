@@ -136,7 +136,8 @@ type File struct {
 	DrawGrid bool
 
 	// Selection
-	Selection []IntVec2
+	DoingSelection bool
+	Selection      []IntVec2
 
 	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int

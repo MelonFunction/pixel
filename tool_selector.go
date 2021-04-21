@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -8,7 +10,9 @@ import (
 type SelectorTool struct {
 	firstPos, lastPos IntVec2
 	firstDown         bool
-	name              string
+	// Cancels the selection if a click happens without drag
+	firstDownTime time.Time
+	name          string
 }
 
 // NewSelectorTool returns the selector tool
@@ -37,23 +41,44 @@ func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
 // MouseDown is for mouse down events
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
+	CurrentFile.DoingSelection = true
 	if t.firstDown == false {
 		t.firstDown = true
+		t.firstDownTime = time.Now()
 		t.firstPos = t.getClampedCoordinates(x, y)
+	} else {
+		CurrentFile.Selection = []IntVec2{}
+		t.lastPos = t.getClampedCoordinates(x, y)
+
+		// Cancel selection if a click without a drag happens
+		if t.firstPos.X == t.lastPos.X && t.firstPos.Y == t.lastPos.Y {
+			if time.Now().Sub(t.firstDownTime) < time.Millisecond*100 {
+				CurrentFile.DoingSelection = false
+				return
+			}
+		}
+
+		firstPosClone := t.firstPos
+
+		if t.lastPos.X < firstPosClone.X {
+			t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
+		}
+		if t.lastPos.Y < firstPosClone.Y {
+			t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
+		}
+
+		for px := firstPosClone.X; px <= t.lastPos.X; px++ {
+			for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
+				CurrentFile.Selection = append(CurrentFile.Selection, IntVec2{px, py})
+			}
+		}
 	}
 }
 
 // MouseUp is for mouse up events
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
-	t.lastPos = t.getClampedCoordinates(x, y)
-
-	CurrentFile.Selection = []IntVec2{}
-	for px := t.firstPos.X; px <= t.lastPos.X; px++ {
-		for py := t.firstPos.Y; py <= t.lastPos.Y; py++ {
-			CurrentFile.Selection = append(CurrentFile.Selection, IntVec2{px, py})
-		}
-	}
+	CurrentFile.DoingSelection = false
 }
 
 // DrawPreview is for drawing the preview

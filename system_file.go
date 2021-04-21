@@ -170,13 +170,12 @@ func (s *UIFileSystem) Draw() {
 		CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
 	}
 
-	// Draw selection overlay on temp layer
-	if len(CurrentFile.Selection) > 0 {
+	// Draw selection overlay on temp layer as it's being selected
+	if CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
 		for _, vec := range CurrentFile.Selection {
 			rl.DrawPixel(vec.X, vec.Y, rl.Color{255, 255, 255, 192})
 		}
 	}
-
 	rl.EndTextureMode()
 
 	// Draw layers
@@ -194,8 +193,6 @@ func (s *UIFileSystem) Draw() {
 	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
 	if CurrentFile.DrawGrid {
 		for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
-			// TODO find out why DrawLineEx draws an entire pixel to the canvas
-			// but DrawLine draws 1px consistently regardless of zoom
 			rl.DrawLine(
 				-CurrentFile.CanvasWidth/2+x,
 				-CurrentFile.CanvasHeight/2,
@@ -211,6 +208,35 @@ func (s *UIFileSystem) Draw() {
 				-CurrentFile.CanvasHeight/2+y,
 				rl.White)
 		}
+	}
+
+	// Draw selection overlay with handles after selection has finished
+	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
+		pa, pb := CurrentFile.Selection[0], CurrentFile.Selection[len(CurrentFile.Selection)-1]
+		// top
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pa.Y-CurrentFile.CanvasHeight/2)),
+			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
+			1,
+			rl.White)
+		// bottom
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
+			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
+			1,
+			rl.White)
+		// left
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
+			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
+			1,
+			rl.White)
+		// right
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
+			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
+			1,
+			rl.White)
 	}
 
 	// Show outline for canvas resize preview
