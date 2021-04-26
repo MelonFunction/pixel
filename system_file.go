@@ -172,8 +172,8 @@ func (s *UIFileSystem) Draw() {
 
 	// Draw selection overlay on temp layer as it's being selected
 	if CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
-		for _, vec := range CurrentFile.Selection {
-			rl.DrawPixel(vec.X, vec.Y, rl.Color{255, 255, 255, 192})
+		for loc, _ := range CurrentFile.Selection {
+			rl.DrawPixel(loc.X, loc.Y, rl.Color{255, 255, 255, 192})
 		}
 	}
 	rl.EndTextureMode()
@@ -212,8 +212,8 @@ func (s *UIFileSystem) Draw() {
 
 	// Draw selection overlay with handles after selection has finished
 	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
-		pa, pb := CurrentFile.Selection[0], CurrentFile.Selection[len(CurrentFile.Selection)-1]
-		CurrentFile.SelectionBounds = [4]int{pa.X, pa.Y, pb.X, pb.Y}
+		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
+		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
 
 		// top
 		rl.DrawLineEx(

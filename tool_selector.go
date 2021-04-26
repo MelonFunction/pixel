@@ -41,22 +41,31 @@ func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
 // MouseDown is for mouse down events
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
+	cl := CurrentFile.GetCurrentLayer()
 	CurrentFile.DoingSelection = true
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
 		t.firstPos = t.getClampedCoordinates(x, y)
 	} else {
-		CurrentFile.Selection = []IntVec2{}
 		t.lastPos = t.getClampedCoordinates(x, y)
 
 		// Cancel selection if a click without a drag happens
 		if t.firstPos.X == t.lastPos.X && t.firstPos.Y == t.lastPos.Y {
 			if time.Now().Sub(t.firstDownTime) < time.Millisecond*100 {
+				// Commit whatever was moving to wherever it ended up
+				CurrentFile.CommitSelection()
+
 				CurrentFile.DoingSelection = false
+				CurrentFile.SelectionMoving = false
+
 				return
 			}
+
 		}
+
+		// Reset the selection
+		CurrentFile.Selection = make(map[*IntVec2]rl.Color)
 
 		firstPosClone := t.firstPos
 
@@ -67,9 +76,15 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 			t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
 		}
 
+		// TODO use comparison to make sure this is correct when using brush selector
+		CurrentFile.SelectionBounds[0] = firstPosClone.X
+		CurrentFile.SelectionBounds[1] = firstPosClone.Y
+		CurrentFile.SelectionBounds[2] = t.lastPos.X
+		CurrentFile.SelectionBounds[3] = t.lastPos.Y
+
 		for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
 			for px := firstPosClone.X; px <= t.lastPos.X; px++ {
-				CurrentFile.Selection = append(CurrentFile.Selection, IntVec2{px, py})
+				CurrentFile.Selection[&IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
 			}
 		}
 	}
@@ -79,6 +94,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
 	CurrentFile.DoingSelection = false
+	CurrentFile.SelectionMoving = false
 }
 
 // DrawPreview is for drawing the preview
@@ -91,6 +107,14 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 		rl.DrawPixel(x, y, rl.Color{0, 0, 0, 192})
 	} else {
 		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
+	}
+
+	// Draw the moving selection
+	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
+		for loc, color := range CurrentFile.Selection {
+			_ = color
+			rl.DrawPixel(loc.X, loc.Y, color)
+		}
 	}
 }
 

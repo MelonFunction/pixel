@@ -134,9 +134,12 @@ type File struct {
 	// If grid should be drawn
 	DrawGrid bool
 
-	// Selection
+	// Is selection happening currently
 	DoingSelection bool
-	Selection      []IntVec2
+	// All of the affected pixels
+	Selection map[*IntVec2]rl.Color
+	// Used for history appending, pixel overwriting/transparency logic
+	SelectionMoving bool
 	//Bounds can be moved if dragged within this area
 	SelectionBounds [4]int
 
@@ -170,7 +173,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 
 		DrawGrid: true,
 
-		Selection: make([]IntVec2, 0, 64),
+		Selection: make(map[*IntVec2]rl.Color),
 
 		CanvasWidth:  canvasWidth,
 		CanvasHeight: canvasHeight,
@@ -233,50 +236,117 @@ const (
 	DirectionDown
 )
 
+func (f *File) CommitSelection() {
+	// cl := f.GetCurrentLayer()
+
+	if f.SelectionMoving {
+		f.SelectionMoving = false
+
+		// TODO when moving a pixel with opacity, it should blend with whatever is beneath it
+
+		cl := f.GetCurrentLayer()
+
+		// Alter PixelData and history
+		for loc, color := range f.Selection {
+			_ = color
+			_ = loc
+
+			latestHistoryInterface := f.History[len(f.History)-1]
+			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+			if ok {
+				// Allow for transparency when moving pixels around
+
+				var currentColor rl.Color
+
+				alreadyWritten, ok := latestHistory.PixelState[*loc]
+				if ok {
+					currentColor = BlendWithOpacity(alreadyWritten.Prev, color)
+					// Overwrite the existing history
+					alreadyWritten.Current = currentColor
+					// alreadyWritten.Prev = cl.PixelData[*loc]
+					latestHistory.PixelState[*loc] = alreadyWritten
+				} else {
+					currentColor = BlendWithOpacity(cl.PixelData[*loc], color)
+					ps := latestHistory.PixelState[*loc]
+					ps.Current = currentColor
+					ps.Prev = cl.PixelData[*loc]
+					latestHistory.PixelState[*loc] = ps
+				}
+
+				cl.PixelData[*loc] = currentColor
+			}
+		}
+
+		cl.Redraw()
+	}
+
+	// Reset the selection
+	f.Selection = make(map[*IntVec2]rl.Color)
+}
+
 // MoveSelection moves the selection in the specified direction by one pixel
 func (f *File) MoveSelection(dir Direction) {
-	log.Println(f.Selection)
 	cl := f.GetCurrentLayer()
-	if !f.DoingSelection && len(f.Selection) > 0 {
 
+	if !f.DoingSelection && len(f.Selection) > 0 {
+		if !f.SelectionMoving {
+			f.SelectionMoving = true
+
+			f.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+
+			for loc, color := range f.Selection {
+				_ = loc
+				_ = color
+				// Alter history
+				latestHistoryInterface := f.History[len(f.History)-1]
+				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+				if ok {
+					ps := latestHistory.PixelState[*loc]
+					ps.Current = rl.Transparent
+					ps.Prev = cl.PixelData[*loc]
+					latestHistory.PixelState[*loc] = ps
+				}
+
+				cl.PixelData[*loc] = rl.Transparent
+			}
+		}
+
+		// Move selection
 		switch dir {
 		case DirectionLeft:
-			for i, vec := range f.Selection {
-				if vec.X > 0 {
-					f.Selection[i].X--
+			CurrentFile.SelectionBounds[0]--
+			CurrentFile.SelectionBounds[2]--
+			for loc := range f.Selection {
+				if loc.X > 0 {
+					loc.X--
 				}
 			}
 		case DirectionRight:
-			for i, vec := range f.Selection {
-				if vec.X < f.CanvasWidth-1 {
-					f.Selection[i].X++
+			CurrentFile.SelectionBounds[0]++
+			CurrentFile.SelectionBounds[2]++
+			for loc := range f.Selection {
+				if loc.X < f.CanvasWidth-1 {
+					loc.X++
 				}
 			}
 		case DirectionUp:
-			for i, vec := range f.Selection {
-				if vec.Y > 0 {
-					f.Selection[i].Y--
+			CurrentFile.SelectionBounds[1]--
+			CurrentFile.SelectionBounds[3]--
+			for loc := range f.Selection {
+				if loc.Y > 0 {
+					loc.Y--
 				}
 			}
 		case DirectionDown:
-			for i, vec := range f.Selection {
-				if vec.Y < f.CanvasHeight-1 {
-					f.Selection[i].Y++
+			CurrentFile.SelectionBounds[1]++
+			CurrentFile.SelectionBounds[3]++
+			for loc := range f.Selection {
+				if loc.Y < f.CanvasHeight-1 {
+					loc.Y++
 				}
 			}
 		}
 
-		// cursor := IntVec2{}
-		// for _, vec := range f.Selection {
-		// 	cursor = vec
-		// 	switch dir {
-		// 	case DirectionLeft:
-		// 		if vec.X-1 >= 0 {
-		// 			cursor.X = vec.X - 1
-		// 			cl.PixelData[cursor] = cl.PixelData[vec]
-		// 		}
-		// 	}
-		// }
 	}
 
 	cl.Redraw()
