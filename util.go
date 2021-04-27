@@ -56,13 +56,6 @@ func AddAndClampUint8(a, b uint8) uint8 {
 	return a + b
 }
 
-func DiffUint8(a, b uint8, ratio float32) uint8 {
-	if ratio == 0 {
-		return a
-	}
-	return uint8(float32(a)*(1-ratio) + float32(b)*ratio)
-}
-
 // BlendWithOpacity blends two colors together
 // It assumes that b is the color being drawn on top
 func BlendWithOpacity(a, b rl.Color) rl.Color {
@@ -73,8 +66,9 @@ func BlendWithOpacity(a, b rl.Color) rl.Color {
 		return b
 	}
 
-	c := a
-	c = c.Lerp(b, 0.5)
-	c.A = AddAndClampUint8(c.A, a.A/2)
+	a.A = AddAndClampUint8(a.A, b.A/2)
+	blendRatio := float32(b.A) / float32(a.A)
+	c := a.Lerp(b, blendRatio)
+	c.A = a.A
 	return c
 }

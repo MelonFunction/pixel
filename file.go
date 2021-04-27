@@ -88,12 +88,6 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 			// Change pixel data to the new color
 			layer.PixelData[IntVec2{x, y}] = color
 			layer.Redraw()
-
-			// Erase pixel by redrawing the entire canvas since drawing is
-			//  additive only
-			if color == rl.Transparent {
-				f.DrawPixelDataToCanvas()
-			}
 		}
 
 	}
@@ -413,8 +407,6 @@ func (f *File) Undo() {
 			current := f.CurrentLayer
 			f.SetCurrentLayer(typed.LayerIndex)
 			layer := f.GetCurrentLayer()
-			rl.BeginTextureMode(layer.Canvas)
-			rl.ClearBackground(rl.Transparent)
 			shouldDraw := true
 			for v, color := range layer.PixelData {
 				shouldDraw = true
@@ -430,11 +422,11 @@ func (f *File) Undo() {
 					}
 				}
 				if shouldDraw {
-					rl.DrawPixel(v.X, v.Y, color)
+					layer.PixelData[v] = color
 				}
 			}
-			rl.EndTextureMode()
 			f.SetCurrentLayer(current)
+			layer.Redraw()
 		case HistoryLayer:
 			if typed.WasDeleted {
 
@@ -465,8 +457,6 @@ func (f *File) Redo() {
 		current := f.CurrentLayer
 		index := len(f.History) - f.historyOffset
 		history := f.History[index]
-
-		log.Println("redo", history)
 
 		switch typed := history.(type) {
 		case HistoryPixel:
