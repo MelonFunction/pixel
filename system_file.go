@@ -8,7 +8,7 @@ import (
 
 var (
 	// ShowDebug enables debug overlays when true
-	ShowDebug = false
+	ShowDebug = true
 )
 
 type UIFileSystem struct {
@@ -302,6 +302,7 @@ func (s *UIFileSystem) Draw() {
 		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, 200, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Left Color: %d", CurrentFile.LeftColor), 0, 260, 20, rl.White)
 		// for y, history := range CurrentFile.History {
 		// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
 		// 		history.LayerIndex,

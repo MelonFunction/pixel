@@ -36,6 +36,8 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 	}
 
+	// TODO add each location drawPixel was called on while mouse is down, don't allow to be drawn to that place again until mouse is up
+
 	if !t.shouldConnectToLastPos {
 		t.shouldConnectToLastPos = true
 		CurrentFile.DrawPixel(x, y, color, true)

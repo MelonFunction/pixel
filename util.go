@@ -63,18 +63,18 @@ func DiffUint8(a, b uint8, ratio float32) uint8 {
 	return uint8(float32(a)*(1-ratio) + float32(b)*ratio)
 }
 
-// BlendWithOpacity assumes that b is the color being drawn on top
+// BlendWithOpacity blends two colors together
+// It assumes that b is the color being drawn on top
 func BlendWithOpacity(a, b rl.Color) rl.Color {
 	if b.A == 0 {
 		return a
 	}
-	blendRatio := float32(a.A) / float32(b.A)
-	// log.Println(float32(a.R), float32(b.R), blendRatio, DiffUint8(a.R, b.R, blendRatio))
+	if a.A == 0 {
+		return b
+	}
 
 	c := a
-	// c.A = AddAndClampUint8(a.A, b.A)
-	c.R = DiffUint8(a.R, b.R, blendRatio)
-	c.G = DiffUint8(a.G, b.G, blendRatio)
-	c.B = DiffUint8(a.B, b.B, blendRatio)
+	c = c.Lerp(b, 0.5)
+	c.A = AddAndClampUint8(c.A, a.A/2)
 	return c
 }

@@ -60,13 +60,14 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 	if saveToHistory {
 		if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
 			// Add old color to history
-			rl.BeginTextureMode(layer.Canvas)
-			rl.DrawPixel(x, y, color)
-			rl.EndTextureMode()
-
 			oldColor, ok := layer.PixelData[IntVec2{x, y}]
 			if !ok {
 				oldColor = rl.Transparent
+			}
+
+			// TODO don't allow multiple opacity compressions per frame/event
+			if color != rl.Transparent {
+				color = BlendWithOpacity(oldColor, color)
 			}
 
 			// Prevent overwriting the old color with the new color since this
@@ -86,6 +87,7 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 
 			// Change pixel data to the new color
 			layer.PixelData[IntVec2{x, y}] = color
+			layer.Redraw()
 
 			// Erase pixel by redrawing the entire canvas since drawing is
 			//  additive only
@@ -158,7 +160,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	f := &File{
 		Filename: "filename",
 		Layers: []*Layer{
-			NewLayer(canvasWidth, canvasHeight, "background", rl.DarkGray, true),
+			NewLayer(canvasWidth, canvasHeight, "background", rl.Transparent, true),
 			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
 		},
 		History:           make([]interface{}, 0, 50),
