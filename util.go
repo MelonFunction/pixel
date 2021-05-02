@@ -67,8 +67,14 @@ func BlendWithOpacity(a, b rl.Color) rl.Color {
 	}
 
 	a.A = AddAndClampUint8(a.A, b.A/2)
-	blendRatio := float32(b.A) / float32(a.A)
-	c := a.Lerp(b, blendRatio)
-	c.A = a.A
+	blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
+
+	c := rl.Color{
+		A: a.A,
+		R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),
+		G: uint8(float32(a.G)*blendRatio + float32(b.G)*(1-blendRatio)),
+		B: uint8(float32(a.B)*blendRatio + float32(b.B)*(1-blendRatio)),
+	}
+
 	return c
 }
