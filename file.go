@@ -135,6 +135,7 @@ type File struct {
 	// All of the affected pixels
 	Selection map[*IntVec2]rl.Color
 	// Used for history appending, pixel overwriting/transparency logic
+	// True after a selection has been made, false when nothing is selected
 	SelectionMoving bool
 	//Bounds can be moved if dragged within this area
 	SelectionBounds [4]int
@@ -255,7 +256,6 @@ func (f *File) CommitSelection() {
 				alreadyWritten, ok := latestHistory.PixelState[*loc]
 				if ok {
 					currentColor = BlendWithOpacity(alreadyWritten.Current, color)
-					log.Println(currentColor, loc)
 					// Overwrite the existing history
 					alreadyWritten.Current = currentColor
 					latestHistory.PixelState[*loc] = alreadyWritten

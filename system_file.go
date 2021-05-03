@@ -210,37 +210,6 @@ func (s *UIFileSystem) Draw() {
 		}
 	}
 
-	// Draw selection overlay with handles after selection has finished
-	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
-		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
-		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
-
-		// top
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pa.Y-CurrentFile.CanvasHeight/2)),
-			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
-			1,
-			rl.Color{255, 255, 255, 192})
-		// bottom
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
-			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+2)),
-			1,
-			rl.Color{255, 255, 255, 192})
-		// left
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
-			rl.NewVector2(float32(pa.X-CurrentFile.CanvasHeight/2-1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
-			1,
-			rl.Color{255, 255, 255, 192})
-		// right
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pa.Y-CurrentFile.CanvasHeight/2)),
-			rl.NewVector2(float32(pb.X-CurrentFile.CanvasHeight/2+1), float32(pb.Y-CurrentFile.CanvasHeight/2+1)),
-			1,
-			rl.Color{255, 255, 255, 192})
-	}
-
 	// Show outline for canvas resize preview
 	if CurrentFile.DoingResize {
 		var x, y float32

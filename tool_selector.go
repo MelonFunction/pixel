@@ -57,7 +57,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 				CurrentFile.CommitSelection()
 
 				CurrentFile.DoingSelection = false
-				CurrentFile.SelectionMoving = false
+				// CurrentFile.SelectionMoving = false
 
 				return
 			}
@@ -96,7 +96,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
 	CurrentFile.DoingSelection = false
-	CurrentFile.SelectionMoving = false
+	// CurrentFile.SelectionMoving = false
 }
 
 // DrawPreview is for drawing the preview
@@ -111,8 +111,37 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
 	}
 
-	// Draw the moving selection
+	// Draw selection overlay with handles after selection has finished
 	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
+		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
+		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
+
+		// top
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X), float32(pa.Y)),
+			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
+			1,
+			rl.Color{255, 255, 255, 192})
+		// bottom
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X), float32(pb.Y+2)),
+			rl.NewVector2(float32(pb.X+1), float32(pb.Y+2)),
+			1,
+			rl.Color{255, 255, 255, 192})
+		// left
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pa.X-1), float32(pa.Y)),
+			rl.NewVector2(float32(pa.X-1), float32(pb.Y+1)),
+			1,
+			rl.Color{255, 255, 255, 192})
+		// right
+		rl.DrawLineEx(
+			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
+			rl.NewVector2(float32(pb.X+1), float32(pb.Y+1)),
+			1,
+			rl.Color{255, 255, 255, 192})
+
+		// Draw the selected pixels
 		for loc, color := range CurrentFile.Selection {
 			_ = color
 			rl.DrawPixel(loc.X, loc.Y, color)
