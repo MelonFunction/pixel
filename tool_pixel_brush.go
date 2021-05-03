@@ -11,6 +11,8 @@ type PixelBrushTool struct {
 	shouldConnectToLastPos bool
 	name                   string
 	eraser                 bool
+	// Don't draw over the same pixel multiple times, prevents opacity stacking
+	drawnPixels []IntVec2
 }
 
 // NewPixelBrushTool returns the pixel brush tool. Requires a name and whether
@@ -18,9 +20,20 @@ type PixelBrushTool struct {
 // lost)
 func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 	return &PixelBrushTool{
-		name:   name,
-		eraser: eraser,
+		name:        name,
+		eraser:      eraser,
+		drawnPixels: make([]IntVec2, 0, 100),
 	}
+}
+
+func (t *PixelBrushTool) exists(e IntVec2) bool {
+	for _, v := range t.drawnPixels {
+		if v == e {
+			return true
+		}
+	}
+
+	return false
 }
 
 // MouseDown is for mouse down events
@@ -36,14 +49,20 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 	}
 
-	// TODO add each location drawPixel was called on while mouse is down, don't allow to be drawn to that place again until mouse is up
-
 	if !t.shouldConnectToLastPos {
 		t.shouldConnectToLastPos = true
-		CurrentFile.DrawPixel(x, y, color, true)
+		loc := IntVec2{x, y}
+		if !t.exists(loc) {
+			t.drawnPixels = append(t.drawnPixels, loc)
+			CurrentFile.DrawPixel(x, y, color, true)
+		}
 	} else {
 		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
-			CurrentFile.DrawPixel(x, y, color, true)
+			loc := IntVec2{x, y}
+			if !t.exists(loc) {
+				CurrentFile.DrawPixel(x, y, color, true)
+				t.drawnPixels = append(t.drawnPixels, loc)
+			}
 		})
 	}
 	t.lastPos.X = x
@@ -53,6 +72,7 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 // MouseUp is for mouse up events
 func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.shouldConnectToLastPos = false
+	t.drawnPixels = make([]IntVec2, 0, 100)
 }
 
 // DrawPreview is for drawing the preview
