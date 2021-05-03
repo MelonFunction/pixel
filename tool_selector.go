@@ -82,6 +82,8 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		CurrentFile.SelectionBounds[2] = t.lastPos.X
 		CurrentFile.SelectionBounds[3] = t.lastPos.Y
 
+		CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
+
 		for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
 			for px := firstPosClone.X; px <= t.lastPos.X; px++ {
 				CurrentFile.Selection[&IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]

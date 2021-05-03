@@ -138,6 +138,8 @@ type File struct {
 	SelectionMoving bool
 	//Bounds can be moved if dragged within this area
 	SelectionBounds [4]int
+	// To check if the selection was moved
+	OrigSelectionBounds [4]int
 
 	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
@@ -233,43 +235,41 @@ const (
 )
 
 func (f *File) CommitSelection() {
-	// cl := f.GetCurrentLayer()
-
 	if f.SelectionMoving {
 		f.SelectionMoving = false
 
-		// TODO when moving a pixel with opacity, it should blend with whatever is beneath it
+		// Selection didn't move, return to prevent stacking
+		if f.SelectionBounds == f.OrigSelectionBounds {
+			return
+		}
 
 		cl := f.GetCurrentLayer()
 
 		// Alter PixelData and history
 		for loc, color := range f.Selection {
-			_ = color
-			_ = loc
-
 			latestHistoryInterface := f.History[len(f.History)-1]
 			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 			if ok {
-				// Allow for transparency when moving pixels around
-
 				var currentColor rl.Color
 
 				alreadyWritten, ok := latestHistory.PixelState[*loc]
 				if ok {
-					currentColor = BlendWithOpacity(alreadyWritten.Prev, color)
+					currentColor = BlendWithOpacity(alreadyWritten.Current, color)
+					log.Println(currentColor, loc)
 					// Overwrite the existing history
 					alreadyWritten.Current = currentColor
-					// alreadyWritten.Prev = cl.PixelData[*loc]
 					latestHistory.PixelState[*loc] = alreadyWritten
+
+					cl.PixelData[*loc] = currentColor
 				} else {
 					currentColor = BlendWithOpacity(cl.PixelData[*loc], color)
 					ps := latestHistory.PixelState[*loc]
 					ps.Current = currentColor
 					ps.Prev = cl.PixelData[*loc]
 					latestHistory.PixelState[*loc] = ps
-				}
 
-				cl.PixelData[*loc] = currentColor
+					cl.PixelData[*loc] = currentColor
+				}
 			}
 		}
 
