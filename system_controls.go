@@ -478,25 +478,25 @@ func (s *UIControlSystem) Update(dt float32) {
 			case matches(last, s.Keymap.Data["toolRight"]):
 				// Move selection
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
-					CurrentFile.MoveSelection(DirectionRight)
+					CurrentFile.MoveSelection(1, 0)
 				} else {
 					rl.SetMousePosition(x+moveAmount, y)
 				}
 			case matches(last, s.Keymap.Data["toolLeft"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
-					CurrentFile.MoveSelection(DirectionLeft)
+					CurrentFile.MoveSelection(-1, 0)
 				} else {
 					rl.SetMousePosition(x-moveAmount, y)
 				}
 			case matches(last, s.Keymap.Data["toolDown"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
-					CurrentFile.MoveSelection(DirectionDown)
+					CurrentFile.MoveSelection(0, 1)
 				} else {
 					rl.SetMousePosition(x, y+moveAmount)
 				}
 			case matches(last, s.Keymap.Data["toolUp"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
-					CurrentFile.MoveSelection(DirectionUp)
+					CurrentFile.MoveSelection(0, -1)
 				} else {
 					rl.SetMousePosition(x, y-moveAmount)
 				}

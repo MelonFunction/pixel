@@ -226,15 +226,6 @@ func (f *File) ResizeTileSize(width, height int) {
 	f.TileHeight = height
 }
 
-type Direction int
-
-const (
-	DirectionLeft = iota
-	DirectionRight
-	DirectionUp
-	DirectionDown
-)
-
 func (f *File) CommitSelection() {
 	if f.SelectionMoving {
 		f.SelectionMoving = false
@@ -248,6 +239,11 @@ func (f *File) CommitSelection() {
 
 		// Alter PixelData and history
 		for loc, color := range f.Selection {
+			// Out of canvas bounds, ignore
+			if !(loc.X >= 0 && loc.X < f.CanvasWidth && loc.Y >= 0 && loc.Y < f.CanvasHeight) {
+				continue
+			}
+
 			latestHistoryInterface := f.History[len(f.History)-1]
 			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 			if ok {
@@ -260,7 +256,6 @@ func (f *File) CommitSelection() {
 					alreadyWritten.Current = currentColor
 					latestHistory.PixelState[*loc] = alreadyWritten
 
-					cl.PixelData[*loc] = currentColor
 				} else {
 					currentColor = BlendWithOpacity(cl.PixelData[*loc], color)
 					ps := latestHistory.PixelState[*loc]
@@ -268,8 +263,10 @@ func (f *File) CommitSelection() {
 					ps.Prev = cl.PixelData[*loc]
 					latestHistory.PixelState[*loc] = ps
 
-					cl.PixelData[*loc] = currentColor
 				}
+
+				cl.PixelData[*loc] = currentColor
+
 			}
 		}
 
@@ -281,7 +278,7 @@ func (f *File) CommitSelection() {
 }
 
 // MoveSelection moves the selection in the specified direction by one pixel
-func (f *File) MoveSelection(dir Direction) {
+func (f *File) MoveSelection(dx, dy int) {
 	cl := f.GetCurrentLayer()
 
 	if !f.DoingSelection && len(f.Selection) > 0 {
@@ -308,39 +305,13 @@ func (f *File) MoveSelection(dir Direction) {
 		}
 
 		// Move selection
-		switch dir {
-		case DirectionLeft:
-			CurrentFile.SelectionBounds[0]--
-			CurrentFile.SelectionBounds[2]--
-			for loc := range f.Selection {
-				if loc.X > 0 {
-					loc.X--
-				}
-			}
-		case DirectionRight:
-			CurrentFile.SelectionBounds[0]++
-			CurrentFile.SelectionBounds[2]++
-			for loc := range f.Selection {
-				if loc.X < f.CanvasWidth-1 {
-					loc.X++
-				}
-			}
-		case DirectionUp:
-			CurrentFile.SelectionBounds[1]--
-			CurrentFile.SelectionBounds[3]--
-			for loc := range f.Selection {
-				if loc.Y > 0 {
-					loc.Y--
-				}
-			}
-		case DirectionDown:
-			CurrentFile.SelectionBounds[1]++
-			CurrentFile.SelectionBounds[3]++
-			for loc := range f.Selection {
-				if loc.Y < f.CanvasHeight-1 {
-					loc.Y++
-				}
-			}
+		CurrentFile.SelectionBounds[0] += dx
+		CurrentFile.SelectionBounds[1] += dy
+		CurrentFile.SelectionBounds[2] += dx
+		CurrentFile.SelectionBounds[3] += dy
+		for loc := range f.Selection {
+			loc.X += dx
+			loc.Y += dy
 		}
 
 	}
