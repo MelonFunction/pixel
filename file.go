@@ -281,7 +281,7 @@ func (f *File) CommitSelection() {
 func (f *File) MoveSelection(dx, dy int) {
 	cl := f.GetCurrentLayer()
 
-	if !f.DoingSelection && len(f.Selection) > 0 {
+	if len(f.Selection) > 0 {
 		if !f.SelectionMoving {
 			f.SelectionMoving = true
 

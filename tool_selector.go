@@ -42,61 +42,64 @@ func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
 	cl := CurrentFile.GetCurrentLayer()
-	CurrentFile.DoingSelection = true
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
 		t.firstPos = t.getClampedCoordinates(x, y)
-	} else {
-		t.lastPos = t.getClampedCoordinates(x, y)
+	}
 
+	t.lastPos = t.getClampedCoordinates(x, y)
+
+	if t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
+		t.firstPos.Y > CurrentFile.SelectionBounds[1] && t.firstPos.Y < CurrentFile.SelectionBounds[3] {
+		CurrentFile.MoveSelection(x-t.firstPos.X, y-t.firstPos.Y)
+		t.firstPos.X = x
+		t.firstPos.Y = y
+		return
+	}
+
+	if t.firstPos.X == t.lastPos.X && t.firstPos.Y == t.lastPos.Y {
 		// Cancel selection if a click without a drag happens
-		if t.firstPos.X == t.lastPos.X && t.firstPos.Y == t.lastPos.Y {
-			if time.Now().Sub(t.firstDownTime) < time.Millisecond*100 {
-				// Commit whatever was moving to wherever it ended up
-				CurrentFile.CommitSelection()
-
-				CurrentFile.DoingSelection = false
-				// CurrentFile.SelectionMoving = false
-
-				return
-			}
-
-		}
-
-		// Reset the selection
-		CurrentFile.Selection = make(map[*IntVec2]rl.Color)
-
-		firstPosClone := t.firstPos
-
-		if t.lastPos.X < firstPosClone.X {
-			t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
-		}
-		if t.lastPos.Y < firstPosClone.Y {
-			t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
-		}
-
-		// TODO use comparison to make sure this is correct when using brush selector
-		CurrentFile.SelectionBounds[0] = firstPosClone.X
-		CurrentFile.SelectionBounds[1] = firstPosClone.Y
-		CurrentFile.SelectionBounds[2] = t.lastPos.X
-		CurrentFile.SelectionBounds[3] = t.lastPos.Y
-
-		CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
-
-		for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
-			for px := firstPosClone.X; px <= t.lastPos.X; px++ {
-				CurrentFile.Selection[&IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
-			}
+		if time.Now().Sub(t.firstDownTime) < time.Millisecond*100 {
+			// Commit whatever was moving to wherever it ended up
+			CurrentFile.CommitSelection()
+			return
 		}
 	}
+
+	// Reset the selection
+	// TODO it creates a lot of objects, not very efficient
+	CurrentFile.Selection = make(map[*IntVec2]rl.Color)
+
+	firstPosClone := t.firstPos
+
+	if t.lastPos.X < firstPosClone.X {
+		t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
+	}
+	if t.lastPos.Y < firstPosClone.Y {
+		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
+	}
+
+	// TODO use comparison to make sure this is correct when using brush selector
+	CurrentFile.SelectionBounds[0] = firstPosClone.X
+	CurrentFile.SelectionBounds[1] = firstPosClone.Y
+	CurrentFile.SelectionBounds[2] = t.lastPos.X
+	CurrentFile.SelectionBounds[3] = t.lastPos.Y
+
+	CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
+
+	for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
+		for px := firstPosClone.X; px <= t.lastPos.X; px++ {
+			CurrentFile.Selection[&IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
+		}
+	}
+	// }
+
 }
 
 // MouseUp is for mouse up events
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
-	CurrentFile.DoingSelection = false
-	// CurrentFile.SelectionMoving = false
 }
 
 // DrawPreview is for drawing the preview
@@ -112,7 +115,7 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 	}
 
 	// Draw selection overlay with handles after selection has finished
-	if !CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
+	if len(CurrentFile.Selection) > 0 {
 		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
 		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
 

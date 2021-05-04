@@ -170,12 +170,6 @@ func (s *UIFileSystem) Draw() {
 		CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
 	}
 
-	// Draw selection overlay on temp layer as it's being selected
-	if CurrentFile.DoingSelection && len(CurrentFile.Selection) > 0 {
-		for loc, _ := range CurrentFile.Selection {
-			rl.DrawPixel(loc.X, loc.Y, rl.Color{255, 255, 255, 192})
-		}
-	}
 	rl.EndTextureMode()
 
 	// Draw layers
@@ -272,6 +266,7 @@ func (s *UIFileSystem) Draw() {
 		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, 220, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, 240, 20, rl.White)
 		rl.DrawText(fmt.Sprintf("Left Color: %d", CurrentFile.LeftColor), 0, 260, 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Selection Len: %d", len(CurrentFile.Selection)), 0, 280, 20, rl.White)
 		// for y, history := range CurrentFile.History {
 		// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
 		// 		history.LayerIndex,
