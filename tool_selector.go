@@ -6,6 +6,9 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// TODO resize
+// TODO rotate
+
 // SelectorTool allows for a selection to be made
 type SelectorTool struct {
 	firstPos, lastPos IntVec2
