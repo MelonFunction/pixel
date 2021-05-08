@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -19,10 +20,71 @@ var (
 // CurrentColorSetLeftColor sets the left color and updates the UI components
 // to reflect the set color
 func CurrentColorSetLeftColor(color rl.Color) {
-	if found, ok := areaColorsRev[color]; ok {
-		log.Println(color, found)
+
+	colorCopy := color
+	log.Println(colorCopy)
+
+	if colorCopy.R != colorCopy.G && colorCopy.R != colorCopy.B {
+		for colorCopy.R > 0 && colorCopy.G > 0 && colorCopy.B > 0 {
+			colorCopy.R--
+			colorCopy.G--
+			colorCopy.B--
+		}
+
+		switch {
+		case colorCopy.G == 0 && colorCopy.B == 0:
+			colorCopy.R = 255
+		case colorCopy.R == 0 && colorCopy.B == 0:
+			colorCopy.G = 255
+		case colorCopy.R == 0 && colorCopy.G == 0:
+			colorCopy.B = 255
+		case colorCopy.R == 0:
+			log.Println("\tR 0")
+			if colorCopy.G > colorCopy.B {
+				colorCopy.B = uint8(math.Round(255 / float64(colorCopy.G) * float64(colorCopy.B)))
+				colorCopy.G = 255
+			} else {
+				colorCopy.G = uint8(math.Round(255 / float64(colorCopy.B) * float64(colorCopy.G)))
+				colorCopy.B = 255
+			}
+		case colorCopy.G == 0:
+			log.Println("\tG 0")
+			if colorCopy.B > colorCopy.R {
+				colorCopy.R = uint8(math.Round(255 / float64(colorCopy.B) * float64(colorCopy.R)))
+				colorCopy.B = 255
+			} else {
+				colorCopy.B = uint8(math.Round(255 / float64(colorCopy.R) * float64(colorCopy.B)))
+				colorCopy.R = 255
+			}
+		case colorCopy.B == 0:
+			log.Println("\tB 0")
+			if colorCopy.R > colorCopy.G {
+				colorCopy.G = uint8(math.Round(255 / float64(colorCopy.R) * float64(colorCopy.G)))
+				colorCopy.R = 255
+			} else {
+				colorCopy.R = uint8(math.Round(255 / float64(colorCopy.G) * float64(colorCopy.R)))
+				colorCopy.G = 255
+			}
+		}
+
+	}
+
+	log.Println("\tafter", colorCopy)
+
+	// var scaled float64
+	// var rounded float64
+	// if color.G > 0 {
+	// 	rounded = math.Round(float64((float32(color.G) / float32(color.R)) * 255))
+	// 	scaled = float64((float32(color.G) / float32(color.R)) * 255)
+	// }
+
+	// TODO
+	// Need to search for near values on the value not equal to 255 since the
+	// slider increments by 6 or 7 depending on how the value was rounded
+	if found, ok := sliderColorsRev[colorCopy]; ok {
+		log.Println("\tfound", colorCopy, found)
 	} else {
-		log.Println("not found", color)
+		log.Println("\tnot found, retrying", colorCopy)
 	}
 
 	if drawable, ok := currentColorLeft.GetDrawable(); ok {

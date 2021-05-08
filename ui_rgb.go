@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -20,7 +22,6 @@ var (
 	opacityColors    = make(map[int]rl.Color)
 	opacityColorsRev = make(map[rl.Color]int)
 	areaColors       = make(map[IntVec2]rl.Color)
-	areaColorsRev    = make(map[rl.Color]IntVec2)
 	sliderColors     = make(map[int]rl.Color)
 	sliderColorsRev  = make(map[rl.Color]int)
 
@@ -67,8 +68,12 @@ func makeColorArea() {
 					// 101 to 100
 					color.R = 255
 					color.B = uint8(float32(255) * (1 - p))
+				default:
+					// Fill in the remainder with red
+					color.R = 255
 				}
 
+				log.Println(px, color)
 				for py := 0; py < int(texture.Texture.Height); py++ {
 					rl.DrawPixel(px, py, color)
 					sliderColors[px] = color
@@ -133,7 +138,6 @@ func makeBlendArea(origColor rl.Color) {
 
 					rl.DrawPixel(px, py, color)
 					areaColors[IntVec2{px, py}] = color
-					areaColorsRev[color] = IntVec2{px, py}
 				}
 			}
 			rl.EndTextureMode()
