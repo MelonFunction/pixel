@@ -110,13 +110,11 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		}, nil,
 		func(entity *Entity, key rl.Key) {
 			// key pressed
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-				drawableParent, ok := drawable.DrawableType.(*DrawableText)
-				if ok {
-					if key == rl.KeyBackspace && len(drawableParent.Label) > 0 {
-						drawableParent.Label = drawableParent.Label[:len(drawableParent.Label)-1]
-					} else if len(drawableParent.Label) < 12 {
+			if drawable, ok := entity.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
+						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
+					} else if len(drawableText.Label) < 12 {
 						switch {
 						// 0 to 9
 						case key >= 48 && key <= 57:
@@ -125,7 +123,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 						case key >= 97 && key <= 97+26:
 							fallthrough
 						case key >= rl.KeyA && key <= rl.KeyZ:
-							drawableParent.Label += string(rune(key))
+							drawableText.Label += string(rune(key))
 						}
 					}
 				}
