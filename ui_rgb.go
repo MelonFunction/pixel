@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -22,6 +20,7 @@ var (
 	opacityColors    = make(map[int]rl.Color)
 	opacityColorsRev = make(map[rl.Color]int)
 	areaColors       = make(map[IntVec2]rl.Color)
+	areaColorsRev    = make(map[rl.Color]IntVec2)
 	sliderColors     = make(map[int]rl.Color)
 	sliderColorsRev  = make(map[rl.Color]int)
 
@@ -73,7 +72,6 @@ func makeColorArea() {
 					color.R = 255
 				}
 
-				log.Println(px, color)
 				for py := 0; py < int(texture.Texture.Height); py++ {
 					rl.DrawPixel(px, py, color)
 					sliderColors[px] = color
@@ -138,6 +136,7 @@ func makeBlendArea(origColor rl.Color) {
 
 					rl.DrawPixel(px, py, color)
 					areaColors[IntVec2{px, py}] = color
+					areaColorsRev[color] = IntVec2{px, py}
 				}
 			}
 			rl.EndTextureMode()
@@ -172,6 +171,68 @@ func makeOpacitySliderArea(color rl.Color) {
 				}
 			}
 			rl.EndTextureMode()
+		}
+	}
+}
+
+func MoveAreaSelector(mx, my int) {
+	if moveable, ok := rgbArea.GetMoveable(); ok {
+		// mx := rl.GetMouseX()
+		// my := rl.GetMouseY()
+		// mx -= int(moveable.Bounds.X)
+		// my -= int(moveable.Bounds.Y)
+
+		if mx < 0 {
+			mx = 0
+		}
+		if my < 0 {
+			my = 0
+		}
+		if mx > int(moveable.Bounds.Width)-1 {
+			mx = int(moveable.Bounds.Width) - 1
+		}
+		if my > int(moveable.Bounds.Height)-1 {
+			my = int(moveable.Bounds.Height) - 1
+		}
+
+		// Move the areaSelector
+		if sm, ok := areaSelector.GetMoveable(); ok {
+			sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
+			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+		}
+
+		loc := IntVec2{mx, my}
+		color, ok := areaColors[loc]
+		if ok {
+			lastColorLocation = loc
+			makeOpacitySliderArea(color)
+		}
+	}
+}
+
+func MoveColorSelector(mx int) {
+	if moveable, ok := colorSlider.GetMoveable(); ok {
+		// mx := rl.GetMouseX()
+		// mx -= int(moveable.Bounds.X)
+		my := int(moveable.Bounds.Height) / 2
+
+		if mx < 0 {
+			mx = 0
+		}
+		if mx > int(moveable.Bounds.Width)-1 {
+			mx = int(moveable.Bounds.Width) - 1
+		}
+
+		// Move the colorSelector
+		if sm, ok := colorSelector.GetMoveable(); ok {
+			sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
+			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+		}
+
+		color, ok := sliderColors[mx]
+		if ok {
+			makeBlendArea(color)
+			makeOpacitySliderArea(color)
 		}
 	}
 }

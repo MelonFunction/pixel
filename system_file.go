@@ -87,6 +87,11 @@ func NewUIFileSystem() *UIFileSystem {
 	rgb.Snap([]SnapData{
 		{screenRight, SideRight, SideLeft},
 	})
+	if res, ok := rgb.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			SetUIColors(CurrentFile.LeftColor)
+		}
+	}
 
 	palette := NewPaletteUI(rl.NewRectangle(
 		0,

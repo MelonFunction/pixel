@@ -31,6 +31,7 @@ func PaletteUIAddColor(color rl.Color) {
 			// Up
 			switch button {
 			case rl.MouseLeftButton:
+				SetUIColors(color)
 				CurrentColorSetLeftColor(color)
 
 				children, err := paletteEntity.GetChildren()
@@ -78,6 +79,7 @@ func PaletteUIAddColor(color rl.Color) {
 				}
 				paletteEntity.FlowChildren()
 			case rl.MouseRightButton:
+				SetUIColors(color)
 				CurrentColorSetRightColor(color)
 			case rl.MouseMiddleButton:
 				PaletteUIRemoveColor(e)

@@ -17,76 +17,166 @@ var (
 	currentColorAdd   *Entity
 )
 
+type colorEditing int
+
+const (
+	editingR colorEditing = iota
+	editingG
+	editingB
+)
+
+func SetUIColors(color rl.Color) {
+	cc := color
+	// If it's R, G or B which is incremented in the loop
+	var editing colorEditing
+
+	for cc.R > 0 && cc.G > 0 && cc.B > 0 {
+		cc.R--
+		cc.G--
+		cc.B--
+	}
+
+	switch {
+	// For cases like 255, 0, 0 (red)
+	case cc.G == 0 && cc.B == 0:
+		cc.R = 255
+	case cc.R == 0 && cc.B == 0:
+		cc.G = 255
+	case cc.R == 0 && cc.G == 0:
+		cc.B = 255
+
+	// For cases like 255, 255, 0 (yellow)
+	case cc.R == cc.G:
+		cc.R = 255
+		cc.G = 255
+	case cc.G == cc.B:
+		cc.G = 255
+		cc.B = 255
+	case cc.R == cc.B:
+		cc.R = 255
+		cc.B = 255
+
+	// For cases like 255, 192, 0 where a ratio is needed
+	case cc.R == 0:
+		if cc.G > cc.B {
+			cc.B = uint8(math.Round(255 / float64(cc.G) * float64(cc.B)))
+			editing = editingB
+			cc.G = 255
+		} else {
+			cc.G = uint8(math.Round(255 / float64(cc.B) * float64(cc.G)))
+			editing = editingG
+			cc.B = 255
+		}
+	case cc.G == 0:
+		if cc.B > cc.R {
+			cc.R = uint8(math.Round(255 / float64(cc.B) * float64(cc.R)))
+			editing = editingR
+			cc.B = 255
+		} else {
+			cc.B = uint8(math.Round(255 / float64(cc.R) * float64(cc.B)))
+			editing = editingB
+			cc.R = 255
+		}
+	case cc.B == 0:
+		if cc.R > cc.G {
+			cc.G = uint8(math.Round(255 / float64(cc.R) * float64(cc.G)))
+			editing = editingG
+			cc.R = 255
+		} else {
+			cc.R = uint8(math.Round(255 / float64(cc.G) * float64(cc.R)))
+			editing = editingR
+			cc.G = 255
+		}
+	}
+
+	var found int
+	var ok bool
+	incr := -1       // -1, 1, -2, 2, -3, 3 etc
+	maxAttempts := 6 // TODO make global var for this
+	var find func(c rl.Color) rl.Color
+	find = func(c rl.Color) rl.Color {
+		found, ok = sliderColorsRev[c]
+		if ok {
+			// log.Println("\tfound", incr, c, found)
+			return c
+		}
+
+		// log.Println("\tnot found, retrying", incr, c)
+		if incr >= 0 {
+			incr++
+		}
+		incr *= -1
+
+		// Find the entry for the color ratio
+		switch editing {
+		case editingR:
+			if incr >= 0 {
+				if c.R+uint8(incr) <= 255 {
+					c.R += uint8(incr)
+				}
+			} else {
+				if c.R-uint8(incr*-1) >= 0 {
+					c.R -= uint8(incr * -1)
+				}
+			}
+		case editingG:
+			if incr >= 0 {
+				if c.G+uint8(incr) <= 255 {
+					c.G += uint8(incr)
+				}
+			} else {
+				if c.G-uint8(incr*-1) >= 0 {
+					c.G -= uint8(incr * -1)
+				}
+			}
+		case editingB:
+			if incr >= 0 {
+				if c.B+uint8(incr) <= 255 {
+					c.B += uint8(incr)
+				}
+			} else {
+				if c.B-uint8(incr*-1) >= 0 {
+					c.B -= uint8(incr * -1)
+				}
+			}
+		}
+
+		if incr > maxAttempts {
+			// log.Println("\tnot found, max attempts reached", incr, c)
+			ok = true
+			return c
+		}
+
+		return find(c)
+	}
+	if ok == false {
+		cc = find(cc)
+	}
+	MoveColorSelector(found)
+
+	// Decrease all values proportionally until the highest value matches the target value
+	// 0  255 49
+	// 64 130 77
+
+	// 118 0 255
+	// 99 66 136
+	log.Println(color)
+
+	ax, ay := 255, 0
+
+	// areaFound, ok := areaColorsRev[color]
+	// if ok {
+	// 	log.Println("found area color")
+	// } else {
+	// 	log.Println("didn't find area color")
+	// }
+	MoveAreaSelector(ax, ay)
+
+}
+
 // CurrentColorSetLeftColor sets the left color and updates the UI components
 // to reflect the set color
 func CurrentColorSetLeftColor(color rl.Color) {
-
-	colorCopy := color
-	log.Println(colorCopy)
-
-	if colorCopy.R != colorCopy.G && colorCopy.R != colorCopy.B {
-		for colorCopy.R > 0 && colorCopy.G > 0 && colorCopy.B > 0 {
-			colorCopy.R--
-			colorCopy.G--
-			colorCopy.B--
-		}
-
-		switch {
-		case colorCopy.G == 0 && colorCopy.B == 0:
-			colorCopy.R = 255
-		case colorCopy.R == 0 && colorCopy.B == 0:
-			colorCopy.G = 255
-		case colorCopy.R == 0 && colorCopy.G == 0:
-			colorCopy.B = 255
-		case colorCopy.R == 0:
-			log.Println("\tR 0")
-			if colorCopy.G > colorCopy.B {
-				colorCopy.B = uint8(math.Round(255 / float64(colorCopy.G) * float64(colorCopy.B)))
-				colorCopy.G = 255
-			} else {
-				colorCopy.G = uint8(math.Round(255 / float64(colorCopy.B) * float64(colorCopy.G)))
-				colorCopy.B = 255
-			}
-		case colorCopy.G == 0:
-			log.Println("\tG 0")
-			if colorCopy.B > colorCopy.R {
-				colorCopy.R = uint8(math.Round(255 / float64(colorCopy.B) * float64(colorCopy.R)))
-				colorCopy.B = 255
-			} else {
-				colorCopy.B = uint8(math.Round(255 / float64(colorCopy.R) * float64(colorCopy.B)))
-				colorCopy.R = 255
-			}
-		case colorCopy.B == 0:
-			log.Println("\tB 0")
-			if colorCopy.R > colorCopy.G {
-				colorCopy.G = uint8(math.Round(255 / float64(colorCopy.R) * float64(colorCopy.G)))
-				colorCopy.R = 255
-			} else {
-				colorCopy.R = uint8(math.Round(255 / float64(colorCopy.G) * float64(colorCopy.R)))
-				colorCopy.G = 255
-			}
-		}
-
-	}
-
-	log.Println("\tafter", colorCopy)
-
-	// var scaled float64
-	// var rounded float64
-	// if color.G > 0 {
-	// 	rounded = math.Round(float64((float32(color.G) / float32(color.R)) * 255))
-	// 	scaled = float64((float32(color.G) / float32(color.R)) * 255)
-	// }
-
-	// TODO
-	// Need to search for near values on the value not equal to 255 since the
-	// slider increments by 6 or 7 depending on how the value was rounded
-	if found, ok := sliderColorsRev[colorCopy]; ok {
-		log.Println("\tfound", colorCopy, found)
-	} else {
-		log.Println("\tnot found, retrying", colorCopy)
-	}
-
 	if drawable, ok := currentColorLeft.GetDrawable(); ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 		if ok {
