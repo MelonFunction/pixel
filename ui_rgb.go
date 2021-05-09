@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -20,13 +22,20 @@ var (
 	opacityColors    = make(map[int]rl.Color)
 	opacityColorsRev = make(map[rl.Color]int)
 	areaColors       = make(map[IntVec2]rl.Color)
-	areaColorsRev    = make(map[rl.Color]IntVec2)
 	sliderColors     = make(map[int]rl.Color)
 	sliderColorsRev  = make(map[rl.Color]int)
 
 	// Used by slider to set tool color when slider is moved
 	lastColorLocation IntVec2
 )
+
+func SetUIHexColor(color rl.Color) {
+	if drawable, ok := hexInput.GetDrawable(); ok {
+		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+			drawableText.Label = fmt.Sprintf("%02x%02x%02x%02x", color.R, color.G, color.B, color.A)
+		}
+	}
+}
 
 func makeColorArea() {
 	// Setup the colorSlider texture
@@ -136,7 +145,6 @@ func makeBlendArea(origColor rl.Color) {
 
 					rl.DrawPixel(px, py, color)
 					areaColors[IntVec2{px, py}] = color
-					areaColorsRev[color] = IntVec2{px, py}
 				}
 			}
 			rl.EndTextureMode()
@@ -177,11 +185,6 @@ func makeOpacitySliderArea(color rl.Color) {
 
 func MoveAreaSelector(mx, my int) {
 	if moveable, ok := rgbArea.GetMoveable(); ok {
-		// mx := rl.GetMouseX()
-		// my := rl.GetMouseY()
-		// mx -= int(moveable.Bounds.X)
-		// my -= int(moveable.Bounds.Y)
-
 		if mx < 0 {
 			mx = 0
 		}
@@ -212,8 +215,6 @@ func MoveAreaSelector(mx, my int) {
 
 func MoveColorSelector(mx int) {
 	if moveable, ok := colorSlider.GetMoveable(); ok {
-		// mx := rl.GetMouseX()
-		// mx -= int(moveable.Bounds.X)
 		my := int(moveable.Bounds.Height) / 2
 
 		if mx < 0 {
@@ -386,9 +387,28 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	makeOpacitySliderArea(rl.Red)
 	makeColorArea()
 
-	hexInput = NewInput(sliderBounds, "#00000000", false, func(entity *Entity, button rl.MouseButton) {}, nil, func(entity *Entity, key rl.Key) {
-
-	})
+	hexInput = NewInput(sliderBounds, "#00000000", false, func(entity *Entity, button rl.MouseButton) {}, nil,
+		func(entity *Entity, key rl.Key) {
+			if drawable, ok := entity.GetDrawable(); ok {
+				// TODO pasting
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
+						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
+					} else if len(drawableText.Label) < 8 {
+						switch {
+						// 0 to 9
+						case key >= 48 && key <= 57:
+							fallthrough
+						// a to f
+						case key >= 97 && key <= 102:
+							fallthrough
+						case key >= rl.KeyA && key <= rl.KeyF:
+							drawableText.Label += string(rune(key))
+						}
+					}
+				}
+			}
+		})
 
 	container := NewBox(bounds, []*Entity{
 		rgbArea,

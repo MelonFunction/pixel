@@ -31,8 +31,8 @@ func PaletteUIAddColor(color rl.Color) {
 			// Up
 			switch button {
 			case rl.MouseLeftButton:
-				SetUIColors(color)
 				CurrentColorSetLeftColor(color)
+				SetUIColors(color)
 
 				children, err := paletteEntity.GetChildren()
 				if err != nil {
