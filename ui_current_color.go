@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -92,7 +91,7 @@ func SetUIColors(color rl.Color) {
 	var found int
 	var ok bool
 	incr := -1       // -1, 1, -2, 2, -3, 3 etc
-	maxAttempts := 6 // TODO make global var for this
+	maxAttempts := 6 // TODO make global var for this, basically the step amount in the gradient values
 	var find func(c rl.Color) rl.Color
 	find = func(c rl.Color) rl.Color {
 		found, ok = sliderColorsRev[c]
@@ -154,24 +153,41 @@ func SetUIColors(color rl.Color) {
 	}
 	MoveColorSelector(found)
 
-	// Decrease all values proportionally until the highest value matches the target value
-	// 0  255 49
-	// 64 130 77
+	// Go to the correct place in the RGB area
+	var ax, ay uint8 = 255, 0
+	if color.R > ay {
+		ay = color.R
+	}
+	if color.G > ay {
+		ay = color.G
+	}
+	if color.B > ay {
+		ay = color.B
+	}
 
-	// 118 0 255
-	// 99 66 136
-	log.Println(color)
+	if color.R < ax {
+		ax = color.R
+	}
+	if color.G < ax {
+		ax = color.G
+	}
+	if color.B < ax {
+		ax = color.B
+	}
 
-	ax, ay := 255, 0
-
-	// areaFound, ok := areaColorsRev[color]
-	// if ok {
-	// 	log.Println("found area color")
-	// } else {
-	// 	log.Println("didn't find area color")
-	// }
-	MoveAreaSelector(ax, ay)
-
+	var scale float32
+	if ax > 0 {
+		scale = float32(ay) / float32(ax)
+	}
+	ax = 255 - uint8(math.Ceil(float64(255/scale)))
+	ay = 255 - ay
+	if ax > 0 {
+		ax--
+	}
+	if ay > 0 {
+		ay--
+	}
+	MoveAreaSelector(int(ax), int(ay))
 }
 
 // CurrentColorSetLeftColor sets the left color and updates the UI components
@@ -188,6 +204,8 @@ func CurrentColorSetLeftColor(color rl.Color) {
 			rl.EndTextureMode()
 		}
 	}
+
+	SetUIHexColor(color)
 }
 
 // CurrentColorSetRightColor sets the right color and updates the UI components
@@ -204,6 +222,8 @@ func CurrentColorSetRightColor(color rl.Color) {
 			rl.EndTextureMode()
 		}
 	}
+
+	SetUIHexColor(color)
 }
 
 func currentColorUIAddColor(color rl.Color) *Entity {
