@@ -509,70 +509,6 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyMoveable = true
 	}
 
-	// Handle mouse events
-	// shouldProcess prevents more events when a mouse button is down
-
-	// shouldProcess := true
-	// if UIEntityCapturedInput != nil {
-	// 	shouldProcess = false
-	// 	button := s.getButtonDown()
-	// 	lastButton := UIInteractableCapturedInput.ButtonDown
-
-	// 	if lastButton != MouseButtonNone && button == lastButton {
-	// 		// Continuously send mouse down event
-	// 		if UIInteractableCapturedInput.ButtonReleased == true {
-	// 			UIInteractableCapturedInput.ButtonDownAt = time.Now()
-	// 			UIInteractableCapturedInput.ButtonReleased = false
-	// 		}
-
-	// 		isHeld := false
-	// 		if time.Now().Sub(UIInteractableCapturedInput.ButtonDownAt) > time.Second/2 {
-	// 			isHeld = true
-	// 		}
-
-	// 		if UIInteractableCapturedInput.OnMouseDown != nil {
-	// 			UIInteractableCapturedInput.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
-	// 		}
-	// 	} else if button == MouseButtonNone {
-	// 		// Handle mouse up event
-	// 		if UIInteractableCapturedInput.OnMouseUp != nil && UIInteractableCapturedInput.ButtonReleased == false {
-	// 			UIInteractableCapturedInput.ButtonReleased = true
-	// 			UIInteractableCapturedInput.OnMouseUp(UIEntityCapturedInput, lastButton)
-	// 		}
-
-	// 		if UIInteractableCapturedInput.OnKeyPress == nil {
-	// 			// RemoveCapturedInput()
-	// 			RemoveCapturedInput()
-	// 		}
-	// 	}
-
-	// 	// Handle keyboard events
-	// 	if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
-	// 		shouldProcess = true
-	// 		lastKey := rl.GetKeyPressed()
-	// 		// GetKeyPressed doesn't get some keys for some reason
-	// 		if rl.IsKeyPressed(rl.KeyBackspace) {
-	// 			lastKey = rl.KeyBackspace
-	// 		}
-	// 		if rl.IsKeyPressed(rl.KeyEnter) {
-	// 			lastKey = rl.KeyEnter
-	// 		}
-	// 		if rl.IsKeyPressed(rl.KeyTab) {
-	// 			lastKey = rl.KeyTab
-	// 		}
-
-	// 		if uint32(lastKey) != math.MaxUint32 {
-	// 			UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, lastKey)
-	// 		}
-
-	// 		if button != MouseButtonNone {
-	// 			// RemoveCapturedInput()
-	// 			RemoveCapturedInput()
-	// 		}
-	// 	}
-
-	// }
-
 	res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"])
 	// Reverse order so that entities that are on top can get input and return
 	for i := len(res)/2 - 1; i >= 0; i-- {
@@ -588,25 +524,27 @@ func (s *UIControlSystem) Update(dt float32) {
 		if entity != nil {
 			UIHasControl = true
 			if interactable, ok := entity.GetInteractable(); ok {
-				if interactable.ButtonDown != MouseButtonNone && UIEntityCapturedInput != entity {
-					lastButton := interactable.ButtonDown
-					if lastButton != MouseButtonNone && button == lastButton {
-						// Continuously send mouse down event
-						if interactable.ButtonReleased == true {
-							interactable.ButtonDownAt = time.Now()
-							interactable.ButtonReleased = false
-						}
-
-						isHeld := false
-						if time.Now().Sub(interactable.ButtonDownAt) > time.Second/2 {
-							isHeld = true
-						}
-
-						if interactable.OnMouseDown != nil {
-							interactable.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
-						}
+				// Continuously sends mouse down event
+				lastButton := interactable.ButtonDown
+				if lastButton != MouseButtonNone && button == lastButton {
+					if interactable.ButtonReleased == true {
+						interactable.ButtonDownAt = time.Now()
+						interactable.ButtonReleased = false
 					}
 
+					// TODO fix click and drag events
+					isHeld := false
+					if time.Now().Sub(interactable.ButtonDownAt) > time.Second/2 {
+						isHeld = true
+					}
+
+					if interactable.OnMouseDown != nil {
+						interactable.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
+					}
+				}
+
+				// Only allow input capture to happen once per new entity
+				if interactable.ButtonDown != MouseButtonNone && UIEntityCapturedInput != entity {
 					SetCapturedInput(entity, interactable)
 				}
 			}
