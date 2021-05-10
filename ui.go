@@ -19,8 +19,14 @@ var (
 	UIIsInputtingText = false
 	// UIInteractableCapturedInput is the current Interactable with control
 	UIInteractableCapturedInput *Interactable
+	// UIInteractableCapturedInputLast is the previous Interactable with control
+	// and is used in the OnBlur function
+	UIInteractableCapturedInputLast *Interactable
 	// UIEntityCapturedInput is the current Entity with control
 	UIEntityCapturedInput *Entity
+	// UIEntityCapturedInputLast is the previous Entity with control
+	// and is used in the OnBlur function
+	UIEntityCapturedInputLast *Entity
 	// UIComponentWithControl is the current ui component with control
 	// UIComponentWithControl UIComponent
 	// isInited is a flag to record if InitUI has been called
@@ -148,6 +154,12 @@ type Interactable struct {
 
 	// OnKeyPress is called when a key is released
 	OnKeyPress func(entity *Entity, key rl.Key)
+
+	// OnBlur is called when focus is lost on the entity
+	OnBlur func(entity *Entity)
+
+	// OnFocus is called when focus is gained on the entity
+	OnFocus func(entity *Entity)
 }
 
 func (entity *Entity) GetInteractable() (t *Interactable, ok bool) {
@@ -501,10 +513,32 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
+func SetCapturedInput(entity *Entity, interactable *Interactable) {
+	if entity == nil || interactable == nil {
+		log.Fatal("Cannot set captured input to a nil entity")
+	} else if interactable != UIInteractableCapturedInput {
+		UIEntityCapturedInputLast = UIEntityCapturedInput
+		UIInteractableCapturedInputLast = UIInteractableCapturedInput
+		if UIInteractableCapturedInputLast != nil && UIInteractableCapturedInputLast.OnBlur != nil {
+			UIInteractableCapturedInputLast.OnBlur(UIEntityCapturedInput)
+		}
+
+		UIEntityCapturedInput = entity
+		UIInteractableCapturedInput = interactable
+		if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnFocus != nil {
+			UIInteractableCapturedInput.OnFocus(UIEntityCapturedInput)
+		}
+	}
+}
+
 func RemoveCapturedInput() {
-	UIHasControl = false
+	UIEntityCapturedInputLast = UIEntityCapturedInput
+	UIInteractableCapturedInputLast = UIInteractableCapturedInput
+	if UIInteractableCapturedInputLast != nil && UIInteractableCapturedInputLast.OnBlur != nil {
+		UIInteractableCapturedInputLast.OnBlur(UIEntityCapturedInput)
+	}
+
 	UIEntityCapturedInput = nil
-	UIInteractableCapturedInput.ButtonDown = MouseButtonNone
 	UIInteractableCapturedInput = nil
 }
 

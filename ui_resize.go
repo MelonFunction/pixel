@@ -59,9 +59,8 @@ func ResizeUIMakeInput(linkedValueCallback func() *int, tabNext *Entity) *Entity
 
 						// Set control to tabNext
 						if tabNext != nil {
-							if hi, ok := tabNext.GetInteractable(); ok {
-								UIEntityCapturedInput = tabNext
-								UIInteractableCapturedInput = hi
+							if interactable, ok := tabNext.GetInteractable(); ok {
+								SetCapturedInput(tabNext, interactable)
 							}
 						}
 					case key == rl.KeyEnter:
