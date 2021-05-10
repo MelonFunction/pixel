@@ -248,18 +248,20 @@ func currentColorUIAddColor(color rl.Color) *Entity {
 func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorBox = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
-	currentColorLeft = currentColorUIAddColor(CurrentFile.LeftColor)
-	CurrentColorSetLeftColor(CurrentFile.LeftColor)
 	currentColorRight = currentColorUIAddColor(CurrentFile.RightColor)
 	CurrentColorSetRightColor(CurrentFile.RightColor)
+	currentColorLeft = currentColorUIAddColor(CurrentFile.LeftColor)
+	CurrentColorSetLeftColor(CurrentFile.LeftColor)
 
 	currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), "./res/icons/swap.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			left := CurrentFile.LeftColor
 			right := CurrentFile.RightColor
-			CurrentColorSetLeftColor(right)
 			CurrentColorSetRightColor(left)
+			CurrentColorSetLeftColor(right)
+			SetUIHexColor(left)
+			SetUIColors(left)
 		}, nil)
 	currentColorBox.PushChild(currentColorSwap)
 
