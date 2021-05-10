@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -27,9 +29,14 @@ var (
 
 	// Used by slider to set tool color when slider is moved
 	lastColorLocation IntVec2
+
+	// hexColor is the current color being displayed
+	hexColor rl.Color
 )
 
 func SetUIHexColor(color rl.Color) {
+	hexColor = color
+
 	if drawable, ok := hexInput.GetDrawable(); ok {
 		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 			drawableText.Label = fmt.Sprintf("%02x%02x%02x%02x", color.R, color.G, color.B, color.A)
@@ -387,10 +394,13 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	makeOpacitySliderArea(rl.Red)
 	makeColorArea()
 
+	hexColor = CurrentFile.LeftColor
 	hexInput = NewInput(sliderBounds, "#00000000", false, func(entity *Entity, button rl.MouseButton) {}, nil,
 		func(entity *Entity, key rl.Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
 				// TODO pasting
+				// TODO set color from hex code
+
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
 						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
@@ -406,9 +416,41 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 							drawableText.Label += string(rune(key))
 						}
 					}
+
+					// Set the color from the hex
+					var r, g, b, a int64 = 0, 0, 0, 255
+					var err error
+					switch len(drawableText.Label) {
+					case 8:
+						if a, err = strconv.ParseInt(drawableText.Label[6:8], 16, 32); err != nil {
+							log.Println(err)
+						}
+						fallthrough
+					case 6:
+						if r, err = strconv.ParseInt(drawableText.Label[0:2], 16, 32); err != nil {
+							log.Println(err)
+						}
+						if g, err = strconv.ParseInt(drawableText.Label[2:4], 16, 32); err != nil {
+							log.Println(err)
+						}
+						if b, err = strconv.ParseInt(drawableText.Label[4:6], 16, 32); err != nil {
+							log.Println(err)
+						}
+
+						hexColor = rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}
+					}
 				}
 			}
 		})
+	if interactable, ok := hexInput.GetInteractable(); ok {
+		interactable.OnBlur = func(entity *Entity) {
+			SetUIColors(hexColor)
+			CurrentColorSetLeftColor(hexColor)
+		}
+		interactable.OnFocus = func(entity *Entity) {
+			SetUIHexColor(hexColor)
+		}
+	}
 
 	container := NewBox(bounds, []*Entity{
 		rgbArea,
