@@ -41,6 +41,9 @@ func main() {
 		"toolUp":    {{rl.KeyC}, {rl.KeyUp}},
 		"toolDown":  {{rl.KeyT}, {rl.KeyDown}},
 
+		"copy":  {{rl.KeyLeftControl, rl.KeyC}},
+		"paste": {{rl.KeyLeftControl, rl.KeyV}},
+
 		"open":   {{rl.KeyLeftControl, rl.KeyO}},
 		"save":   {{rl.KeyLeftControl, rl.KeyS}},
 		"export": {{rl.KeyLeftControl, rl.KeyE}},

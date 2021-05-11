@@ -366,6 +366,17 @@ func (s *UIControlSystem) Update(dt float32) {
 		if checkDown(s.Keymap.Data[key]) {
 			setAwaitingRelease(s.Keymap.Data[key])
 
+			// Can work with entities which are capturing the input
+			switch key {
+			case "copy":
+			case "paste":
+				if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
+					for _, char := range rl.GetClipboardText() {
+						UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, rl.Key(char))
+					}
+				}
+			}
+
 			// Don't allow events to happen if a component is inputting text
 			if UIEntityCapturedInput != nil {
 				break

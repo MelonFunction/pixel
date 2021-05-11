@@ -398,9 +398,6 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	hexInput = NewInput(sliderBounds, "#00000000", false, func(entity *Entity, button rl.MouseButton) {}, nil,
 		func(entity *Entity, key rl.Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
-				// TODO pasting
-				// TODO set color from hex code
-
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 					if key == rl.KeyEnter {
 						RemoveCapturedInput()

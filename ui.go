@@ -18,8 +18,6 @@ var (
 	FileHasControl = false
 	// UIHasControl lets the program know if input should go to the UI or not
 	UIHasControl = false
-	// UIIsInputtingText allows click events to cancel out text input
-	UIIsInputtingText = false
 	// UIInteractableCapturedInput is the current Interactable with control
 	UIInteractableCapturedInput *Interactable
 	// UIInteractableCapturedInputLast is the previous Interactable with control
