@@ -509,6 +509,10 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyMoveable = true
 	}
 
+	if FileHasControl {
+		return
+	}
+
 	res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"])
 	// Reverse order so that entities that are on top can get input and return
 	for i := len(res)/2 - 1; i >= 0; i-- {

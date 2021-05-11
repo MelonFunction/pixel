@@ -13,6 +13,9 @@ type UI interface {
 }
 
 var (
+	// FileHasControl prevents UI from taking control when the mouse button down
+	// event was initiated while drawing
+	FileHasControl = false
 	// UIHasControl lets the program know if input should go to the UI or not
 	UIHasControl = false
 	// UIIsInputtingText allows click events to cancel out text input
@@ -253,6 +256,12 @@ type Drawable struct {
 	// IsChild prevents normal rendering and instead renders to its
 	// DrawableParent Texture
 	IsChild bool
+
+	// DrawBorder will draw the border if true
+	DrawBorder bool
+
+	// DrawBackground will draw the background if true
+	DrawBackground bool
 }
 
 func (entity *Entity) GetDrawable() (t *Drawable, ok bool) {
@@ -655,7 +664,11 @@ func NewRenderTexture(
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))}})
+		AddComponent(drawable, &Drawable{
+			DrawableType:   &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))},
+			DrawBorder:     true,
+			DrawBackground: true,
+		})
 	e.Name = "buttonTexture"
 	return e
 }
@@ -673,7 +686,11 @@ func NewButtonTexture(
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
-		AddComponent(drawable, &Drawable{DrawableType: NewDrawableTexture(texturePath)})
+		AddComponent(drawable, &Drawable{
+			DrawableType:   NewDrawableTexture(texturePath),
+			DrawBorder:     true,
+			DrawBackground: true,
+		})
 	e.Name = "buttonTexture"
 	return e
 }
@@ -690,7 +707,11 @@ func NewButtonText(bounds rl.Rectangle,
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
+		AddComponent(drawable, &Drawable{
+			DrawableType:   &DrawableText{label},
+			DrawBorder:     true,
+			DrawBackground: true,
+		})
 	e.Name = "buttonText: " + label
 	return e
 }
@@ -709,7 +730,11 @@ func NewInput(
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableText{label}})
+		AddComponent(drawable, &Drawable{
+			DrawableType:   &DrawableText{label},
+			DrawBorder:     true,
+			DrawBackground: true,
+		})
 	e.Name = "buttonText: " + label
 	return e
 }
@@ -730,10 +755,15 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
-			IsPassthrough: true,
-			Children:      children,
-		}})
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: nil, OnMouseDown: nil, OnKeyPress: nil}).
+		AddComponent(drawable, &Drawable{
+			DrawableType: &DrawableParent{
+				IsPassthrough: true,
+				Children:      children,
+			},
+			DrawBorder:     false,
+			DrawBackground: false,
+		})
 	e.Name = "box"
 	prepareChildren(e, children)
 	return e
@@ -747,10 +777,14 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection La
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(scrollable, &Scrollable{}).
-		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
-			IsPassthrough: false,
-			Texture:       rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
-		}})
+		AddComponent(drawable, &Drawable{
+			DrawableType: &DrawableParent{
+				IsPassthrough: false,
+				Texture:       rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
+			},
+			DrawBorder:     false,
+			DrawBackground: false,
+		})
 	e.Name = "scroll"
 	prepareChildren(e, children)
 	e.FlowChildren()
