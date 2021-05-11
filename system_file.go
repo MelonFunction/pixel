@@ -62,7 +62,7 @@ func NewUIFileSystem() *UIFileSystem {
 		}
 	}
 
-	// // UI Components
+	// Top bar
 	menu := NewMenuUI(rl.NewRectangle(
 		0,
 		0,
@@ -78,7 +78,32 @@ func NewUIFileSystem() *UIFileSystem {
 		{menu, SideTop, SideBottom},
 	})
 
+	// Right panel
 	var rgbWidth float32 = 255.0
+	var paletteWidth float32 = 128
+
+	rightPanel := NewBox(rl.NewRectangle(0, 0, rgbWidth+paletteWidth, float32(rl.GetScreenHeight())),
+		[]*Entity{}, FlowDirectionNone)
+	rightPanel.Snap([]SnapData{
+		{screenRight, SideRight, SideLeft},
+	})
+	if drawable, ok := rightPanel.GetDrawable(); ok {
+		// drawable.DrawBorder = true
+		drawable.DrawBackground = true
+	}
+	if res, ok := rightPanel.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			if moveable, ok := entity.GetMoveable(); ok {
+				moveable.Bounds.Height = float32(rl.GetScreenHeight())
+			}
+		}
+	}
+	if interactable, ok := rightPanel.GetInteractable(); ok {
+		interactable.OnMouseDown = func(entity *Entity, button rl.MouseButton, isHeld bool) {
+
+		}
+	}
+
 	rgb := NewRGBUI(rl.NewRectangle(
 		0,
 		0,
@@ -96,8 +121,8 @@ func NewUIFileSystem() *UIFileSystem {
 	palette := NewPaletteUI(rl.NewRectangle(
 		0,
 		0,
-		128,
-		(rgbWidth+UIButtonHeight*1.5)-128/4))
+		paletteWidth,
+		(rgbWidth+UIButtonHeight*1.5)-paletteWidth/4))
 	palette.Snap([]SnapData{
 		{rgb, SideRight, SideLeft},
 	})
@@ -105,8 +130,8 @@ func NewUIFileSystem() *UIFileSystem {
 	currentColor := NewCurrentColorUI(rl.NewRectangle(
 		0,
 		0,
-		128,
-		128/4))
+		paletteWidth,
+		paletteWidth/4))
 	currentColor.Snap([]SnapData{
 		{rgb, SideRight, SideLeft},
 		{palette, SideTop, SideBottom},
@@ -125,8 +150,8 @@ func NewUIFileSystem() *UIFileSystem {
 	layers := NewLayersUI(rl.NewRectangle(
 		0,
 		0,
-		rgbWidth+128,
-		128*2))
+		rgbWidth+paletteWidth,
+		paletteWidth*2))
 	layers.Snap([]SnapData{
 		{screenRight, SideRight, SideLeft},
 		{tools, SideTop, SideBottom},
@@ -268,6 +293,9 @@ func (s *UIFileSystem) Draw() {
 			return start
 		}
 
+		rl.DrawText(fmt.Sprintf("UIHasControl: %v", UIHasControl), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("FileHasControl: %v", FileHasControl), 0, incrY(), 20, rl.White)
+
 		rl.DrawText(fmt.Sprintf("CanvasWidthResizePreview: %v", CurrentFile.CanvasWidthResizePreview), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("CanvasHeightResizePreview: %v", CurrentFile.CanvasHeightResizePreview), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("TileWidthResizePreview: %v", CurrentFile.TileWidthResizePreview), 0, incrY(), 20, rl.White)
@@ -378,8 +406,11 @@ func (s *UIFileSystem) Update(dt float32) {
 
 	s.cursor = rl.GetScreenToWorld2D(rl.GetMousePosition(), s.Camera)
 	s.cursor = s.cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
+
+	FileHasControl = false
 	if !UIHasControl {
 		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+			FileHasControl = true
 			// Fires once
 			if CurrentFile.HasDoneMouseUpLeft {
 				// Create new history action
@@ -405,6 +436,7 @@ func (s *UIFileSystem) Update(dt float32) {
 		}
 
 		if rl.IsMouseButtonDown(rl.MouseRightButton) {
+			FileHasControl = true
 			if CurrentFile.HasDoneMouseUpRight {
 				// Create new history action
 				switch CurrentFile.LeftTool.(type) {
