@@ -9,6 +9,9 @@ import (
 var (
 	paletteEntity        *Entity
 	selectedPaletteColor *Entity
+
+	// The palette item being dragged
+	movingColor *Moveable
 )
 
 func PaletteUIRemoveColor(child *Entity) {
@@ -28,6 +31,7 @@ func PaletteUIAddColor(color rl.Color) {
 	var e *Entity
 	e = NewRenderTexture(rl.NewRectangle(0, 0, w, h),
 		func(entity *Entity, button rl.MouseButton) {
+			movingColor = nil
 			// Up
 			switch button {
 			case rl.MouseLeftButton:
@@ -90,11 +94,14 @@ func PaletteUIAddColor(color rl.Color) {
 			if isHeld {
 				switch button {
 				case rl.MouseLeftButton:
-					if res, err := scene.QueryID(entity.ID); err == nil {
-						moveable := res.Components[entity.Scene.ComponentsMap["moveable"]].(*Moveable)
-						moveable.Bounds.X = rl.GetMousePosition().X - moveable.Bounds.Width/2
-						moveable.Bounds.Y = rl.GetMousePosition().Y - moveable.Bounds.Height/2
+					if movingColor == nil {
+						if moveable, ok := entity.GetMoveable(); ok {
+							movingColor = moveable
+						}
 					}
+
+					movingColor.Bounds.X = rl.GetMousePosition().X - movingColor.Bounds.Width/2
+					movingColor.Bounds.Y = rl.GetMousePosition().Y - movingColor.Bounds.Height/2
 				}
 			}
 		})
@@ -107,6 +114,9 @@ func PaletteUIAddColor(color rl.Color) {
 			rl.ClearBackground(color)
 			rl.EndTextureMode()
 		}
+	}
+	if moveable, ok := e.GetMoveable(); ok {
+		moveable.Draggable = true
 	}
 
 	paletteEntity.PushChild(e)
