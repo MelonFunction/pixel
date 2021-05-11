@@ -402,7 +402,9 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				// TODO set color from hex code
 
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
-					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
+					if key == rl.KeyEnter {
+						RemoveCapturedInput()
+					} else if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
 						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 					} else if len(drawableText.Label) < 8 {
 						switch {

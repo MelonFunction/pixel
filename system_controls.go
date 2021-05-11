@@ -509,12 +509,14 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyMoveable = true
 	}
 
+	// Don't bother with UI controls, something is being drawn
 	if FileHasControl {
 		return
 	}
 
 	res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"])
 	// Reverse order so that entities that are on top can get input and return
+	// TODO check if this actually matters or does anything
 	for i := len(res)/2 - 1; i >= 0; i-- {
 		opp := len(res) - 1 - i
 		res[i], res[opp] = res[opp], res[i]
