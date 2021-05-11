@@ -31,6 +31,8 @@ var (
 	// UIComponentWithControl UIComponent
 	// isInited is a flag to record if InitUI has been called
 	isInited = false
+	// UIIsDraggingEntity is true when something is being dragged
+	UIIsDraggingEntity = false
 	// Font is the font used
 	Font *rl.Font
 	// UIFontSize is the size of the font
@@ -65,6 +67,8 @@ type Moveable struct {
 	Offset rl.Vector2
 	// LayoutTag is how the elements should be arranged
 	LayoutTag LayoutTag
+	// Draggable states if the Moveable should trigger the UIIsDraggingEntity flag
+	Draggable bool
 }
 
 func (entity *Entity) GetMoveable() (t *Moveable, ok bool) {
@@ -634,7 +638,7 @@ func NewBlock(
 	bounds rl.Rectangle,
 ) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{})
 	e.Name = "Block"
 	return e
@@ -647,7 +651,7 @@ func NewRenderTexture(
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
@@ -665,7 +669,7 @@ func NewButtonTexture(
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
@@ -682,7 +686,7 @@ func NewButtonText(bounds rl.Rectangle,
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
@@ -701,7 +705,7 @@ func NewInput(
 	onKeyPress func(entity *Entity, key rl.Key),
 ) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
@@ -723,7 +727,7 @@ func prepareChildren(entity *Entity, children []*Entity) {
 // NewBox creates a box which can store children
 func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(drawable, &Drawable{DrawableType: &DrawableParent{
@@ -739,7 +743,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 // order should be reversed
 func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
 	e := scene.NewEntity(nil).
-		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection}).
+		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(scrollable, &Scrollable{}).

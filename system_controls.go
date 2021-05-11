@@ -516,39 +516,53 @@ func (s *UIControlSystem) Update(dt float32) {
 		res[i], res[opp] = res[opp], res[i]
 	}
 
-	button := s.getButtonDown()
 	var entity *Entity
 	UIHasControl = false
-	for _, result := range res {
-		entity = s.process(result, false)
-		if entity != nil {
-			UIHasControl = true
-			if interactable, ok := entity.GetInteractable(); ok {
-				// Continuously sends mouse down event
-				lastButton := interactable.ButtonDown
-				if lastButton != MouseButtonNone && button == lastButton {
-					if interactable.ButtonReleased == true {
-						interactable.ButtonDownAt = time.Now()
-						interactable.ButtonReleased = false
-					}
 
-					// TODO fix click and drag events
-					isHeld := false
-					if time.Now().Sub(interactable.ButtonDownAt) > time.Second/2 {
-						isHeld = true
-					}
+	if UIEntityCapturedInput != nil && UIIsDraggingEntity {
+		entity = UIEntityCapturedInput
+	}
 
-					if interactable.OnMouseDown != nil {
-						interactable.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
+	if entity == nil {
+		for _, result := range res {
+			entity = s.process(result, false)
+			if entity != nil {
+				break
+			}
+		}
+	}
+
+	button := s.getButtonDown()
+	if entity != nil {
+		UIHasControl = true
+		if interactable, ok := entity.GetInteractable(); ok {
+			// Continuously sends mouse down event
+			lastButton := interactable.ButtonDown
+			if lastButton != MouseButtonNone && button == lastButton {
+				if interactable.ButtonReleased == true {
+					interactable.ButtonDownAt = time.Now()
+					interactable.ButtonReleased = false
+				}
+
+				isHeld := false
+				if time.Now().Sub(interactable.ButtonDownAt) > time.Second/2 {
+					isHeld = true
+					if moveable, ok := entity.GetMoveable(); ok {
+						if moveable.Draggable {
+							UIIsDraggingEntity = true
+						}
 					}
 				}
 
-				// Only allow input capture to happen once per new entity
-				if interactable.ButtonDown != MouseButtonNone && UIEntityCapturedInput != entity {
-					SetCapturedInput(entity, interactable)
+				if interactable.OnMouseDown != nil {
+					interactable.OnMouseDown(UIEntityCapturedInput, lastButton, isHeld)
 				}
 			}
-			return
+
+			// Only allow input capture to happen once per new entity
+			if interactable.ButtonDown != MouseButtonNone && UIEntityCapturedInput != entity {
+				SetCapturedInput(entity, interactable)
+			}
 		}
 	}
 
@@ -573,17 +587,17 @@ func (s *UIControlSystem) Update(dt float32) {
 		if entity != UIEntityCapturedInput && button != MouseButtonNone {
 			RemoveCapturedInput()
 		}
-	} else if UIEntityCapturedInput != nil && button == MouseButtonNone {
-		// Remove entity
+	} else if (UIEntityCapturedInput != nil || UIIsDraggingEntity) && button == MouseButtonNone {
 		// Handle mouse up event
 		if UIInteractableCapturedInput.ButtonReleased == false {
 			UIInteractableCapturedInput.ButtonReleased = true
 			if UIInteractableCapturedInput.OnMouseUp != nil {
 				UIInteractableCapturedInput.OnMouseUp(UIEntityCapturedInput, UIInteractableCapturedInput.ButtonDown)
 			}
-
+			UIIsDraggingEntity = false
 		}
 
+		// Remove entity
 		if UIInteractableCapturedInput.OnKeyPress == nil {
 			RemoveCapturedInput()
 			UIHasControl = false
