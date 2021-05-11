@@ -53,17 +53,29 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			// area. Elements aren't hovered when they are added via a button but they can
 			// still be clicked etc. Appears that only hover is broken
 			hoverable.Hovered = false
-			rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 			rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 		} else {
 			if hoverable.Selected {
 				// TODO colorscheme
 				// Same as hover for now
-				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 			} else {
-				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.Gray)
+			}
+		}
+	}
+
+	drawBackground := func(hoverable *Hoverable, moveable *Moveable) {
+		if hoverable.Hovered {
+			hoverable.Hovered = false
+			rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
+		} else {
+			if hoverable.Selected {
+				// TODO colorscheme
+				// Same as hover for now
+				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
+			} else {
+				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
 			}
 		}
 	}
@@ -86,6 +98,13 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 
 	switch t := drawable.DrawableType.(type) {
 	case *DrawableParent:
+		if drawable.DrawBackground {
+			drawBackground(hoverable, moveable)
+		}
+		if drawable.DrawBorder {
+			drawBorder(hoverable, moveable)
+		}
+
 		if t.IsPassthrough {
 			for _, child := range t.Children {
 				// Just draw the child, offset is already set
@@ -126,7 +145,13 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			rl.White)
 
 	case *DrawableText:
-		drawBorder(hoverable, moveable)
+		if drawable.DrawBackground {
+			drawBackground(hoverable, moveable)
+		}
+		if drawable.DrawBorder {
+			drawBorder(hoverable, moveable)
+		}
+
 		text := t.Label
 		if interactable != nil && UIInteractableCapturedInput == interactable && interactable.OnKeyPress != nil {
 			text += "|"
@@ -138,7 +163,13 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		rl.DrawTextEx(*Font, text, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
 
 	case *DrawableTexture:
-		drawBorder(hoverable, moveable)
+		if drawable.DrawBackground {
+			drawBackground(hoverable, moveable)
+		}
+		if drawable.DrawBorder {
+			drawBorder(hoverable, moveable)
+		}
+
 		x := moveable.Bounds.X + moveable.Bounds.Width/2 - float32(t.Texture.Width)/2
 		y := moveable.Bounds.Y + moveable.Bounds.Height/2 - float32(t.Texture.Height)/2
 		rl.DrawTexture(t.Texture, int(x), int(y), rl.White)
