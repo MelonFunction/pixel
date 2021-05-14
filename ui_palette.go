@@ -125,13 +125,9 @@ func PaletteUIAddColor(color rl.Color) {
 
 func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	paletteEntity = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
-	PaletteUIAddColor(rl.Red)
-	PaletteUIAddColor(rl.Blue)
-	PaletteUIAddColor(rl.Green)
-	PaletteUIAddColor(rl.Pink)
-	PaletteUIAddColor(rl.Orange)
-	PaletteUIAddColor(rl.Purple)
-	PaletteUIAddColor(rl.Aqua)
+	for _, color := range Settings.PaletteData[0].Data {
+		PaletteUIAddColor(color)
+	}
 
 	return paletteEntity
 }

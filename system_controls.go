@@ -11,15 +11,6 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
-// KeymapData stores the action name as the key and a 2d slice of the keys
-type KeymapData map[string][][]rl.Key
-
-// Keymap stores the command+actions in Map and the the ordered keys in Keys
-type Keymap struct {
-	Keys []string
-	Data KeymapData
-}
-
 // Static vars for file
 var (
 	keysExemptFromRelease = []rl.Key{
@@ -34,42 +25,6 @@ var (
 	UIControlSystemCmds    chan string
 	UIControlSystemReturns chan string
 )
-
-// NewKeymap returns a new Keymap
-// It also sorts the keys to avoid conflicts between bindings as ctrl+z will
-// fire before ctrl+shift+z if it is called first. Longer similar bindings will
-// be before shorter similar ones in the list
-func NewKeymap(data KeymapData) Keymap {
-	keys := make([]string, 0, 0)
-
-	for name, outer := range data {
-
-		var longestInner []rl.Key
-		for _, inner := range outer {
-			if len(inner) > len(longestInner) {
-				longestInner = inner
-			}
-		}
-		didInsert := false
-		for i, k := range keys {
-			for _, inner := range data[k] {
-				if len(longestInner) > len(inner) && !didInsert {
-					didInsert = true
-					keys = append(keys[:i], append([]string{name}, keys[i:]...)...)
-				}
-			}
-		}
-
-		if !didInsert {
-			keys = append(keys, name)
-		}
-	}
-
-	return Keymap{
-		Keys: keys,
-		Data: data,
-	}
-}
 
 type UIControlSystem struct {
 	BasicSystem
