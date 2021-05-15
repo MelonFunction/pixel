@@ -10,8 +10,8 @@ import (
 
 // SettingsData is the settings object which is read from settings.json
 type SettingsData struct {
-	KeymapData  KeymapData  `binding:"required" json:"keymap_data"`
-	PaletteData PaletteData `binding:"required" json"palette_data"`
+	KeymapData  KeymapData  `binding:"required"`
+	PaletteData PaletteData `binding:"required"`
 }
 
 // KeymapData stores the action name as the key and a 2d slice of the keys
@@ -166,7 +166,7 @@ func LoadSettings() error {
 		}
 		if palettes := Settings.PaletteData; palettes == nil {
 			Settings.PaletteData = defaultPalettes
-			log.Println("🎨 Palettes was missing from settings, default added")
+			log.Println("🎨 Palettes were missing from settings, default added")
 		}
 
 		if err := SaveSettings(); err != nil {

@@ -28,6 +28,16 @@ func PaletteUIAddColor(color rl.Color) {
 		h = moveable.Bounds.Width / 4
 	}
 
+	// Get the element the cursor is over
+	moveToPosition := 0
+	// The index of the dragged child
+	childPosition := 0
+	// isMoveBefore is true if the cursor was on the left
+	// half of the item
+	isMoveBefore := true
+	// if there was a collision
+	collision := false
+
 	var e *Entity
 	e = NewRenderTexture(rl.NewRectangle(0, 0, w, h),
 		func(entity *Entity, button rl.MouseButton) {
@@ -38,49 +48,6 @@ func PaletteUIAddColor(color rl.Color) {
 				CurrentColorSetLeftColor(color)
 				SetUIColors(color)
 
-				children, err := paletteEntity.GetChildren()
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				// Get the element the cursor is over
-				moveToPosition := 0
-				// The index of the dragged child
-				childPosition := 0
-				// isMoveBefore is true if the cursor was on the left
-				// half of the item
-				isMoveBefore := true
-
-				collision := false
-				for i, child := range children {
-					if child == entity {
-						childPosition = i
-					} else {
-						if res, err := scene.QueryID(child.ID); err == nil {
-							childMoveable := res.Components[child.Scene.ComponentsMap["moveable"]].(*Moveable)
-							cur := rl.GetMousePosition()
-							bounds := childMoveable.Bounds
-							if rl.CheckCollisionPointRec(cur, bounds) {
-								collision = true
-								moveToPosition = i
-								isMoveBefore = cur.X < (bounds.X + bounds.Width/2)
-							}
-						}
-					}
-
-				}
-
-				if collision {
-					moved := children[childPosition]
-					children = append(children[:childPosition], children[childPosition+1:]...)
-					if childPosition < moveToPosition {
-						moveToPosition--
-					}
-					if isMoveBefore == false {
-						moveToPosition++
-					}
-					children = append(children[:moveToPosition], append([]*Entity{moved}, children[moveToPosition:]...)...)
-				}
 				paletteEntity.FlowChildren()
 			case rl.MouseRightButton:
 				SetUIColors(color)
@@ -98,6 +65,57 @@ func PaletteUIAddColor(color rl.Color) {
 						if moveable, ok := entity.GetMoveable(); ok {
 							movingColor = moveable
 						}
+					}
+
+					switch button {
+					case rl.MouseLeftButton:
+
+						children, err := paletteEntity.GetChildren()
+						if err != nil {
+							log.Println(err)
+							return
+						}
+
+						collision = false
+						for i, child := range children {
+							if child == entity {
+								childPosition = i
+							} else {
+								if res, err := scene.QueryID(child.ID); err == nil {
+									childMoveable := res.Components[child.Scene.ComponentsMap["moveable"]].(*Moveable)
+									cur := rl.GetMousePosition()
+									bounds := childMoveable.Bounds
+									if rl.CheckCollisionPointRec(cur, bounds) {
+										collision = true
+										moveToPosition = i
+										isMoveBefore = cur.X < (bounds.X + bounds.Width/2)
+										break
+									}
+								}
+							}
+
+						}
+
+						if collision {
+							moved := children[childPosition]
+							movedData := Settings.PaletteData[0].Data[childPosition]
+							children = append(children[:childPosition], children[childPosition+1:]...)
+							Settings.PaletteData[0].Data = append(Settings.PaletteData[0].Data[:childPosition], Settings.PaletteData[0].Data[childPosition+1:]...)
+							if childPosition < moveToPosition {
+								moveToPosition--
+							}
+							if isMoveBefore == false {
+								moveToPosition++
+							}
+							children = append(children[:moveToPosition], append([]*Entity{moved}, children[moveToPosition:]...)...)
+							// TODO get current palette
+							Settings.PaletteData[0].Data = append(
+								Settings.PaletteData[0].Data[:moveToPosition],
+								append(
+									[]rl.Color{movedData}, Settings.PaletteData[0].Data[moveToPosition:]...)...)
+							SaveSettings()
+						}
+						paletteEntity.FlowChildren()
 					}
 
 					movingColor.Bounds.X = rl.GetMousePosition().X - movingColor.Bounds.Width/2

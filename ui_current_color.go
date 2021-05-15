@@ -271,9 +271,14 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			switch button {
 			case rl.MouseLeftButton:
 				PaletteUIAddColor(CurrentFile.LeftColor)
+				Settings.PaletteData[0].Data = append(Settings.PaletteData[0].Data, CurrentFile.LeftColor)
+				SaveSettings()
 			case rl.MouseRightButton:
 				PaletteUIAddColor(CurrentFile.RightColor)
+				Settings.PaletteData[0].Data = append(Settings.PaletteData[0].Data, CurrentFile.RightColor)
+				SaveSettings()
 			}
+
 		}, nil)
 	currentColorBox.PushChild(currentColorAdd)
 	currentColorBox.FlowChildren()
