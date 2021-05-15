@@ -491,7 +491,7 @@ func (s *UIControlSystem) Update(dt float32) {
 	var entity *Entity
 	UIHasControl = false
 
-	if UIEntityCapturedInput != nil && UIIsDraggingEntity {
+	if UIEntityCapturedInput != nil {
 		entity = UIEntityCapturedInput
 	}
 
