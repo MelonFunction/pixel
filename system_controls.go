@@ -34,6 +34,7 @@ type UIControlSystem struct {
 	Keymap              Keymap
 	keyMoveable         bool
 	lastKey             []rl.Key
+	mouseButtonDown     bool
 	keysDown            map[rl.Key]bool // current keys down, used for combinations
 	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
 }
@@ -491,20 +492,34 @@ func (s *UIControlSystem) Update(dt float32) {
 	var entity *Entity
 	UIHasControl = false
 
-	if UIEntityCapturedInput != nil {
-		entity = UIEntityCapturedInput
-	}
-
-	if entity == nil {
-		for _, result := range res {
-			entity = s.process(result, false)
-			if entity != nil {
-				break
-			}
+	// entity = UIEntityCapturedInput
+	// the entity which would be returned from process()
+	var newEntity *Entity
+	for _, result := range res {
+		newEntity = s.process(result, false)
+		if newEntity != nil {
+			break
 		}
 	}
 
+	if UIEntityCapturedInput != nil {
+		entity = UIEntityCapturedInput
+	} else {
+		entity = newEntity
+	}
+
 	button := s.getButtonDown()
+
+	// Check if the UIEntityCapturedInput is the same as the newly clicked element
+	if s.mouseButtonDown == false && button != MouseButtonNone {
+		s.mouseButtonDown = true
+		if UIEntityCapturedInput != newEntity {
+			entity = newEntity
+		}
+	} else if s.mouseButtonDown == true && button == MouseButtonNone {
+		s.mouseButtonDown = false
+	}
+
 	if entity != nil {
 		UIHasControl = true
 		if interactable, ok := entity.GetInteractable(); ok {
@@ -573,7 +588,6 @@ func (s *UIControlSystem) Update(dt float32) {
 		if UIInteractableCapturedInput.OnKeyPress == nil {
 			RemoveCapturedInput()
 			UIHasControl = false
-
 		}
 	}
 }
