@@ -40,11 +40,6 @@ type HistoryPixel struct {
 	LayerIndex int
 }
 
-type HistoryState struct {
-	LayerState map[IntVec2]rl.Color
-	LayerIndex int
-}
-
 type HistoryResize struct {
 	// PrevLayerState is a slice consisting of all layer's PixelData
 	PrevLayerState, CurrentLayerState []map[IntVec2]rl.Color
@@ -363,7 +358,84 @@ func (f *File) DrawPixelDataToCanvas() {
 		rl.DrawPixel(v.X, v.Y, color)
 	}
 	rl.EndTextureMode()
+}
 
+// FlipiHorizontal flips the layer horizontally, or flips the selection if anything
+// is selected
+func (f *File) FlipiHorizontal() {
+	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
+	CurrentFile.AppendHistory(latestHistory)
+
+	// Swap the pixels over
+	cl := f.GetCurrentLayer()
+	for y := 0; y < f.CanvasHeight; y++ {
+		for x := 0; x < f.CanvasWidth/2; x++ {
+			lpos := IntVec2{x, y}
+			rpos := IntVec2{f.CanvasWidth - 1 - x, y}
+
+			lcur := cl.PixelData[lpos]
+			rcur := cl.PixelData[rpos]
+
+			if lcur == rcur {
+				continue
+			}
+
+			// Not a pointer, so latestHistory.PixelState[rpos] must be set to l
+			l := latestHistory.PixelState[lpos]
+			l.Prev = lcur
+			l.Current = rcur
+			latestHistory.PixelState[lpos] = l
+
+			r := latestHistory.PixelState[rpos]
+			r.Prev = rcur
+			r.Current = lcur
+			latestHistory.PixelState[rpos] = r
+
+			cl.PixelData[lpos] = rcur
+			cl.PixelData[rpos] = lcur
+		}
+	}
+
+	cl.Redraw()
+}
+
+// FlipVertical flips the layer vertically, or flips the selection if anything
+// is selected
+func (f *File) FlipVertical() {
+	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
+	CurrentFile.AppendHistory(latestHistory)
+
+	// Swap the pixels over
+	cl := f.GetCurrentLayer()
+	for x := 0; x < f.CanvasWidth; x++ {
+		for y := 0; y < f.CanvasHeight/2; y++ {
+			lpos := IntVec2{x, y}
+			rpos := IntVec2{x, f.CanvasHeight - 1 - y}
+
+			lcur := cl.PixelData[lpos]
+			rcur := cl.PixelData[rpos]
+
+			if lcur == rcur {
+				continue
+			}
+
+			// Not a pointer, so latestHistory.PixelState[rpos] must be set to l
+			l := latestHistory.PixelState[lpos]
+			l.Prev = lcur
+			l.Current = rcur
+			latestHistory.PixelState[lpos] = l
+
+			r := latestHistory.PixelState[rpos]
+			r.Prev = rcur
+			r.Current = lcur
+			latestHistory.PixelState[rpos] = r
+
+			cl.PixelData[lpos] = rcur
+			cl.PixelData[rpos] = lcur
+		}
+	}
+
+	cl.Redraw()
 }
 
 // Undo usdoes an action

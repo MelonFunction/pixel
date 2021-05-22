@@ -85,6 +85,9 @@ var (
 		"picker":     {{rl.KeyM}},
 		"selector":   {{rl.KeyS}},
 
+		"flipHorizontal": {{rl.KeyZ}},
+		"flipVertical":   {{rl.KeyV}},
+
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
 		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},
 

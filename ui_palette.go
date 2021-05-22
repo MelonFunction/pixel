@@ -48,6 +48,7 @@ func PaletteUIAddColor(color rl.Color) {
 				CurrentColorSetLeftColor(color)
 				SetUIColors(color)
 
+				SaveSettings()
 				paletteEntity.FlowChildren()
 			case rl.MouseRightButton:
 				SetUIColors(color)
@@ -108,12 +109,12 @@ func PaletteUIAddColor(color rl.Color) {
 								moveToPosition++
 							}
 							children = append(children[:moveToPosition], append([]*Entity{moved}, children[moveToPosition:]...)...)
+
 							// TODO get current palette
 							Settings.PaletteData[0].Data = append(
 								Settings.PaletteData[0].Data[:moveToPosition],
 								append(
 									[]rl.Color{movedData}, Settings.PaletteData[0].Data[moveToPosition:]...)...)
-							SaveSettings()
 						}
 						paletteEntity.FlowChildren()
 					}

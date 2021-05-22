@@ -368,6 +368,11 @@ func (s *UIControlSystem) Update(dt float32) {
 					interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
 				}
 
+			case "flipHorizontal":
+				CurrentFile.FlipiHorizontal()
+			case "flipVertical":
+				CurrentFile.FlipVertical()
+
 			case "layerUp":
 				CurrentFile.CurrentLayer++
 				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {

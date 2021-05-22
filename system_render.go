@@ -93,9 +93,6 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		}
 	}
 
-	// Comment out
-	// drawBorder(hoverable, moveable)
-
 	switch t := drawable.DrawableType.(type) {
 	case *DrawableParent:
 		if drawable.DrawBackground {
