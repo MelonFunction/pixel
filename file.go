@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -342,12 +343,15 @@ func (f *File) GetCurrentLayer() *Layer {
 // DeleteLayer deletes the layer.
 // Won't delete anything if only one visible layer exists
 // Sets the current layer to the top-most layer
-func (f *File) DeleteLayer(index int) {
+func (f *File) DeleteLayer(index int) error {
 	// TODO history
 	if len(f.Layers) > 2 {
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
 		f.SetCurrentLayer(len(f.Layers) - 2)
+		return nil
 	}
+
+	return fmt.Errorf("Couldn't delete layer as it's the only one visible")
 }
 
 // AddNewLayer inserts a new layer
@@ -360,17 +364,22 @@ func (f *File) AddNewLayer() {
 }
 
 // MoveLayerUp moves the layer up
-func (f *File) MoveLayerUp(index int) {
+func (f *File) MoveLayerUp(index int) error {
 	if index < len(f.Layers)-2 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
 		f.Layers = append(f.Layers[:index], append([]*Layer{f.Layers[index], toMove}, f.Layers[index+1:]...)...)
+
+		return nil
 	}
+
+	return fmt.Errorf("Couldn't move layer up")
 }
 
 // MoveLayerDown moves the layer down
-func (f *File) MoveLayerDown(index int) {
+func (f *File) MoveLayerDown(index int) error {
 	// TODO history
+	log.Println(index)
 	if index > 0 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -379,7 +388,12 @@ func (f *File) MoveLayerDown(index int) {
 		} else {
 			f.Layers = append(f.Layers[:index-1], append([]*Layer{toMove}, f.Layers[index-1:]...)...)
 		}
+
+		return nil
 	}
+
+	return fmt.Errorf("Couldn't move layer down")
+
 }
 
 // AppendHistory inserts a new history interface{} to f.History depending on the

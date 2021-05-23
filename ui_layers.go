@@ -83,26 +83,29 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_up.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			CurrentFile.MoveLayerUp(y)
-			if CurrentFile.CurrentLayer == y {
-				CurrentFile.SetCurrentLayer(y + 1)
+			if err := CurrentFile.MoveLayerUp(y); err == nil {
+				if CurrentFile.CurrentLayer == y {
+					CurrentFile.SetCurrentLayer(y + 1)
+				}
+				LayersUIRebuildList()
 			}
-			LayersUIRebuildList()
 		}, nil)
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_down.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			CurrentFile.MoveLayerDown(y)
-			if CurrentFile.CurrentLayer == y {
-				CurrentFile.SetCurrentLayer(y - 1)
+			if err := CurrentFile.MoveLayerDown(y); err == nil {
+				if CurrentFile.CurrentLayer == y {
+					CurrentFile.SetCurrentLayer(y - 1)
+				}
+				LayersUIRebuildList()
 			}
-			LayersUIRebuildList()
 		}, nil)
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/cross.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			CurrentFile.DeleteLayer(y)
-			LayersUIRebuildList()
+			if err := CurrentFile.DeleteLayer(y); err == nil {
+				LayersUIRebuildList()
+			}
 		}, nil)
 
 	// Keep the buttons organized
