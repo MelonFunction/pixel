@@ -63,15 +63,13 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		bounds = moveable.Bounds
 	}
 
-	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), "./res/icons/eye_open.png", false,
+	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/eye_open.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-				// hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 				CurrentFile.Layers[y].Hidden = !CurrentFile.Layers[y].Hidden
-
 				drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
 				if ok {
 					if CurrentFile.Layers[y].Hidden {
@@ -82,6 +80,27 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				}
 			}
 		}, nil)
+	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_up.png", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			CurrentFile.MoveLayerUp(y)
+			LayersUIRebuildList()
+		}, nil)
+	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_down.png", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			CurrentFile.MoveLayerDown(y)
+			LayersUIRebuildList()
+		}, nil)
+
+	// Keep the buttons organized
+	buttonBox := NewBox(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight),
+		[]*Entity{
+			hidden,
+			moveUp,
+			moveDown,
+		},
+		FlowDirectionHorizontal)
 
 	preview := NewRenderTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), nil, nil)
 	if res, err := scene.QueryID(preview.ID); err == nil {
@@ -93,7 +112,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	}
 
 	isCurrent := CurrentFile.CurrentLayer == y
-	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*3, UIButtonHeight), layer.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if res, err := scene.QueryID(entity.ID); err == nil {
@@ -126,6 +145,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 							drawableText.Label += string(rune(key))
 						}
 					}
+					CurrentFile.Layers[y].Name = drawableText.Label
 				}
 			}
 
@@ -143,7 +163,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	}
 
 	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight), []*Entity{
-		hidden,
+		buttonBox,
 		preview,
 		label,
 	}, FlowDirectionHorizontal)

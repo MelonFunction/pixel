@@ -30,16 +30,19 @@ type PixelStateData struct {
 	Prev, Current rl.Color
 }
 
+// HistoryLayer is for layer operations
 type HistoryLayer struct {
 	WasDeleted bool
 	LayerIndex int
 }
 
+// HistoryPixel is for pixel operations
 type HistoryPixel struct {
 	PixelState map[IntVec2]PixelStateData
 	LayerIndex int
 }
 
+// HistoryResize is for resize operations
 type HistoryResize struct {
 	// PrevLayerState is a slice consisting of all layer's PixelData
 	PrevLayerState, CurrentLayerState []map[IntVec2]rl.Color
@@ -185,8 +188,10 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 	return f
 }
 
+// ResizeDirection is used to specify which edge the resize operation applies to
 type ResizeDirection int
 
+// Resize directions
 const (
 	ResizeTL ResizeDirection = iota
 	ResizeTC
@@ -199,6 +204,7 @@ const (
 	ResizeBR
 )
 
+// Resize resizes the canvas from a specified edge
 func (f *File) Resize(width, height int, direction ResizeDirection) {
 	prevLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 	currentLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
@@ -216,11 +222,13 @@ func (f *File) Resize(width, height int, direction ResizeDirection) {
 	LayersUIRebuildList()
 }
 
+// ResizeTileSize resizes the tile size
 func (f *File) ResizeTileSize(width, height int) {
 	f.TileWidth = width
 	f.TileHeight = height
 }
 
+// CommitSelection "stamps" the floating selection in place
 func (f *File) CommitSelection() {
 	f.DoingSelection = false
 	if f.SelectionMoving {
@@ -327,7 +335,42 @@ func (f *File) AddNewLayer() {
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
 
+	// for i, l := range f.Layers {
+	// 	log.Println(i, l.Name)
+	// }
+
 	f.AppendHistory(HistoryLayer{false, f.CurrentLayer})
+}
+
+// MoveLayerUp moves the layer up
+func (f *File) MoveLayerUp(index int) {
+	if index < len(f.Layers)-2 {
+		toMove := f.Layers[index]
+		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
+		f.Layers = append(f.Layers[:index], append([]*Layer{f.Layers[index], toMove}, f.Layers[index+1:]...)...)
+	}
+}
+
+// MoveLayerDown moves the layer down
+func (f *File) MoveLayerDown(index int) {
+	for i, l := range f.Layers {
+		log.Println(index, i, l.Name)
+	}
+	log.Println()
+	if index > 0 {
+		toMove := f.Layers[index]
+		log.Println(index, index-1, len(f.Layers))
+		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
+		if index-1 == 0 {
+			f.Layers = append([]*Layer{toMove}, append(f.Layers[:index], f.Layers[index:]...)...)
+		} else {
+			f.Layers = append(f.Layers[:index-1], append([]*Layer{toMove}, f.Layers[index-1:]...)...)
+		}
+	}
+	for i, l := range f.Layers {
+		log.Println(i, l.Name)
+	}
+	log.Println()
 }
 
 // AppendHistory inserts a new history interface{} to f.History depending on the
