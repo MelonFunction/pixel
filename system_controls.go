@@ -369,7 +369,7 @@ func (s *UIControlSystem) Update(dt float32) {
 				}
 
 			case "flipHorizontal":
-				CurrentFile.FlipiHorizontal()
+				CurrentFile.FlipHorizontal()
 			case "flipVertical":
 				CurrentFile.FlipVertical()
 

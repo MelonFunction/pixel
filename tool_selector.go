@@ -72,7 +72,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 	// Reset the selection
 	// TODO it creates a lot of objects, not very efficient
-	CurrentFile.Selection = make(map[*IntVec2]rl.Color)
+	CurrentFile.Selection = make(map[IntVec2]rl.Color)
 
 	firstPosClone := t.firstPos
 
@@ -91,9 +91,12 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 	CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
 
+	// Selection is being displayed on screen
+	CurrentFile.DoingSelection = true
+
 	for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
 		for px := firstPosClone.X; px <= t.lastPos.X; px++ {
-			CurrentFile.Selection[&IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
+			CurrentFile.Selection[IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
 		}
 	}
 	// }
@@ -118,7 +121,7 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 	}
 
 	// Draw selection overlay with handles after selection has finished
-	if len(CurrentFile.Selection) > 0 {
+	if CurrentFile.DoingSelection {
 		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
 		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
 
@@ -149,7 +152,6 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 
 		// Draw the selected pixels
 		for loc, color := range CurrentFile.Selection {
-			_ = color
 			rl.DrawPixel(loc.X, loc.Y, color)
 		}
 	}

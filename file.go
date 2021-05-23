@@ -128,7 +128,7 @@ type File struct {
 	// Is selection happening currently
 	DoingSelection bool
 	// All of the affected pixels
-	Selection map[*IntVec2]rl.Color
+	Selection map[IntVec2]rl.Color
 	// Used for history appending, pixel overwriting/transparency logic
 	// True after a selection has been made, false when nothing is selected
 	SelectionMoving bool
@@ -167,7 +167,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 
 		DrawGrid: true,
 
-		Selection: make(map[*IntVec2]rl.Color),
+		Selection: make(map[IntVec2]rl.Color),
 
 		CanvasWidth:  canvasWidth,
 		CanvasHeight: canvasHeight,
@@ -222,13 +222,9 @@ func (f *File) ResizeTileSize(width, height int) {
 }
 
 func (f *File) CommitSelection() {
+	f.DoingSelection = false
 	if f.SelectionMoving {
 		f.SelectionMoving = false
-
-		// Selection didn't move, return to prevent stacking
-		if f.SelectionBounds == f.OrigSelectionBounds {
-			return
-		}
 
 		cl := f.GetCurrentLayer()
 
@@ -244,23 +240,23 @@ func (f *File) CommitSelection() {
 			if ok {
 				var currentColor rl.Color
 
-				alreadyWritten, ok := latestHistory.PixelState[*loc]
+				alreadyWritten, ok := latestHistory.PixelState[loc]
 				if ok {
 					currentColor = BlendWithOpacity(alreadyWritten.Current, color)
 					// Overwrite the existing history
 					alreadyWritten.Current = currentColor
-					latestHistory.PixelState[*loc] = alreadyWritten
+					latestHistory.PixelState[loc] = alreadyWritten
 
 				} else {
-					currentColor = BlendWithOpacity(cl.PixelData[*loc], color)
-					ps := latestHistory.PixelState[*loc]
+					currentColor = BlendWithOpacity(cl.PixelData[loc], color)
+					ps := latestHistory.PixelState[loc]
 					ps.Current = currentColor
-					ps.Prev = cl.PixelData[*loc]
-					latestHistory.PixelState[*loc] = ps
+					ps.Prev = cl.PixelData[loc]
+					latestHistory.PixelState[loc] = ps
 
 				}
 
-				cl.PixelData[*loc] = currentColor
+				cl.PixelData[loc] = currentColor
 
 			}
 		}
@@ -269,7 +265,7 @@ func (f *File) CommitSelection() {
 	}
 
 	// Reset the selection
-	f.Selection = make(map[*IntVec2]rl.Color)
+	f.Selection = make(map[IntVec2]rl.Color)
 }
 
 // MoveSelection moves the selection in the specified direction by one pixel
@@ -289,13 +285,13 @@ func (f *File) MoveSelection(dx, dy int) {
 				latestHistoryInterface := f.History[len(f.History)-1]
 				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 				if ok {
-					ps := latestHistory.PixelState[*loc]
+					ps := latestHistory.PixelState[loc]
 					ps.Current = rl.Transparent
-					ps.Prev = cl.PixelData[*loc]
-					latestHistory.PixelState[*loc] = ps
+					ps.Prev = cl.PixelData[loc]
+					latestHistory.PixelState[loc] = ps
 				}
 
-				cl.PixelData[*loc] = rl.Transparent
+				cl.PixelData[loc] = rl.Transparent
 			}
 		}
 
@@ -304,10 +300,11 @@ func (f *File) MoveSelection(dx, dy int) {
 		CurrentFile.SelectionBounds[1] += dy
 		CurrentFile.SelectionBounds[2] += dx
 		CurrentFile.SelectionBounds[3] += dy
-		for loc := range f.Selection {
-			loc.X += dx
-			loc.Y += dy
+		newSelection := make(map[IntVec2]rl.Color)
+		for loc, color := range f.Selection {
+			newSelection[IntVec2{loc.X + dx, loc.Y + dy}] = color
 		}
+		f.Selection = newSelection
 
 	}
 
@@ -319,7 +316,7 @@ func (f *File) SetCurrentLayer(index int) {
 	f.CurrentLayer = index
 }
 
-// GetCurrentLayer reutrns the current layer
+// GetCurrentLayer returns the current layer
 func (f *File) GetCurrentLayer() *Layer {
 	return f.Layers[f.CurrentLayer]
 }
@@ -360,40 +357,59 @@ func (f *File) DrawPixelDataToCanvas() {
 	rl.EndTextureMode()
 }
 
-// FlipiHorizontal flips the layer horizontally, or flips the selection if anything
+// FlipHorizontal flips the layer horizontally, or flips the selection if anything
 // is selected
-func (f *File) FlipiHorizontal() {
+func (f *File) FlipHorizontal() {
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
-	CurrentFile.AppendHistory(latestHistory)
+
+	sx, sy := 0, 0
+	mx, my := f.CanvasWidth, f.CanvasHeight
+
+	if f.DoingSelection {
+		sx = f.SelectionBounds[0]
+		sy = f.SelectionBounds[1]
+		mx = (f.SelectionBounds[0] + f.SelectionBounds[2]) + 1
+		my = f.SelectionBounds[3] + 1
+	} else {
+		// If selection is modified, it will be added to history on commit
+		CurrentFile.AppendHistory(latestHistory)
+	}
 
 	// Swap the pixels over
 	cl := f.GetCurrentLayer()
-	for y := 0; y < f.CanvasHeight; y++ {
-		for x := 0; x < f.CanvasWidth/2; x++ {
+	wasSelectionMoving := f.SelectionMoving
+	for y := sy; y < my; y++ {
+		for x := sx; x < mx/2; x++ {
 			lpos := IntVec2{x, y}
-			rpos := IntVec2{f.CanvasWidth - 1 - x, y}
+			rpos := IntVec2{mx - x - 1, y}
 
 			lcur := cl.PixelData[lpos]
 			rcur := cl.PixelData[rpos]
 
-			if lcur == rcur {
-				continue
+			// Update selection
+			if f.DoingSelection {
+				f.Selection[lpos], f.Selection[rpos] = f.Selection[rpos], f.Selection[lpos]
+			} else {
+				l := latestHistory.PixelState[lpos]
+				l.Prev = lcur
+				l.Current = rcur
+				latestHistory.PixelState[lpos] = l
+
+				r := latestHistory.PixelState[rpos]
+				r.Prev = rcur
+				r.Current = lcur
+				latestHistory.PixelState[rpos] = r
+
+				cl.PixelData[lpos] = rcur
+				cl.PixelData[rpos] = lcur
 			}
 
-			// Not a pointer, so latestHistory.PixelState[rpos] must be set to l
-			l := latestHistory.PixelState[lpos]
-			l.Prev = lcur
-			l.Current = rcur
-			latestHistory.PixelState[lpos] = l
-
-			r := latestHistory.PixelState[rpos]
-			r.Prev = rcur
-			r.Current = lcur
-			latestHistory.PixelState[rpos] = r
-
-			cl.PixelData[lpos] = rcur
-			cl.PixelData[rpos] = lcur
 		}
+	}
+
+	if f.DoingSelection && wasSelectionMoving == false {
+		// Allow CommitSelection to detect a change
+		f.MoveSelection(0, 0)
 	}
 
 	cl.Redraw()
@@ -403,36 +419,55 @@ func (f *File) FlipiHorizontal() {
 // is selected
 func (f *File) FlipVertical() {
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
-	CurrentFile.AppendHistory(latestHistory)
+
+	sx, sy := 0, 0
+	mx, my := f.CanvasWidth, f.CanvasHeight
+
+	if f.DoingSelection {
+		sx = f.SelectionBounds[0]
+		sy = f.SelectionBounds[1]
+		mx = f.SelectionBounds[2] + 1
+		my = (f.SelectionBounds[1] + f.SelectionBounds[3]) + 1
+	} else {
+		// If selection is modified, it will be added to history on commit
+		CurrentFile.AppendHistory(latestHistory)
+	}
 
 	// Swap the pixels over
 	cl := f.GetCurrentLayer()
-	for x := 0; x < f.CanvasWidth; x++ {
-		for y := 0; y < f.CanvasHeight/2; y++ {
+	wasSelectionMoving := f.SelectionMoving
+	for x := sx; x < mx; x++ {
+		for y := sy; y < my/2; y++ {
 			lpos := IntVec2{x, y}
-			rpos := IntVec2{x, f.CanvasHeight - 1 - y}
+			rpos := IntVec2{x, my - y - 1}
 
 			lcur := cl.PixelData[lpos]
 			rcur := cl.PixelData[rpos]
 
-			if lcur == rcur {
-				continue
+			// Update selection
+			if f.DoingSelection {
+				f.Selection[lpos], f.Selection[rpos] = f.Selection[rpos], f.Selection[lpos]
+			} else {
+				l := latestHistory.PixelState[lpos]
+				l.Prev = lcur
+				l.Current = rcur
+				latestHistory.PixelState[lpos] = l
+
+				r := latestHistory.PixelState[rpos]
+				r.Prev = rcur
+				r.Current = lcur
+				latestHistory.PixelState[rpos] = r
+
+				cl.PixelData[lpos] = rcur
+				cl.PixelData[rpos] = lcur
 			}
 
-			// Not a pointer, so latestHistory.PixelState[rpos] must be set to l
-			l := latestHistory.PixelState[lpos]
-			l.Prev = lcur
-			l.Current = rcur
-			latestHistory.PixelState[lpos] = l
-
-			r := latestHistory.PixelState[rpos]
-			r.Prev = rcur
-			r.Current = lcur
-			latestHistory.PixelState[rpos] = r
-
-			cl.PixelData[lpos] = rcur
-			cl.PixelData[rpos] = lcur
 		}
+	}
+
+	if f.DoingSelection && wasSelectionMoving == false {
+		// Allow CommitSelection to detect a change
+		f.MoveSelection(0, 0)
 	}
 
 	cl.Redraw()
