@@ -84,12 +84,24 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			CurrentFile.MoveLayerUp(y)
+			if CurrentFile.CurrentLayer == y {
+				CurrentFile.SetCurrentLayer(y + 1)
+			}
 			LayersUIRebuildList()
 		}, nil)
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_down.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			CurrentFile.MoveLayerDown(y)
+			if CurrentFile.CurrentLayer == y {
+				CurrentFile.SetCurrentLayer(y - 1)
+			}
+			LayersUIRebuildList()
+		}, nil)
+	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/cross.png", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			CurrentFile.DeleteLayer(y)
 			LayersUIRebuildList()
 		}, nil)
 
@@ -99,6 +111,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 			hidden,
 			moveUp,
 			moveDown,
+			delete,
 		},
 		FlowDirectionHorizontal)
 
@@ -115,9 +128,13 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
-
+		},
+		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+			if entity == nil {
+				// TODO find why the first call is nil
+				return
+			}
+			if hoverable, ok := entity.GetHoverable(); ok {
 				if currentLayerHoverable != nil {
 					currentLayerHoverable.Selected = false
 				}
@@ -126,7 +143,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 
 				CurrentFile.SetCurrentLayer(y)
 			}
-		}, nil,
+		},
 		func(entity *Entity, key rl.Key) {
 			// key pressed
 			if drawable, ok := entity.GetDrawable(); ok {

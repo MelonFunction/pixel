@@ -8,10 +8,10 @@ UI
 Layers
   Actions
     - Merge down
-    - Delete
-    - Move up
-    - Move down
-    - Hide/show
+    //- Delete
+    //- Move up
+    //- Move down
+    //- Hide/show
 
 Menubar
   Palettes
@@ -27,6 +27,9 @@ Tools
     - Paste
     - Copy/paste while moving
     - Rotate
+    //- Flip
+      //- rl.KeyH for Horizontal
+      //- rl.KeyV for Vertical
 
 Features
   Animation Tab

@@ -24,16 +24,26 @@ type Tool interface {
 	DrawPreview(x, y int)
 }
 
+// HistoryLayerAction specifies the action which has been called upon the layer
+type HistoryLayerAction int
+
+// What HistoryLayer action has happened
+const (
+	HistoryLayerActionDelete HistoryLayerAction = iota
+	HistoryLayerActionMoveUp
+	HistoryLayerActionMoveDown
+)
+
+// HistoryLayer is for layer operations
+type HistoryLayer struct {
+	HistoryLayerAction
+	LayerIndex int
+}
+
 // PixelStateData stores what the state was previously and currently
 // Prev is used by undo and Current is used by redo
 type PixelStateData struct {
 	Prev, Current rl.Color
-}
-
-// HistoryLayer is for layer operations
-type HistoryLayer struct {
-	WasDeleted bool
-	LayerIndex int
 }
 
 // HistoryPixel is for pixel operations
@@ -329,17 +339,24 @@ func (f *File) GetCurrentLayer() *Layer {
 	return f.Layers[f.CurrentLayer]
 }
 
+// DeleteLayer deletes the layer.
+// Won't delete anything if only one visible layer exists
+// Sets the current layer to the top-most layer
+func (f *File) DeleteLayer(index int) {
+	// TODO history
+	if len(f.Layers) > 2 {
+		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
+		f.SetCurrentLayer(len(f.Layers) - 2)
+	}
+}
+
 // AddNewLayer inserts a new layer
 func (f *File) AddNewLayer() {
 	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent, true)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
 
-	// for i, l := range f.Layers {
-	// 	log.Println(i, l.Name)
-	// }
-
-	f.AppendHistory(HistoryLayer{false, f.CurrentLayer})
+	f.AppendHistory(HistoryLayer{HistoryLayerActionDelete, f.CurrentLayer})
 }
 
 // MoveLayerUp moves the layer up
@@ -353,13 +370,9 @@ func (f *File) MoveLayerUp(index int) {
 
 // MoveLayerDown moves the layer down
 func (f *File) MoveLayerDown(index int) {
-	for i, l := range f.Layers {
-		log.Println(index, i, l.Name)
-	}
-	log.Println()
+	// TODO history
 	if index > 0 {
 		toMove := f.Layers[index]
-		log.Println(index, index-1, len(f.Layers))
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
 		if index-1 == 0 {
 			f.Layers = append([]*Layer{toMove}, append(f.Layers[:index], f.Layers[index:]...)...)
@@ -367,10 +380,6 @@ func (f *File) MoveLayerDown(index int) {
 			f.Layers = append(f.Layers[:index-1], append([]*Layer{toMove}, f.Layers[index-1:]...)...)
 		}
 	}
-	for i, l := range f.Layers {
-		log.Println(i, l.Name)
-	}
-	log.Println()
 }
 
 // AppendHistory inserts a new history interface{} to f.History depending on the
@@ -516,7 +525,7 @@ func (f *File) FlipVertical() {
 	cl.Redraw()
 }
 
-// Undo usdoes an action
+// Undo undoes an action
 func (f *File) Undo() {
 	if f.historyOffset < len(f.History) {
 		f.historyOffset++
@@ -549,14 +558,13 @@ func (f *File) Undo() {
 			f.SetCurrentLayer(current)
 			layer.Redraw()
 		case HistoryLayer:
-			if typed.WasDeleted {
-
-			} else {
-				f.deletedLayers = append(f.deletedLayers, f.Layers[typed.LayerIndex])
-				f.Layers = append(f.Layers[:typed.LayerIndex], f.Layers[typed.LayerIndex+1:]...)
-				f.SetCurrentLayer(typed.LayerIndex - 1)
+			switch typed.HistoryLayerAction {
+			case HistoryLayerActionDelete:
 			}
-			LayersUIRebuildList()
+			// f.deletedLayers = append(f.deletedLayers, f.Layers[typed.LayerIndex])
+			// f.Layers = append(f.Layers[:typed.LayerIndex], f.Layers[typed.LayerIndex+1:]...)
+			// f.SetCurrentLayer(typed.LayerIndex - 1)
+			// LayersUIRebuildList()
 		case HistoryResize:
 			f.CanvasWidthResizePreview = typed.PrevWidth
 			f.CanvasHeightResizePreview = typed.PrevHeight
@@ -604,11 +612,14 @@ func (f *File) Redo() {
 			rl.EndTextureMode()
 			f.SetCurrentLayer(current)
 		case HistoryLayer:
-			layer := f.deletedLayers[len(f.deletedLayers)-1]
-			f.deletedLayers = f.deletedLayers[:len(f.deletedLayers)-1]
-			// TODO add to correct position on f.Layers
-			f.Layers = append(f.Layers[:len(f.Layers)-1], layer, f.Layers[len(f.Layers)-1])
-			LayersUIRebuildList()
+			switch typed.HistoryLayerAction {
+			case HistoryLayerActionDelete:
+				// layer := f.deletedLayers[len(f.deletedLayers)-1]
+				// f.deletedLayers = f.deletedLayers[:len(f.deletedLayers)-1]
+				// // TODO add to correct position on f.Layers
+				// f.Layers = append(f.Layers[:len(f.Layers)-1], layer, f.Layers[len(f.Layers)-1])
+				// LayersUIRebuildList()
+			}
 		case HistoryResize:
 			f.CanvasWidthResizePreview = typed.CurrentWidth
 			f.CanvasHeightResizePreview = typed.CurrentHeight
