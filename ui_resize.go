@@ -170,7 +170,7 @@ func NewResizeUI() *Entity {
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight),
 			"Resize Canvas", false, func(entity *Entity, button rl.MouseButton) {
-				CurrentFile.Resize(CurrentFile.CanvasWidthResizePreview, CurrentFile.CanvasHeightResizePreview, CurrentFile.CanvasDirectionResizePreview)
+				CurrentFile.ResizeCanvas(CurrentFile.CanvasWidthResizePreview, CurrentFile.CanvasHeightResizePreview, CurrentFile.CanvasDirectionResizePreview)
 			}, nil),
 	}, FlowDirectionVertical)
 

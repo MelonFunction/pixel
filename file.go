@@ -216,8 +216,8 @@ const (
 	ResizeBR
 )
 
-// Resize resizes the canvas from a specified edge
-func (f *File) Resize(width, height int, direction ResizeDirection) {
+// ResizeCanvas resizes the canvas from a specified edge
+func (f *File) ResizeCanvas(width, height int, direction ResizeDirection) {
 	prevLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 	currentLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 
@@ -286,6 +286,11 @@ func (f *File) CommitSelection() {
 
 	// Reset the selection
 	f.Selection = make(map[IntVec2]rl.Color)
+}
+
+// ResizeSelection resizes the selection by dx and dy from the direction specified
+func (f *File) ResizeSelection(dx, dy int, direction ResizeDirection) {
+
 }
 
 // MoveSelection moves the selection in the specified direction by one pixel
