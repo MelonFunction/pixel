@@ -103,7 +103,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/cross.png", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			if err := CurrentFile.DeleteLayer(y); err == nil {
+			if err := CurrentFile.DeleteLayer(y, true); err == nil {
 				LayersUIRebuildList()
 			}
 		}, nil)
