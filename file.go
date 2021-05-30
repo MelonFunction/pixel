@@ -147,7 +147,9 @@ type File struct {
 	// Used for history appending, pixel overwriting/transparency logic
 	// True after a selection has been made, false when nothing is selected
 	SelectionMoving bool
-	//Bounds can be moved if dragged within this area
+	// SelectionResizing is true when the selection is being resized
+	SelectionResizing bool
+	// Bounds can be moved if dragged within this area
 	SelectionBounds [4]int
 	// To check if the selection was moved
 	OrigSelectionBounds [4]int
@@ -303,9 +305,7 @@ func (f *File) MoveSelection(dx, dy int) {
 
 			f.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
 
-			for loc, color := range f.Selection {
-				_ = loc
-				_ = color
+			for loc := range f.Selection {
 				// Alter history
 				latestHistoryInterface := f.History[len(f.History)-1]
 				latestHistory, ok := latestHistoryInterface.(HistoryPixel)

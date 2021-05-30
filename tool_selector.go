@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -13,6 +14,7 @@ import (
 type SelectorTool struct {
 	firstPos, lastPos IntVec2
 	firstDown         bool
+	mouseReleased     bool
 	// Cancels the selection if a click happens without drag
 	firstDownTime time.Time
 	name          string
@@ -21,7 +23,8 @@ type SelectorTool struct {
 // NewSelectorTool returns the selector tool
 func NewSelectorTool(name string) *SelectorTool {
 	return &SelectorTool{
-		name: name,
+		name:          name,
+		mouseReleased: true,
 	}
 }
 
@@ -44,14 +47,65 @@ func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
 // MouseDown is for mouse down events
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
+
+	var resizeSide ResizeDirection
+
 	cl := CurrentFile.GetCurrentLayer()
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
 		t.firstPos = t.getClampedCoordinates(x, y)
+
+		// Trigger resize event
+		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
+		x1, y1 := CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]
+		log.Println(x0, y0, x1, y1, t.firstPos)
+		if t.mouseReleased == true {
+			if t.firstPos.Y >= y0-1 && t.firstPos.Y-1 <= y1 {
+				if t.firstPos.X == x0-1 {
+					resizeSide = ResizeCL
+					CurrentFile.SelectionResizing = true
+				}
+				if t.firstPos.X-1 == x1 {
+					resizeSide = ResizeCR
+					CurrentFile.SelectionResizing = true
+				}
+			}
+			if t.firstPos.X >= x0-1 && t.firstPos.X-1 <= x1 {
+				if t.firstPos.Y == y0-1 {
+					// TODO use bit operations
+					if resizeSide == ResizeCL {
+						resizeSide = ResizeTL
+					} else if resizeSide == ResizeCR {
+						resizeSide = ResizeTR
+					} else {
+						resizeSide = ResizeTC
+					}
+					CurrentFile.SelectionResizing = true
+				}
+				if t.firstPos.Y-1 == y1 {
+					if resizeSide == ResizeCL {
+						resizeSide = ResizeBL
+					} else if resizeSide == ResizeCR {
+						resizeSide = ResizeBR
+					} else {
+						resizeSide = ResizeBC
+					}
+					CurrentFile.SelectionResizing = true
+				}
+			}
+		}
+
+		t.mouseReleased = false
 	}
 
 	t.lastPos = t.getClampedCoordinates(x, y)
+
+	// Do resize event
+	if CurrentFile.SelectionResizing == true {
+
+		return
+	}
 
 	if t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
 		t.firstPos.Y > CurrentFile.SelectionBounds[1] && t.firstPos.Y < CurrentFile.SelectionBounds[3] {
@@ -99,13 +153,13 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 			CurrentFile.Selection[IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
 		}
 	}
-	// }
-
 }
 
 // MouseUp is for mouse up events
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
+	t.mouseReleased = true
+	CurrentFile.SelectionResizing = false
 }
 
 // DrawPreview is for drawing the preview

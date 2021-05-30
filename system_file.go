@@ -309,6 +309,9 @@ func (s *UIFileSystem) Draw() {
 		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("Left Color: %d", CurrentFile.LeftColor), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("Selection Len: %d", len(CurrentFile.Selection)), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("DoingSelection: %t", CurrentFile.DoingSelection), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("SelectionMoving: %t", CurrentFile.SelectionMoving), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("SelectionResizing: %t", CurrentFile.SelectionResizing), 0, incrY(), 20, rl.White)
 		// for y, history := range CurrentFile.History {
 		// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
 		// 		history.LayerIndex,

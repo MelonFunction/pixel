@@ -27,6 +27,7 @@ Tools
     - Paste
     - Copy/paste while moving
     - Rotate
+    - Resize
     //- Flip
       //- rl.KeyH for Horizontal
       //- rl.KeyV for Vertical
