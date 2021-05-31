@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -15,6 +14,13 @@ type SelectorTool struct {
 	firstPos, lastPos IntVec2
 	firstDown         bool
 	mouseReleased     bool
+	resizeSide        ResizeDirection
+	// Should resize the original selection only
+	oldWidth           int32
+	oldHeight          int32
+	oldImg             *rl.Image
+	oldSelection       []rl.Color
+	oldSelectionCopied bool
 	// Cancels the selection if a click happens without drag
 	firstDownTime time.Time
 	name          string
@@ -48,8 +54,6 @@ func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
 
-	var resizeSide ResizeDirection
-
 	cl := CurrentFile.GetCurrentLayer()
 	if t.firstDown == false {
 		t.firstDown = true
@@ -59,37 +63,36 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		// Trigger resize event
 		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
 		x1, y1 := CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]
-		log.Println(x0, y0, x1, y1, t.firstPos)
 		if t.mouseReleased == true {
 			if t.firstPos.Y >= y0-1 && t.firstPos.Y-1 <= y1 {
 				if t.firstPos.X == x0-1 {
-					resizeSide = ResizeCL
+					t.resizeSide = ResizeCL
 					CurrentFile.SelectionResizing = true
 				}
 				if t.firstPos.X-1 == x1 {
-					resizeSide = ResizeCR
+					t.resizeSide = ResizeCR
 					CurrentFile.SelectionResizing = true
 				}
 			}
 			if t.firstPos.X >= x0-1 && t.firstPos.X-1 <= x1 {
 				if t.firstPos.Y == y0-1 {
 					// TODO use bit operations
-					if resizeSide == ResizeCL {
-						resizeSide = ResizeTL
-					} else if resizeSide == ResizeCR {
-						resizeSide = ResizeTR
+					if t.resizeSide == ResizeCL {
+						t.resizeSide = ResizeTL
+					} else if t.resizeSide == ResizeCR {
+						t.resizeSide = ResizeTR
 					} else {
-						resizeSide = ResizeTC
+						t.resizeSide = ResizeTC
 					}
 					CurrentFile.SelectionResizing = true
 				}
 				if t.firstPos.Y-1 == y1 {
-					if resizeSide == ResizeCL {
-						resizeSide = ResizeBL
-					} else if resizeSide == ResizeCR {
-						resizeSide = ResizeBR
+					if t.resizeSide == ResizeCL {
+						t.resizeSide = ResizeBL
+					} else if t.resizeSide == ResizeCR {
+						t.resizeSide = ResizeBR
 					} else {
-						resizeSide = ResizeBC
+						t.resizeSide = ResizeBC
 					}
 					CurrentFile.SelectionResizing = true
 				}
@@ -100,9 +103,54 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	}
 
 	t.lastPos = t.getClampedCoordinates(x, y)
+	firstPosClone := t.firstPos
 
 	// Do resize event
 	if CurrentFile.SelectionResizing == true {
+		if t.oldSelectionCopied == false {
+			t.oldSelectionCopied = true
+			t.oldSelection = CurrentFile.SelectionPixels
+
+			CurrentFile.MoveSelection(0, 0)
+
+			// Make an image from the selection
+			t.oldWidth = int32(CurrentFile.SelectionBounds[2] - CurrentFile.SelectionBounds[0] + 1)
+			t.oldHeight = int32(CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1)
+		}
+
+		// Make a new image using the old data since ResizeNN is a pointer
+		t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
+
+		// Resize selection bounds
+		switch t.resizeSide {
+		case ResizeCL:
+			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+		case ResizeCR:
+			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
+		case ResizeTC:
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+		case ResizeBC:
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+		}
+
+		// Do the resize
+		newWidth := CurrentFile.SelectionBounds[2] - CurrentFile.SelectionBounds[0] + 1
+		newHeight := CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1
+
+		t.oldImg.ResizeNN(newWidth, newHeight)
+		imgPixels := t.oldImg.GetPixels()
+		CurrentFile.SelectionPixels = imgPixels
+
+		// Dump pixels back into the selection
+		var count int
+		for y := CurrentFile.SelectionBounds[1]; y <= CurrentFile.SelectionBounds[3]; y++ {
+			for x := CurrentFile.SelectionBounds[0]; x <= CurrentFile.SelectionBounds[2]; x++ {
+				if count < len(imgPixels) {
+					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
+					count++
+				}
+			}
+		}
 
 		return
 	}
@@ -124,18 +172,17 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 	}
 
-	// Reset the selection
-	// TODO it creates a lot of objects, not very efficient
-	CurrentFile.Selection = make(map[IntVec2]rl.Color)
-
-	firstPosClone := t.firstPos
-
 	if t.lastPos.X < firstPosClone.X {
 		t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
 	}
 	if t.lastPos.Y < firstPosClone.Y {
 		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
 	}
+
+	// Reset the selection
+	// TODO it creates a lot of objects, not very efficient
+	CurrentFile.Selection = make(map[IntVec2]rl.Color)
+	CurrentFile.SelectionPixels = make([]rl.Color, 0, (t.lastPos.X-firstPosClone.X)*(t.lastPos.Y-firstPosClone.Y))
 
 	// TODO use comparison to make sure this is correct when using brush selector
 	CurrentFile.SelectionBounds[0] = firstPosClone.X
@@ -150,7 +197,9 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 	for py := firstPosClone.Y; py <= t.lastPos.Y; py++ {
 		for px := firstPosClone.X; px <= t.lastPos.X; px++ {
-			CurrentFile.Selection[IntVec2{px, py}] = cl.PixelData[IntVec2{px, py}]
+			pixel := cl.PixelData[IntVec2{px, py}]
+			CurrentFile.Selection[IntVec2{px, py}] = pixel
+			CurrentFile.SelectionPixels = append(CurrentFile.SelectionPixels, pixel)
 		}
 	}
 }
@@ -159,6 +208,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.firstDown = false
 	t.mouseReleased = true
+	t.oldSelectionCopied = false
 	CurrentFile.SelectionResizing = false
 }
 

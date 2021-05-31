@@ -144,6 +144,8 @@ type File struct {
 	DoingSelection bool
 	// All of the affected pixels
 	Selection map[IntVec2]rl.Color
+	// Like above, but ordered
+	SelectionPixels []rl.Color
 	// Used for history appending, pixel overwriting/transparency logic
 	// True after a selection has been made, false when nothing is selected
 	SelectionMoving bool
@@ -288,6 +290,9 @@ func (f *File) CommitSelection() {
 
 	// Reset the selection
 	f.Selection = make(map[IntVec2]rl.Color)
+	// Not important to reset this, but I'm doing it just because it feels right
+	f.SelectionPixels = make([]rl.Color, 0, 0)
+
 }
 
 // ResizeSelection resizes the selection by dx and dy from the direction specified
