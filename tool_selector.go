@@ -137,17 +137,24 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		newWidth := CurrentFile.SelectionBounds[2] - CurrentFile.SelectionBounds[0] + 1
 		newHeight := CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1
 
-		t.oldImg.ResizeNN(newWidth, newHeight)
-		imgPixels := t.oldImg.GetPixels()
-		CurrentFile.SelectionPixels = imgPixels
+		// Reset the selection
+		// TODO it creates a lot of objects, not very efficient
+		CurrentFile.Selection = make(map[IntVec2]rl.Color)
 
-		// Dump pixels back into the selection
-		var count int
-		for y := CurrentFile.SelectionBounds[1]; y <= CurrentFile.SelectionBounds[3]; y++ {
-			for x := CurrentFile.SelectionBounds[0]; x <= CurrentFile.SelectionBounds[2]; x++ {
-				if count < len(imgPixels) {
-					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
-					count++
+		// TODO flip selection if inverted
+		if newWidth > 0 && newHeight > 0 {
+			t.oldImg.ResizeNN(newWidth, newHeight)
+			imgPixels := t.oldImg.GetPixels()
+			CurrentFile.SelectionPixels = imgPixels
+
+			// Dump pixels back into the selection
+			var count int
+			for y := CurrentFile.SelectionBounds[1]; y <= CurrentFile.SelectionBounds[3]; y++ {
+				for x := CurrentFile.SelectionBounds[0]; x <= CurrentFile.SelectionBounds[2]; x++ {
+					if count < len(imgPixels) {
+						CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
+						count++
+					}
 				}
 			}
 		}

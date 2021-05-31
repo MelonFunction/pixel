@@ -322,6 +322,12 @@ func (s *UIControlSystem) Update(dt float32) {
 		if checkDown(s.Keymap.Data[key]) {
 			setAwaitingRelease(s.Keymap.Data[key])
 
+			// Prevent tool switching or anything that could alter the state of the tool being used
+			// Moving the cursor with the keyboard is still allowed
+			if rl.IsMouseButtonDown(rl.MouseLeftButton) || rl.IsMouseButtonDown(rl.MouseRightButton) || rl.IsMouseButtonDown(rl.MouseMiddleButton) {
+				break
+			}
+
 			// Can work with entities which are capturing the input
 			switch key {
 			case "copy":
