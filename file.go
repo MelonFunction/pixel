@@ -157,7 +157,8 @@ type File struct {
 	OrigSelectionBounds [4]int
 
 	// CopiedSelection holds the selection when File.Copy is called
-	CopiedSelection map[IntVec2]rl.Color
+	CopiedSelection       map[IntVec2]rl.Color
+	CopiedSelectionPixels []rl.Color
 	// If the layer data should be moved or not
 	IsSelectionPasted     bool
 	CopiedSelectionBounds [4]int
@@ -253,27 +254,52 @@ func (f *File) ResizeTileSize(width, height int) {
 // Copy the selection
 func (f *File) Copy() {
 	f.CopiedSelection = make(map[IntVec2]rl.Color)
-	for v, c := range f.Selection {
-		f.CopiedSelection[v] = c
+	f.CopiedSelectionPixels = make([]rl.Color, 0, len(f.SelectionPixels))
+
+	// Copy selection if there is one
+	if len(f.Selection) > 0 {
+		for v, c := range f.Selection {
+			f.CopiedSelection[v] = c
+		}
+		for _, v := range f.SelectionPixels {
+			f.CopiedSelectionPixels = append(f.CopiedSelectionPixels, v)
+		}
+		for i, v := range f.SelectionBounds {
+			f.CopiedSelectionBounds[i] = v
+		}
+		return
 	}
 
-	for i, v := range f.SelectionBounds {
-		f.CopiedSelectionBounds[i] = v
+	// Otherwise copy the entire current layer
+	cl := f.GetCurrentLayer()
+	for v, c := range cl.PixelData {
+		f.CopiedSelection[v] = c
 	}
+	f.CopiedSelectionBounds = [4]int{
+		0,
+		0,
+		f.CanvasWidth - 1,
+		f.CanvasHeight - 1,
+	}
+
 }
 
 // Paste the selection
 func (f *File) Paste() {
 	f.CommitSelection()
 
+	// Appends history
+	f.SelectionMoving = false
 	f.IsSelectionPasted = true
+	f.MoveSelection(0, 0)
 	f.DoingSelection = true
-	f.SelectionMoving = true
 
 	f.Selection = make(map[IntVec2]rl.Color)
 	for v, c := range f.CopiedSelection {
 		f.Selection[v] = c
-		f.SelectionPixels = append(f.SelectionPixels, c)
+	}
+	for _, v := range f.CopiedSelectionPixels {
+		f.SelectionPixels = append(f.SelectionPixels, v)
 	}
 
 	for i, v := range f.CopiedSelectionBounds {
@@ -358,9 +384,9 @@ func (f *File) MoveSelection(dx, dy int) {
 					ps := latestHistory.PixelState[loc]
 					if !f.IsSelectionPasted {
 						ps.Current = rl.Transparent
+						ps.Prev = cl.PixelData[loc]
+						latestHistory.PixelState[loc] = ps
 					}
-					ps.Prev = cl.PixelData[loc]
-					latestHistory.PixelState[loc] = ps
 				}
 
 				if !f.IsSelectionPasted {
