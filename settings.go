@@ -67,7 +67,10 @@ type PaletteData []Palette
 // Palette is a list of the colors found in the palette
 type Palette struct {
 	Name string
-	Data []rl.Color
+	// Usable rl.Color data
+	data []rl.Color
+	// Hex which is converted to rl.Color on read, overwrites everything in data
+	Strings []string
 }
 
 var (
@@ -109,14 +112,19 @@ var (
 	defaultPalettes = PaletteData{
 		{
 			Name: "Default",
-			Data: []rl.Color{
-				rl.Red,
-				rl.Blue,
-				rl.Green,
-				rl.Pink,
-				rl.Orange,
-				rl.Purple,
-				rl.Aqua,
+			data: []rl.Color{
+				// rl.Red,
+				// rl.Blue,
+				// rl.Green,
+				// rl.Pink,
+				// rl.Orange,
+				// rl.Purple,
+				// rl.Aqua,
+			},
+			Strings: []string{
+				"ff0000ff",
+				"00ff00ff",
+				"0000ffff",
 			},
 		},
 	}
@@ -124,7 +132,16 @@ var (
 
 // SaveSettings writes the settings object into settings.json
 func SaveSettings() error {
-	j, err := json.Marshal(Settings)
+	// Save each color as a hex
+	for pi, palette := range Settings.PaletteData {
+		palette.Strings = make([]string, 0)
+		for _, color := range palette.data {
+			palette.Strings = append(palette.Strings, ColorToHex(color))
+		}
+		Settings.PaletteData[pi] = palette
+	}
+
+	j, err := json.MarshalIndent(Settings, "", "  ")
 	if err != nil {
 		log.Fatal(nil)
 		return err
@@ -170,6 +187,16 @@ func LoadSettings() error {
 		if palettes := Settings.PaletteData; palettes == nil {
 			Settings.PaletteData = defaultPalettes
 			log.Println("🎨 Palettes were missing from settings, default added")
+		}
+		// Convert hex to rl.Color
+		for pi, palette := range Settings.PaletteData {
+			palette.data = make([]rl.Color, 0)
+			for _, hex := range palette.Strings {
+				if color, err := HexToColor(hex); err == nil {
+					palette.data = append(palette.data, color)
+				}
+			}
+			Settings.PaletteData[pi] = palette
 		}
 
 		if err := SaveSettings(); err != nil {

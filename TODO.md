@@ -3,7 +3,10 @@ Refactor
     This should be moved to system_render. 
     
 UI
-  - Resize elements
+  - Resize element
+
+System
+  - Serialize state data into file (like .ase etc)
   
 Layers
   Actions
@@ -23,11 +26,11 @@ Menubar
 
 Tools
   Selector
-    - Copy
-    - Paste
-    - Copy/paste while moving
+    //- Copy
+    //- Paste
+    // - Copy/paste while moving
     - Rotate
-    - Resize
+    //- Resize
     //- Flip
       //- rl.KeyH for Horizontal
       //- rl.KeyV for Vertical

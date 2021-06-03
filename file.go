@@ -783,19 +783,16 @@ func (f *File) Export(path string) {
 	img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))
 
 	for _, layer := range f.Layers[:len(f.Layers)-1] {
-		log.Println(layer.Name)
 		if !layer.Hidden {
 			for pos, data := range layer.PixelData {
-				if data.A == 255 {
+				// TODO layer blend modes
+				if data.A != 0 {
 					img.Set(pos.X, pos.Y, color.NRGBA{
 						R: data.R,
 						G: data.G,
 						B: data.B,
 						A: data.A,
 					})
-				} else {
-					// TODO layer blend modes
-					// Blend with existing depending on blend mode
 				}
 			}
 		}

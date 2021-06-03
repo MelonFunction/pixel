@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"strconv"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -77,4 +81,33 @@ func BlendWithOpacity(a, b rl.Color) rl.Color {
 	}
 
 	return c
+}
+
+func ColorToHex(color rl.Color) string {
+	return fmt.Sprintf("%02x%02x%02x%02x", color.R, color.G, color.B, color.A)
+}
+
+func HexToColor(color string) (rl.Color, error) {
+	var r, g, b, a int64 = 0, 0, 0, 255
+	var err error
+	switch len(color) {
+	case 8:
+		if a, err = strconv.ParseInt(color[6:8], 16, 32); err != nil {
+			log.Println(err)
+		}
+		fallthrough
+	case 6:
+		if r, err = strconv.ParseInt(color[0:2], 16, 32); err != nil {
+			log.Println(err)
+		}
+		if g, err = strconv.ParseInt(color[2:4], 16, 32); err != nil {
+			log.Println(err)
+		}
+		if b, err = strconv.ParseInt(color[4:6], 16, 32); err != nil {
+			log.Println(err)
+		}
+
+		return rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}, nil
+	}
+	return rl.Color{}, fmt.Errorf("color couldn't be created from hex")
 }

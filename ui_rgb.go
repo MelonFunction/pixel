@@ -1,10 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"strconv"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -39,7 +35,7 @@ func SetUIHexColor(color rl.Color) {
 
 	if drawable, ok := hexInput.GetDrawable(); ok {
 		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
-			drawableText.Label = fmt.Sprintf("%02x%02x%02x%02x", color.R, color.G, color.B, color.A)
+			drawableText.Label = ColorToHex(color)
 		}
 	}
 }
@@ -417,26 +413,8 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					}
 
 					// Set the color from the hex
-					var r, g, b, a int64 = 0, 0, 0, 255
-					var err error
-					switch len(drawableText.Label) {
-					case 8:
-						if a, err = strconv.ParseInt(drawableText.Label[6:8], 16, 32); err != nil {
-							log.Println(err)
-						}
-						fallthrough
-					case 6:
-						if r, err = strconv.ParseInt(drawableText.Label[0:2], 16, 32); err != nil {
-							log.Println(err)
-						}
-						if g, err = strconv.ParseInt(drawableText.Label[2:4], 16, 32); err != nil {
-							log.Println(err)
-						}
-						if b, err = strconv.ParseInt(drawableText.Label[4:6], 16, 32); err != nil {
-							log.Println(err)
-						}
-
-						hexColor = rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}
+					if color, err := HexToColor(drawableText.Label); err == nil {
+						hexColor = color
 					}
 				}
 			}
