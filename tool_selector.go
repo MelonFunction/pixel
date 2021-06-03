@@ -118,6 +118,11 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 			t.oldHeight = int32(CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1)
 		}
 
+		if len(t.oldSelection) == 0 {
+			CurrentFile.SelectionResizing = false
+			return
+		}
+
 		// Make a new image using the old data since ResizeNN is a pointer
 		t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
 

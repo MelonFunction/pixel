@@ -333,7 +333,6 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			// Can work with entities which are capturing the input
 			switch key {
 			case "copy":
-				log.Println("copying")
 				CurrentFile.Copy()
 			case "paste":
 				// Pixel paste

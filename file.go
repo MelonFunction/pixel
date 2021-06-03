@@ -156,6 +156,12 @@ type File struct {
 	// To check if the selection was moved
 	OrigSelectionBounds [4]int
 
+	// CopiedSelection holds the selection when File.Copy is called
+	CopiedSelection map[IntVec2]rl.Color
+	// If the layer data should be moved or not
+	IsSelectionPasted     bool
+	CopiedSelectionBounds [4]int
+
 	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
@@ -244,9 +250,47 @@ func (f *File) ResizeTileSize(width, height int) {
 	f.TileHeight = height
 }
 
+// Copy the selection
+func (f *File) Copy() {
+	f.CopiedSelection = make(map[IntVec2]rl.Color)
+	for v, c := range f.Selection {
+		f.CopiedSelection[v] = c
+	}
+
+	for i, v := range f.SelectionBounds {
+		f.CopiedSelectionBounds[i] = v
+	}
+}
+
+// Paste the selection
+func (f *File) Paste() {
+	f.CommitSelection()
+
+	f.IsSelectionPasted = true
+	f.DoingSelection = true
+	f.SelectionMoving = true
+
+	f.Selection = make(map[IntVec2]rl.Color)
+	for v, c := range f.CopiedSelection {
+		f.Selection[v] = c
+		f.SelectionPixels = append(f.SelectionPixels, c)
+	}
+
+	for i, v := range f.CopiedSelectionBounds {
+		f.SelectionBounds[i] = v
+	}
+
+	// TODO better way to switch tool
+	if interactable, ok := toolSelector.GetInteractable(); ok {
+		interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
+	}
+}
+
 // CommitSelection "stamps" the floating selection in place
 func (f *File) CommitSelection() {
+	f.IsSelectionPasted = false
 	f.DoingSelection = false
+
 	if f.SelectionMoving {
 		f.SelectionMoving = false
 
@@ -295,12 +339,8 @@ func (f *File) CommitSelection() {
 
 }
 
-// ResizeSelection resizes the selection by dx and dy from the direction specified
-func (f *File) ResizeSelection(dx, dy int, direction ResizeDirection) {
-
-}
-
 // MoveSelection moves the selection in the specified direction by one pixel
+// dx and dy is how much the selection has moved
 func (f *File) MoveSelection(dx, dy int) {
 	cl := f.GetCurrentLayer()
 
@@ -316,12 +356,16 @@ func (f *File) MoveSelection(dx, dy int) {
 				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 				if ok {
 					ps := latestHistory.PixelState[loc]
-					ps.Current = rl.Transparent
+					if !f.IsSelectionPasted {
+						ps.Current = rl.Transparent
+					}
 					ps.Prev = cl.PixelData[loc]
 					latestHistory.PixelState[loc] = ps
 				}
 
-				cl.PixelData[loc] = rl.Transparent
+				if !f.IsSelectionPasted {
+					cl.PixelData[loc] = rl.Transparent
+				}
 			}
 		}
 
@@ -578,6 +622,11 @@ func (f *File) Undo() {
 
 		switch typed := history.(type) {
 		case HistoryPixel:
+			if f.DoingSelection {
+				f.Selection = make(map[IntVec2]rl.Color)
+				f.DoingSelection = false
+				f.SelectionMoving = false
+			}
 			current := f.CurrentLayer
 			f.SetCurrentLayer(typed.LayerIndex)
 			layer := f.GetCurrentLayer()
