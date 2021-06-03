@@ -274,7 +274,7 @@ func UISave() {
 	}
 }
 
-func (s *UIControlSystem) Update(dt float32) {
+func (s *UIControlSystem) HandleKeyboardEvents() {
 	// Handle keyboard events
 	for key := range s.keysAwaitingRelease {
 		if !rl.IsKeyDown(key) {
@@ -328,21 +328,36 @@ func (s *UIControlSystem) Update(dt float32) {
 				break
 			}
 
+			shouldReturn := true
+
 			// Can work with entities which are capturing the input
 			switch key {
 			case "copy":
+				log.Println("copying")
+				CurrentFile.Copy()
 			case "paste":
+				// Pixel paste
+				CurrentFile.Paste()
+				// Input paste
 				if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
 					for _, char := range rl.GetClipboardText() {
 						UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, rl.Key(char))
 					}
 				}
+			default:
+				shouldReturn = false
+			}
+
+			if shouldReturn {
+				return
 			}
 
 			// Don't allow events to happen if a component is inputting text
 			if UIEntityCapturedInput != nil {
 				break
 			}
+
+			shouldReturn = true
 
 			switch key {
 			case "toggleGrid":
@@ -401,6 +416,12 @@ func (s *UIControlSystem) Update(dt float32) {
 				CurrentFile.Undo()
 			case "redo":
 				CurrentFile.Redo()
+			default:
+				shouldReturn = false
+			}
+
+			if shouldReturn {
+				return
 			}
 
 			break
@@ -486,6 +507,10 @@ func (s *UIControlSystem) Update(dt float32) {
 		s.keyRepeatTimer = 0
 		s.keyMoveable = true
 	}
+}
+
+func (s *UIControlSystem) Update(dt float32) {
+	s.HandleKeyboardEvents()
 
 	// Don't bother with UI controls, something is being drawn
 	if FileHasControl {
