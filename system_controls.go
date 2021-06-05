@@ -97,6 +97,9 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 						log.Println("not accept")
 						returns <- ""
 					}
+				case "export":
+					// TODO make export and save different
+					fallthrough
 				case "save":
 					fc, err := gtk.FileChooserNativeDialogNew(
 						"Select file to save",
@@ -247,7 +250,7 @@ func UIOpen() {
 }
 
 func UIExport() {
-	UIControlSystemCmds <- "save"
+	UIControlSystemCmds <- "export"
 	waiting := true
 	for waiting {
 		select {
@@ -332,6 +335,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 
 			// Can work with entities which are capturing the input
 			switch key {
+			case "delete":
+				CurrentFile.DeleteSelection()
 			case "copy":
 				CurrentFile.Copy()
 			case "paste":

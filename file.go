@@ -163,6 +163,8 @@ type File struct {
 	IsSelectionPasted     bool
 	CopiedSelectionBounds [4]int
 
+	CurrentPalette int
+
 	// Canvas and tile dimensions
 	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
@@ -249,6 +251,12 @@ func (f *File) ResizeCanvas(width, height int, direction ResizeDirection) {
 func (f *File) ResizeTileSize(width, height int) {
 	f.TileWidth = width
 	f.TileHeight = height
+}
+
+// DeleteSelection deletes the selection
+func (f *File) DeleteSelection() {
+	f.MoveSelection(0, 0)
+	f.Selection = make(map[IntVec2]rl.Color)
 }
 
 // Copy the selection
