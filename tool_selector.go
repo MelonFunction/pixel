@@ -128,13 +128,25 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 		// Resize selection bounds
 		switch t.resizeSide {
-		case ResizeCL:
+		case ResizeCL: // left
 			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
-		case ResizeCR:
+		case ResizeCR: // right
 			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
-		case ResizeTC:
+		case ResizeTC: // top
 			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
-		case ResizeBC:
+		case ResizeBC: // bottom
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+		case ResizeTL:
+			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+		case ResizeTR:
+			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+		case ResizeBL:
+			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+		case ResizeBR:
+			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
 			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
 		}
 
