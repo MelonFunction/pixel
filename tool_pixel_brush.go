@@ -49,6 +49,20 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 	}
 
+	for _, keys := range Settings.KeymapData["drawLine"] {
+		allDown := true
+		for _, key := range keys {
+			if !rl.IsKeyDown(key) {
+				allDown = false
+			}
+		}
+
+		if allDown {
+			t.shouldConnectToLastPos = true
+			break
+		}
+	}
+
 	if !t.shouldConnectToLastPos {
 		t.shouldConnectToLastPos = true
 		loc := IntVec2{x, y}

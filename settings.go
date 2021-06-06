@@ -78,6 +78,10 @@ var (
 	Settings *SettingsData
 
 	defaultKeymap = KeymapData{
+		// Handled by tools
+		"drawLine": {{rl.KeyLeftShift}, {rl.KeyRightShift}},
+
+		// Handled by system controls
 		"toggleGrid": {{rl.KeyG}},
 		"showDebug":  {{rl.KeyD}},
 		"resize":     {{rl.KeyLeftControl, rl.KeyR}},
@@ -114,15 +118,6 @@ var (
 	defaultPalettes = PaletteData{
 		{
 			Name: "Default",
-			data: []rl.Color{
-				// rl.Red,
-				// rl.Blue,
-				// rl.Green,
-				// rl.Pink,
-				// rl.Orange,
-				// rl.Purple,
-				// rl.Aqua,
-			},
 			Strings: []string{
 				"ff0000ff",
 				"00ff00ff",
