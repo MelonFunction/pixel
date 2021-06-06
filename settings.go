@@ -99,6 +99,7 @@ var (
 		"toolUp":    {{rl.KeyC}, {rl.KeyUp}},
 		"toolDown":  {{rl.KeyT}, {rl.KeyDown}},
 
+		"cancel": {{rl.KeyEscape}},
 		"copy":   {{rl.KeyLeftControl, rl.KeyC}},
 		"paste":  {{rl.KeyLeftControl, rl.KeyV}},
 		"delete": {{rl.KeyDelete}},

@@ -335,6 +335,15 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 
 			// Can work with entities which are capturing the input
 			switch key {
+			case "cancel":
+				if UIInteractableCapturedInput != nil {
+					// Escape from text entry
+
+				} else {
+					if CurrentFile.DoingSelection {
+						CurrentFile.CancelSelection()
+					}
+				}
 			case "delete":
 				CurrentFile.DeleteSelection()
 			case "copy":

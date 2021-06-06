@@ -259,6 +259,13 @@ func (f *File) DeleteSelection() {
 	f.Selection = make(map[IntVec2]rl.Color)
 }
 
+// CancelSelection cancels the selection
+func (f *File) CancelSelection() {
+	f.Selection = make(map[IntVec2]rl.Color)
+	f.SelectionMoving = false
+	f.DoingSelection = false
+}
+
 // Copy the selection
 func (f *File) Copy() {
 	f.CopiedSelection = make(map[IntVec2]rl.Color)

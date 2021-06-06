@@ -1,9 +1,19 @@
 {
   "KeymapData": {
+    "cancel": [
+      [
+        256
+      ]
+    ],
     "copy": [
       [
         341,
         67
+      ]
+    ],
+    "delete": [
+      [
+        261
       ]
     ],
     "eraser": [
@@ -148,8 +158,8 @@
       "Name": "Default",
       "Strings": [
         "ff0000ff",
-        "0000ffff",
-        "00ff00ff"
+        "00ff00ff",
+        "0000ffff"
       ]
     }
   ]
