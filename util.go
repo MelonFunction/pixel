@@ -83,11 +83,17 @@ func BlendWithOpacity(a, b rl.Color) rl.Color {
 	return c
 }
 
+// ColorToHex converts an rl.Color into a hex string
 func ColorToHex(color rl.Color) string {
 	return fmt.Sprintf("%02x%02x%02x%02x", color.R, color.G, color.B, color.A)
 }
 
+// HexToColor converts a hex string into a rl.Color
 func HexToColor(color string) (rl.Color, error) {
+	if color[0] == '#' {
+		color = color[1:]
+	}
+
 	var r, g, b, a int64 = 0, 0, 0, 255
 	var err error
 	switch len(color) {

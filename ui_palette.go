@@ -19,13 +19,13 @@ func PaletteUIRemoveColor(child *Entity) {
 	paletteEntity.FlowChildren()
 }
 
-func PaletteUIAddColor(color rl.Color) {
+func PaletteUIAddColor(color rl.Color, index int) {
 	var w float32
 	var h float32
 	if res, err := scene.QueryID(paletteEntity.ID); err == nil {
 		moveable := res.Components[paletteEntity.Scene.ComponentsMap["moveable"]].(*Moveable)
-		w = moveable.Bounds.Width / 4
-		h = moveable.Bounds.Width / 4
+		w = moveable.Bounds.Width / 5
+		h = moveable.Bounds.Width / 5
 	}
 
 	// Get the element the cursor is over
@@ -55,6 +55,11 @@ func PaletteUIAddColor(color rl.Color) {
 				CurrentColorSetRightColor(color)
 			case rl.MouseMiddleButton:
 				PaletteUIRemoveColor(e)
+				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
+					Settings.PaletteData[CurrentFile.CurrentPalette].data[:index],
+					Settings.PaletteData[CurrentFile.CurrentPalette].data[index+1:]...,
+				)
+				SaveSettings()
 			}
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
@@ -99,9 +104,9 @@ func PaletteUIAddColor(color rl.Color) {
 
 						if collision {
 							moved := children[childPosition]
-							movedData := Settings.PaletteData[0].data[childPosition]
+							movedData := Settings.PaletteData[CurrentFile.CurrentPalette].data[childPosition]
 							children = append(children[:childPosition], children[childPosition+1:]...)
-							Settings.PaletteData[0].data = append(Settings.PaletteData[0].data[:childPosition], Settings.PaletteData[0].data[childPosition+1:]...)
+							Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data[:childPosition], Settings.PaletteData[CurrentFile.CurrentPalette].data[childPosition+1:]...)
 							if childPosition < moveToPosition {
 								moveToPosition--
 							}
@@ -110,11 +115,10 @@ func PaletteUIAddColor(color rl.Color) {
 							}
 							children = append(children[:moveToPosition], append([]*Entity{moved}, children[moveToPosition:]...)...)
 
-							// TODO get current palette
-							Settings.PaletteData[0].data = append(
-								Settings.PaletteData[0].data[:moveToPosition],
+							Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
+								Settings.PaletteData[CurrentFile.CurrentPalette].data[:moveToPosition],
 								append(
-									[]rl.Color{movedData}, Settings.PaletteData[0].data[moveToPosition:]...)...)
+									[]rl.Color{movedData}, Settings.PaletteData[CurrentFile.CurrentPalette].data[moveToPosition:]...)...)
 						}
 						paletteEntity.FlowChildren()
 					}
@@ -144,8 +148,8 @@ func PaletteUIAddColor(color rl.Color) {
 
 func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	paletteEntity = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
-	for _, color := range Settings.PaletteData[0].data {
-		PaletteUIAddColor(color)
+	for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
+		PaletteUIAddColor(color, i)
 	}
 
 	return paletteEntity

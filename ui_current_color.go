@@ -270,12 +270,12 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			// button up
 			switch button {
 			case rl.MouseLeftButton:
-				PaletteUIAddColor(CurrentFile.LeftColor)
-				Settings.PaletteData[0].data = append(Settings.PaletteData[0].data, CurrentFile.LeftColor)
+				PaletteUIAddColor(CurrentFile.LeftColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.LeftColor)
 				SaveSettings()
 			case rl.MouseRightButton:
-				PaletteUIAddColor(CurrentFile.RightColor)
-				Settings.PaletteData[0].data = append(Settings.PaletteData[0].data, CurrentFile.RightColor)
+				PaletteUIAddColor(CurrentFile.RightColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.RightColor)
 				SaveSettings()
 			}
 
