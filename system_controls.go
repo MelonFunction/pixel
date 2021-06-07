@@ -4,7 +4,7 @@ import (
 	"log"
 	"math"
 	"os"
-	"path/filepath"
+	"path"
 	"time"
 
 	"github.com/gotk3/gotk3/gtk"
@@ -61,10 +61,16 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		}
 		filter.AddPattern("*.png")
 
-		// Default path is program exec location
-		ex, err := os.Executable()
+		// Default path
+		pathDir, err := os.Getwd()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return
+		}
+
+		if len(os.Args) > 1 {
+			argPath := os.Args[1]
+			pathDir = path.Join(pathDir, argPath)
 		}
 
 		running := true
@@ -85,16 +91,14 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					}
 
 					fc.AddFilter(filter)
-					fc.SetCurrentFolder(filepath.Dir(ex))
+					fc.SetCurrentFolder(pathDir)
 
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
-						log.Println("accept")
 						name := fc.GetFilename()
 						log.Println(name)
 						returns <- name
 					default:
-						log.Println("not accept")
 						returns <- ""
 					}
 				case "export":
@@ -112,16 +116,14 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 						log.Fatal(err)
 					}
 
-					fc.SetCurrentFolder(filepath.Dir(ex))
+					fc.SetCurrentFolder(pathDir)
 
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
-						log.Println("accept")
 						name := fc.GetFilename()
 						log.Println(name)
 						returns <- name
 					default:
-						log.Println("not accept")
 						returns <- ""
 					}
 				case "quit":
@@ -338,7 +340,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			case "cancel":
 				if UIInteractableCapturedInput != nil {
 					// Escape from text entry
-
+					// TODO
 				} else {
 					if CurrentFile.DoingSelection {
 						CurrentFile.CancelSelection()
