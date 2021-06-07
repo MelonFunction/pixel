@@ -17,6 +17,7 @@ Layers
     //- Hide/show
 
 Menubar
+  # Lets do this today!
   Palettes
     - Maybe show the palette name in the menu item?
     - Save palette
@@ -25,11 +26,16 @@ Menubar
     - Create palette from colors in image
 
 Tools
+  Pixel Brush
+    //- Hold button to draw line
+ 
+  # Lets do this today!
   Selector
+    - Draw in selection/mask
+    - Rotate
     //- Copy
     //- Paste
-    // - Copy/paste while moving
-    - Rotate
+    //- Copy/paste while moving
     //- Resize
     //- Flip
       //- rl.KeyH for Horizontal

@@ -8,11 +8,13 @@ import (
 // eraser if eraser is true
 type PixelBrushTool struct {
 	lastPos                IntVec2
-	shouldConnectToLastPos bool
 	name                   string
 	eraser                 bool
+	shouldConnectToLastPos bool
 	// Don't draw over the same pixel multiple times, prevents opacity stacking
 	drawnPixels []IntVec2
+
+	currentColor rl.Color
 }
 
 // NewPixelBrushTool returns the pixel brush tool. Requires a name and whether
@@ -36,19 +38,7 @@ func (t *PixelBrushTool) exists(e IntVec2) bool {
 	return false
 }
 
-// MouseDown is for mouse down events
-func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
-	// Assume we are in eraser mode by setting transparent as default
-	color := rl.Transparent
-	if !t.eraser {
-		switch button {
-		case rl.MouseLeftButton:
-			color = CurrentFile.LeftColor
-		case rl.MouseRightButton:
-			color = CurrentFile.RightColor
-		}
-	}
-
+func (t *PixelBrushTool) isLineModifierDown() bool {
 	for _, keys := range Settings.KeymapData["drawLine"] {
 		allDown := true
 		for _, key := range keys {
@@ -58,26 +48,40 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 
 		if allDown {
-			t.shouldConnectToLastPos = true
-			break
+			return true
+		}
+	}
+	return false
+}
+
+// MouseDown is for mouse down events
+func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
+	// Assume we are in eraser mode by setting transparent as default
+	t.currentColor = rl.Transparent
+	if !t.eraser {
+		switch button {
+		case rl.MouseLeftButton:
+			t.currentColor = CurrentFile.LeftColor
+		case rl.MouseRightButton:
+			t.currentColor = CurrentFile.RightColor
 		}
 	}
 
-	if !t.shouldConnectToLastPos {
+	if t.shouldConnectToLastPos || t.isLineModifierDown() {
+		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
+			loc := IntVec2{x, y}
+			if !t.exists(loc) {
+				CurrentFile.DrawPixel(x, y, t.currentColor, true)
+				t.drawnPixels = append(t.drawnPixels, loc)
+			}
+		})
+	} else {
 		t.shouldConnectToLastPos = true
 		loc := IntVec2{x, y}
 		if !t.exists(loc) {
 			t.drawnPixels = append(t.drawnPixels, loc)
-			CurrentFile.DrawPixel(x, y, color, true)
+			CurrentFile.DrawPixel(x, y, t.currentColor, true)
 		}
-	} else {
-		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
-			loc := IntVec2{x, y}
-			if !t.exists(loc) {
-				CurrentFile.DrawPixel(x, y, color, true)
-				t.drawnPixels = append(t.drawnPixels, loc)
-			}
-		})
 	}
 	t.lastPos.X = x
 	t.lastPos.Y = y
@@ -92,6 +96,16 @@ func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
 // DrawPreview is for drawing the preview
 func (t *PixelBrushTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
+
+	if t.isLineModifierDown() {
+		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
+			loc := IntVec2{x, y}
+			if !t.exists(loc) {
+				rl.DrawPixel(x, y, t.currentColor)
+			}
+		})
+	}
+
 	// Preview pixel location with a suitable color
 	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	avg := (c.R + c.G + c.B) / 3
