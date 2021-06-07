@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -115,13 +117,54 @@ var (
 		"redo":   {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},
 	}
 
+	// Using the Lospec500 palette as default
+	// https://lospec.com/palette-list/lospec500
 	defaultPalettes = PaletteData{
 		{
 			Name: "Default",
 			Strings: []string{
-				"ff0000ff",
-				"00ff00ff",
-				"0000ffff",
+				"10121cff",
+				"2c1e31ff",
+				"6b2643ff",
+				"ac2847ff",
+				"ec273fff",
+				"94493aff",
+				"de5d3aff",
+				"e98537ff",
+				"f3a833ff",
+				"4d3533ff",
+				"6e4c30ff",
+				"a26d3fff",
+				"ce9248ff",
+				"dab163ff",
+				"e8d282ff",
+				"f7f3b7ff",
+				"1e4044ff",
+				"006554ff",
+				"26854cff",
+				"5ab552ff",
+				"9de64eff",
+				"008b8bff",
+				"62a477ff",
+				"a6cb96ff",
+				"d3eed3ff",
+				"3e3b65ff",
+				"3859b3ff",
+				"3388deff",
+				"36c5f4ff",
+				"6dead6ff",
+				"5e5b8cff",
+				"8c78a5ff",
+				"b0a7b8ff",
+				"deceedff",
+				"9a4d76ff",
+				"c878afff",
+				"cc99ffff",
+				"fa6e79ff",
+				"ffa2acff",
+				"ffd1d5ff",
+				"f6e8e0ff",
+				"ffffffff",
 			},
 		},
 	}
@@ -144,7 +187,13 @@ func SaveSettings() error {
 		return err
 	}
 
-	if err := ioutil.WriteFile("./settings.json", j, 0644); err != nil {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if err := ioutil.WriteFile(path.Join(homeDir, "pixelSettings.json"), j, 0644); err != nil {
 		log.Fatal(err)
 		return err
 	}
@@ -156,12 +205,31 @@ func SaveSettings() error {
 // or creates a new settings.json file if one doesn't exist already
 func LoadSettings() error {
 	Settings = &SettingsData{}
-	data, err := ioutil.ReadFile("./settings.json")
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	data, err := ioutil.ReadFile(path.Join(homeDir, "pixelSettings.json"))
 	// settings.json not found or is empty
 	if err != nil {
 		// Make a default settings file using the default data
 		Settings.KeymapData = defaultKeymap
 		Settings.PaletteData = defaultPalettes
+		for _, color := range Settings.PaletteData[0].Strings {
+			parsedColor, err := HexToColor(color)
+			if err != nil {
+				log.Println(err)
+			} else {
+				Settings.PaletteData[0].data = append(
+					Settings.PaletteData[0].data,
+					parsedColor,
+				)
+			}
+		}
+
 		if err := SaveSettings(); err != nil {
 			return err
 		}
