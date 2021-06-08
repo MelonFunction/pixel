@@ -49,7 +49,6 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		}
 		win.Connect("destroy", func() {
 			gtk.MainQuit()
-			log.Println("destoryed")
 		})
 
 		// Only show png files
@@ -87,6 +86,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					default:
 						returns <- ""
 					}
+					fc.Destroy()
 				case "export":
 					// TODO make export and save different
 					fallthrough
@@ -103,6 +103,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					}
 
 					fc.SetCurrentFolder(CurrentFile.PathDir)
+					fc.SetFilename(CurrentFile.Filename)
 
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
@@ -112,10 +113,9 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					default:
 						returns <- ""
 					}
+					fc.Destroy()
 				case "quit":
 					running = false
-					log.Println("quitting gtk")
-					gtk.MainQuit()
 				}
 			default:
 				time.Sleep(time.Millisecond * 100)
