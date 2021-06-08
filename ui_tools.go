@@ -30,7 +30,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 
 	// TODO allow right click to be replaced with selector if alt is pressed
 	toolPencil = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"./res/icons/pencil.png", false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/pencil.png"), false, func(entity *Entity, button rl.MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -40,7 +40,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolEraser = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"./res/icons/eraser.png", false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/eraser.png"), false, func(entity *Entity, button rl.MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -50,7 +50,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolFill = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"./res/icons/fill.png", false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/fill.png"), false, func(entity *Entity, button rl.MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -60,7 +60,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolPicker = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"./res/icons/picker.png", false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/picker.png"), false, func(entity *Entity, button rl.MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -70,7 +70,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolSelector = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"./res/icons/selector.png", false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/selector.png"), false, func(entity *Entity, button rl.MouseButton) {
 			CurrentFile.LeftTool = NewSelectorTool("Selector")
 			CurrentFile.RightTool = NewSelectorTool("Selector")
 			ToolsUISetCurrentToolSelected(entity)

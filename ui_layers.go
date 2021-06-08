@@ -63,7 +63,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 		bounds = moveable.Bounds
 	}
 
-	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/eye_open.png", false,
+	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/eye_open.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 
@@ -73,14 +73,14 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
 				if ok {
 					if CurrentFile.Layers[y].Hidden {
-						drawableTexture.SetTexture("./res/icons/eye_closed.png")
+						drawableTexture.SetTexture(GetFile("./res/icons/eye_closed.png"))
 					} else {
-						drawableTexture.SetTexture("./res/icons/eye_open.png")
+						drawableTexture.SetTexture(GetFile("./res/icons/eye_open.png"))
 					}
 				}
 			}
 		}, nil)
-	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_up.png", false,
+	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if err := CurrentFile.MoveLayerUp(y); err == nil {
@@ -90,7 +90,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				LayersUIRebuildList()
 			}
 		}, nil)
-	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/arrow_down.png", false,
+	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if err := CurrentFile.MoveLayerDown(y); err == nil {
@@ -100,7 +100,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				LayersUIRebuildList()
 			}
 		}, nil)
-	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), "./res/icons/cross.png", false,
+	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if err := CurrentFile.DeleteLayer(y, true); err == nil {
@@ -193,7 +193,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 // NewLayersUI creates the UI representation of the CurrentFile's layers
 func NewLayersUI(bounds rl.Rectangle) *Entity {
 	// New layer button
-	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), "./res/icons/plus.png", false,
+	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), GetFile("./res/icons/plus.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			CurrentFile.AddNewLayer()

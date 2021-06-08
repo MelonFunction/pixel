@@ -6,11 +6,6 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
-var (
-	// ShowDebug enables debug overlays when true
-	ShowDebug = true
-)
-
 type UIFileSystem struct {
 	BasicSystem
 

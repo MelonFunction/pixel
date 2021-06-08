@@ -11,16 +11,21 @@ var (
 	CurrentFile *File
 	// Files is a slice of all the files currently loaded
 	Files = make([]*File, 0, 8)
+
+	// ShowDebug enables debug overlays when true
+	ShowDebug = false
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
 
+	SetupFiles()
+
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(1200, 800, "Pixel")
 	rl.SetTargetFPS(60)
-	// rl.SetExitKey(rl.KeyNumLock)
+	rl.SetExitKey(0)
 
 	// Load the settings
 	err := LoadSettings()

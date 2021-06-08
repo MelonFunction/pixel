@@ -311,7 +311,8 @@ type DrawableParent struct {
 // InitUI must be called before UI is used
 func InitUI(keymap Keymap) {
 	isInited = true
-	Font = rl.LoadFont("./res/fonts/prstartk.ttf")
+
+	Font = rl.LoadFont(GetFile("./res/fonts/prstartk.ttf"))
 
 	scene = NewScene()
 
@@ -357,6 +358,7 @@ func InitUI(keymap Keymap) {
 // DestroyUI calls the destructor on every entity/component
 func DestroyUI() {
 	scene.Destroy()
+	Font.Unload()
 }
 
 // UpdateUI updates the systems (excluding the RenderSystem)

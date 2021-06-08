@@ -1,4 +1,8 @@
+github.com/gen2brain/raylib-go v0.0.0-20210526111428-ace572fead21 h1:w1duHOKelNSXQ3VKCKiTz5zuzTBma/E6RunaTtGZNsk=
+github.com/gen2brain/raylib-go v0.0.0-20210526111428-ace572fead21/go.mod h1:LUVRDQbnxUaOgzLzW5lMS+IcbqlXHIqIA9wq8wxzmcA=
 github.com/gotk3/gotk3 v0.5.2 h1:jbSFvUNMfo3ImM6BWBAkNUxY5piqP3eTc1YFbYy9ecU=
 github.com/gotk3/gotk3 v0.5.2/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
+github.com/gotk3/gotk3 v0.6.0 h1:Aqlq4/6VabNwtCyA9M9zFNad5yHAqCi5heWnZ9y+3dA=
+github.com/gotk3/gotk3 v0.6.0/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
 github.com/lachee/raylib-goplus v0.0.0-20200605081007-7ca39b8afc71 h1:H4fcwldyU7pQvzyR3fuNLe0Gs3f7yLg/lH7NorUTc7I=
 github.com/lachee/raylib-goplus v0.0.0-20200605081007-7ca39b8afc71/go.mod h1:dBwvFApqhdnnQuWzvHZnvWph/zlTAHC3nd/Hy6yBE8U=

@@ -1,8 +1,13 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -116,4 +121,55 @@ func HexToColor(color string) (rl.Color, error) {
 		return rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}, nil
 	}
 	return rl.Color{}, fmt.Errorf("color couldn't be created from hex")
+}
+
+//go:embed res
+var f embed.FS
+
+// SetupFiles creates temp files from the embedded files in ./res
+func SetupFiles() error {
+	ex, err := os.UserCacheDir()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	savePath := path.Join(ex, "pixel")
+
+	os.Mkdir(savePath, 0700)
+
+	fs.WalkDir(f, "res", func(p string, d fs.DirEntry, err error) error {
+		if data, err := os.ReadFile(p); err == nil {
+			savePath := path.Join(savePath, p)
+			nestedPath := filepath.Dir(savePath)
+
+			if _, err := os.Stat(savePath); os.IsNotExist(err) {
+				log.Println("Creating cache file: ", savePath)
+				os.MkdirAll(nestedPath, 0700)
+				os.WriteFile(savePath, data, 0666)
+			}
+		}
+
+		return err
+	})
+
+	return nil
+}
+
+// GetFile will create a temp file for everything that was embedded in ./res,
+// resPath is the relative path to the file
+func GetFile(resPath string) string {
+	ex, err := os.UserCacheDir()
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	cachePath := path.Join(ex, "pixel", resPath)
+	_, err = os.Stat(cachePath)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	return cachePath
 }
