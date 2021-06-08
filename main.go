@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"path"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -23,9 +25,33 @@ func main() {
 
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
-	rl.InitWindow(1200, 800, "Pixel")
+	rl.InitWindow(1920*0.75, 1080*0.75, "Pixel")
 	rl.SetTargetFPS(60)
 	rl.SetExitKey(0)
+
+	// Make the files
+	Files = []*File{}
+
+	if len(os.Args) > 1 {
+		for _, argPath := range os.Args[1:] {
+			// Default path
+			pathDir, err := os.Getwd()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			log.Println(pathDir)
+			pathDir = path.Join(pathDir, argPath)
+			log.Println(pathDir)
+
+			newFile := Open(pathDir)
+			CurrentFile = newFile
+			Files = append(Files, newFile)
+		}
+	} else {
+		CurrentFile = NewFile(64, 64, 8, 8)
+		Files = append(Files, CurrentFile)
+	}
 
 	// Load the settings
 	err := LoadSettings()
@@ -33,8 +59,6 @@ func main() {
 		log.Println(err)
 	}
 
-	CurrentFile = NewFile(64, 64, 8, 8)
-	Files = []*File{CurrentFile}
 	InitUI(NewKeymap(Settings.KeymapData))
 
 	for !rl.WindowShouldClose() {

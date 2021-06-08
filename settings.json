@@ -16,6 +16,14 @@
         261
       ]
     ],
+    "drawLine": [
+      [
+        340
+      ],
+      [
+        344
+      ]
+    ],
     "eraser": [
       [
         69
@@ -157,9 +165,48 @@
     {
       "Name": "Default",
       "Strings": [
-        "ff0000ff",
-        "00ff00ff",
-        "0000ffff"
+        "10121cff",
+        "2c1e31ff",
+        "6b2643ff",
+        "ac2847ff",
+        "ec273fff",
+        "94493aff",
+        "de5d3aff",
+        "e98537ff",
+        "f3a833ff",
+        "4d3533ff",
+        "6e4c30ff",
+        "a26d3fff",
+        "ce9248ff",
+        "dab163ff",
+        "e8d282ff",
+        "f7f3b7ff",
+        "1e4044ff",
+        "006554ff",
+        "26854cff",
+        "5ab552ff",
+        "9de64eff",
+        "008b8bff",
+        "62a477ff",
+        "a6cb96ff",
+        "d3eed3ff",
+        "3e3b65ff",
+        "3859b3ff",
+        "3388deff",
+        "36c5f4ff",
+        "6dead6ff",
+        "5e5b8cff",
+        "8c78a5ff",
+        "b0a7b8ff",
+        "deceedff",
+        "9a4d76ff",
+        "c878afff",
+        "cc99ffff",
+        "fa6e79ff",
+        "ffa2acff",
+        "ffd1d5ff",
+        "f6e8e0ff",
+        "ffffffff"
       ]
     }
   ]

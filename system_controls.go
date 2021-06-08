@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"math"
-	"os"
-	"path"
 	"time"
 
 	"github.com/gotk3/gotk3/gtk"
@@ -61,18 +59,6 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		}
 		filter.AddPattern("*.png")
 
-		// Default path
-		pathDir, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		if len(os.Args) > 1 {
-			argPath := os.Args[1]
-			pathDir = path.Join(pathDir, argPath)
-		}
-
 		running := true
 		for running {
 			select {
@@ -91,7 +77,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					}
 
 					fc.AddFilter(filter)
-					fc.SetCurrentFolder(pathDir)
+					fc.SetCurrentFolder(CurrentFile.PathDir)
 
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
@@ -116,7 +102,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 						log.Fatal(err)
 					}
 
-					fc.SetCurrentFolder(pathDir)
+					fc.SetCurrentFolder(CurrentFile.PathDir)
 
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):

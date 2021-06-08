@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"path"
 	"strings"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -118,7 +119,10 @@ func (f *File) ClearBackground(color rl.Color) {
 
 // File contains all the methods and data required to alter a file
 type File struct {
-	Filename     string
+	// Save directory of the file
+	PathDir  string
+	Filename string
+
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
 
@@ -177,6 +181,7 @@ type File struct {
 
 // NewFile returns a pointer to a new File
 func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
+
 	f := &File{
 		Filename: "filename",
 		Layers: []*Layer{
@@ -834,39 +839,52 @@ func (f *File) Export(path string) {
 }
 
 // Open a file
-func Open(path string) *File {
-	reader, err := os.Open(path)
+func Open(openPath string) *File {
+	f := NewFile(64, 64, 8, 8)
+	f.Filename = "Drawing"
+	f.PathDir = path.Dir(openPath)
+
+	fi, err := os.Stat(openPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	defer reader.Close()
-
-	img, err := png.Decode(reader)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	f := NewFile(img.Bounds().Max.X, img.Bounds().Max.Y, 8, 8)
-	editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
-
-	rl.BeginTextureMode(editedLayer.Canvas)
-	for x := 0; x < f.CanvasWidth; x++ {
-		for y := 0; y < f.CanvasHeight; y++ {
-			color := img.At(x, y)
-			r, g, b, a := color.RGBA()
-			rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
-			editedLayer.PixelData[IntVec2{x, y}] = rlColor
-			rl.DrawPixel(x, y, rlColor)
+	if fi.Mode().IsRegular() {
+		reader, err := os.Open(openPath)
+		if err != nil {
+			log.Fatal(err)
 		}
-	}
-	rl.EndTextureMode()
+		defer reader.Close()
 
-	f.Layers = []*Layer{
-		editedLayer,
-		NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
+		img, err := png.Decode(reader)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		f.CanvasWidth = img.Bounds().Max.X
+		f.CanvasHeight = img.Bounds().Max.Y
+
+		editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
+
+		rl.BeginTextureMode(editedLayer.Canvas)
+		for x := 0; x < f.CanvasWidth; x++ {
+			for y := 0; y < f.CanvasHeight; y++ {
+				color := img.At(x, y)
+				r, g, b, a := color.RGBA()
+				rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
+				editedLayer.PixelData[IntVec2{x, y}] = rlColor
+				rl.DrawPixel(x, y, rlColor)
+			}
+		}
+		rl.EndTextureMode()
+
+		f.Layers = []*Layer{
+			editedLayer,
+			NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
+		}
+
+		spl := strings.Split(openPath, "/")
+		f.Filename = spl[len(spl)-1]
 	}
-	// Change name in the tab
-	spl := strings.Split(path, "/")
-	f.Filename = spl[len(spl)-1]
+
 	return f
 }
