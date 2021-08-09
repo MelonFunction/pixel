@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"image"
 	"image/color"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
@@ -117,6 +119,19 @@ func (f *File) ClearBackground(color rl.Color) {
 	}
 }
 
+// FileSer contains only the fields that need to be serialized
+type FileSer struct {
+	DrawGrid bool
+
+	Layers []*LayerSer
+}
+type LayerSer struct {
+	Hidden        bool
+	Name          string
+	PixelData     map[IntVec2]rl.Color
+	Width, Height int
+}
+
 // File contains all the methods and data required to alter a file
 type File struct {
 	// Save directory of the file
@@ -126,8 +141,6 @@ type File struct {
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
 
-	// History uses empty interfaces because I don't want to use nested structs
-	// to defer the base type
 	History           []interface{}
 	HistoryMaxActions int
 	historyOffset     int      // How many undos have been made
@@ -791,9 +804,45 @@ func (f *File) Destroy() {
 	}
 }
 
-// Save the file into the custom editor format
+// Save the file into binary with gob
 func (f *File) Save(path string) {
+	file, err := os.Create(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	log.Println("saving file", path)
+	enc := gob.NewEncoder(file)
+
+	gob.Register(rl.Color{})
+	gob.Register(IntVec2{})
+
+	fSer := &FileSer{
+		DrawGrid: f.DrawGrid,
+		Layers:   make([]*LayerSer, len(f.Layers)),
+	}
+	for l := range f.Layers {
+		fSer.Layers[l] = &LayerSer{
+			Name:      f.Layers[l].Name,
+			Hidden:    f.Layers[l].Hidden,
+			PixelData: f.Layers[l].PixelData,
+			Width:     f.Layers[l].Width,
+			Height:    f.Layers[l].Height,
+		}
+	}
+
+	if err := enc.Encode(fSer); err != nil {
+		log.Println(err)
+	}
+
+	if err := file.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Change name in the tab
+	spl := strings.Split(path, "/")
+	f.Filename = spl[len(spl)-1]
+	EditorsUIRebuild()
 }
 
 // Export the file into .png etc
@@ -855,35 +904,61 @@ func Open(openPath string) *File {
 		}
 		defer reader.Close()
 
-		img, err := png.Decode(reader)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		f.CanvasWidth = img.Bounds().Max.X
-		f.CanvasHeight = img.Bounds().Max.Y
-
-		editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
-
-		rl.BeginTextureMode(editedLayer.Canvas)
-		for x := 0; x < f.CanvasWidth; x++ {
-			for y := 0; y < f.CanvasHeight; y++ {
-				color := img.At(x, y)
-				r, g, b, a := color.RGBA()
-				rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
-				editedLayer.PixelData[IntVec2{x, y}] = rlColor
-				rl.DrawPixel(x, y, rlColor)
+		switch filepath.Ext(openPath) {
+		case ".pix":
+			dec := gob.NewDecoder(reader)
+			fileSer := &FileSer{}
+			if err := dec.Decode(&fileSer); err != nil {
+				log.Println(err)
 			}
-		}
-		rl.EndTextureMode()
 
-		f.Layers = []*Layer{
-			editedLayer,
-			NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
-		}
+			f.Layers = make([]*Layer, len(fileSer.Layers))
+			for i, layer := range fileSer.Layers {
+				f.Layers[i] = &Layer{
+					Name:           layer.Name,
+					Hidden:         layer.Hidden,
+					PixelData:      layer.PixelData,
+					Width:          layer.Width,
+					Height:         layer.Height,
+					Canvas:         rl.LoadRenderTexture(layer.Width, layer.Height),
+					hasInitialFill: true,
+				}
+				f.Layers[i].Redraw()
+			}
 
-		spl := strings.Split(openPath, "/")
-		f.Filename = spl[len(spl)-1]
+			LayersUIRebuildList()
+
+		case ".png":
+			img, err := png.Decode(reader)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			f.CanvasWidth = img.Bounds().Max.X
+			f.CanvasHeight = img.Bounds().Max.Y
+
+			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
+
+			rl.BeginTextureMode(editedLayer.Canvas)
+			for x := 0; x < f.CanvasWidth; x++ {
+				for y := 0; y < f.CanvasHeight; y++ {
+					color := img.At(x, y)
+					r, g, b, a := color.RGBA()
+					rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
+					editedLayer.PixelData[IntVec2{x, y}] = rlColor
+					rl.DrawPixel(x, y, rlColor)
+				}
+			}
+			rl.EndTextureMode()
+
+			f.Layers = []*Layer{
+				editedLayer,
+				NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
+			}
+
+			spl := strings.Split(openPath, "/")
+			f.Filename = spl[len(spl)-1]
+		}
 	}
 
 	return f

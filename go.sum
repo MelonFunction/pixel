@@ -4,5 +4,7 @@ github.com/gotk3/gotk3 v0.5.2 h1:jbSFvUNMfo3ImM6BWBAkNUxY5piqP3eTc1YFbYy9ecU=
 github.com/gotk3/gotk3 v0.5.2/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
 github.com/gotk3/gotk3 v0.6.0 h1:Aqlq4/6VabNwtCyA9M9zFNad5yHAqCi5heWnZ9y+3dA=
 github.com/gotk3/gotk3 v0.6.0/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=
+github.com/jinzhu/copier v0.3.2 h1:QdBOCbaouLDYaIPFfi1bKv5F5tPpeTwXe4sD0jqtz5w=
+github.com/jinzhu/copier v0.3.2/go.mod h1:24xnZezI2Yqac9J61UC6/dG/k76ttpq0DdJI3QmUvro=
 github.com/lachee/raylib-goplus v0.0.0-20200605081007-7ca39b8afc71 h1:H4fcwldyU7pQvzyR3fuNLe0Gs3f7yLg/lH7NorUTc7I=
 github.com/lachee/raylib-goplus v0.0.0-20200605081007-7ca39b8afc71/go.mod h1:dBwvFApqhdnnQuWzvHZnvWph/zlTAHC3nd/Hy6yBE8U=

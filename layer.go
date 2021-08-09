@@ -12,6 +12,7 @@ type Layer struct {
 	hasInitialFill   bool
 	InitialFillColor rl.Color
 	Name             string
+	Width, Height    int
 
 	// PixelData is the "raw" pixels map
 	PixelData map[IntVec2]rl.Color
@@ -98,5 +99,7 @@ func NewLayer(width, height int, name string, fillColor rl.Color, shouldFill boo
 		PixelData:        make(map[IntVec2]rl.Color),
 		Name:             name,
 		Hidden:           false,
+		Width:            width,
+		Height:           height,
 	}
 }

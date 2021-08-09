@@ -56,7 +56,9 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		if err != nil {
 			log.Fatal(err)
 		}
+		filter.SetName(".png, .pix")
 		filter.AddPattern("*.png")
+		filter.AddPattern("*.pix")
 
 		running := true
 		for running {
@@ -87,9 +89,32 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 						returns <- ""
 					}
 					fc.Destroy()
+
 				case "export":
-					// TODO make export and save different
-					fallthrough
+					fc, err := gtk.FileChooserNativeDialogNew(
+						"Select file to export",
+						win,
+						gtk.FILE_CHOOSER_ACTION_SAVE,
+						"export",
+						"cancel",
+					)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					fc.SetCurrentFolder(CurrentFile.PathDir)
+					fc.SetFilename(CurrentFile.Filename)
+
+					switch fc.Run() {
+					case int(gtk.RESPONSE_ACCEPT):
+						name := fc.GetFilename()
+						log.Println(name)
+						returns <- name
+					default:
+						returns <- ""
+					}
+					fc.Destroy()
+
 				case "save":
 					fc, err := gtk.FileChooserNativeDialogNew(
 						"Select file to save",
@@ -228,7 +253,7 @@ func UIOpen() {
 			waiting = false
 			if len(name) > 0 {
 				file := Open(name)
-				log.Println(file)
+				// log.Println(file)
 				Files = append(Files, file)
 				CurrentFile = file
 				EditorsUIAddButton(file)
