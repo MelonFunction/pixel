@@ -225,7 +225,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
 	}
-	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+	// f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+	f.LeftTool = NewSpriteSelectorTool("Sprite Selector L")
 	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
 	return f
