@@ -173,3 +173,28 @@ func GetFile(resPath string) string {
 
 	return cachePath
 }
+
+// GetClampedCoordinates limits the x and y to the width/height of the canvas
+func GetClampedCoordinates(x, y int) IntVec2 {
+	if x < 0 {
+		x = 0
+	} else if x >= CurrentFile.CanvasWidth-1 {
+		x = CurrentFile.CanvasWidth - 1
+	}
+	if y < 0 {
+		y = 0
+	} else if y >= CurrentFile.CanvasHeight-1 {
+		y = CurrentFile.CanvasHeight - 1
+	}
+
+	v := IntVec2{x, y}
+	return v
+}
+
+// GetTilePosition returns the top left x and y coordinates
+func GetTilePosition(x, y int) IntVec2 {
+	return IntVec2{
+		X: x / CurrentFile.TileWidth * CurrentFile.TileWidth,
+		Y: y / CurrentFile.TileHeight * CurrentFile.TileHeight,
+	}
+}

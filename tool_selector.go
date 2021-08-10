@@ -34,22 +34,6 @@ func NewSelectorTool(name string) *SelectorTool {
 	}
 }
 
-func (t *SelectorTool) getClampedCoordinates(x, y int) IntVec2 {
-	if x < 0 {
-		x = 0
-	} else if x >= CurrentFile.CanvasWidth-1 {
-		x = CurrentFile.CanvasWidth - 1
-	}
-	if y < 0 {
-		y = 0
-	} else if y >= CurrentFile.CanvasHeight-1 {
-		y = CurrentFile.CanvasHeight - 1
-	}
-
-	v := IntVec2{x, y}
-	return v
-}
-
 // MouseDown is for mouse down events
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
@@ -58,7 +42,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
-		t.firstPos = t.getClampedCoordinates(x, y)
+		t.firstPos = GetClampedCoordinates(x, y)
 
 		// Trigger resize event
 		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
@@ -102,7 +86,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		t.mouseReleased = false
 	}
 
-	t.lastPos = t.getClampedCoordinates(x, y)
+	t.lastPos = GetClampedCoordinates(x, y)
 	firstPosClone := t.firstPos
 
 	// Do resize event
