@@ -6,17 +6,17 @@ import (
 
 var (
 	currentLayerHoverable *Hoverable
-	interactables         = make(map[int]*Entity)
+	layerInteractables    = make(map[int]*Entity)
 
-	layerList     *Entity
-	listContainer *Entity
+	layerList          *Entity
+	layerListContainer *Entity
 )
 
 // LayersUISetCurrentLayer can be used to activate a callback on a layer button
 // Intended to be used by the ControlSystem
 func LayersUISetCurrentLayer(index int) {
 	currentLayerHoverable.Selected = false
-	entity, ok := interactables[index]
+	entity, ok := layerInteractables[index]
 	if ok {
 		if res, err := scene.QueryID(entity.ID); err == nil {
 			hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
@@ -29,6 +29,7 @@ func LayersUISetCurrentLayer(index int) {
 	}
 }
 
+// LayersUIMakeList makes the list
 func LayersUIMakeList(bounds rl.Rectangle) {
 	layerList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the layers
@@ -42,24 +43,26 @@ func LayersUIMakeList(bounds rl.Rectangle) {
 	layerList.FlowChildren()
 }
 
+// LayersUIRebuildList rebuilds the list
 func LayersUIRebuildList() {
 	layerList.DestroyNested()
 	layerList.Destroy()
-	listContainer.RemoveChild(layerList)
+	layerListContainer.RemoveChild(layerList)
 
-	if res, err := scene.QueryID(listContainer.ID); err == nil {
-		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+	if res, err := scene.QueryID(layerListContainer.ID); err == nil {
+		moveable := res.Components[layerListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
 		bounds := moveable.Bounds
 		LayersUIMakeList(bounds)
-		listContainer.PushChild(layerList)
-		listContainer.FlowChildren()
+		layerListContainer.PushChild(layerList)
+		layerListContainer.FlowChildren()
 	}
 }
 
+// LayersUIMakeBox makes a box
 func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	var bounds rl.Rectangle
-	if res, err := scene.QueryID(listContainer.ID); err == nil {
-		moveable := res.Components[listContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+	if res, err := scene.QueryID(layerListContainer.ID); err == nil {
+		moveable := res.Components[layerListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
 		bounds = moveable.Bounds
 	}
 
@@ -179,7 +182,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 			currentLayerHoverable = hoverable
 		}
 
-		interactables[y] = label
+		layerInteractables[y] = label
 	}
 
 	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight), []*Entity{
@@ -208,13 +211,13 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 			layerList.FlowChildren()
 		}, nil)
 
-	listContainer = NewBox(bounds, []*Entity{
+	layerListContainer = NewBox(bounds, []*Entity{
 		newLayerButton,
 	}, FlowDirectionVertical)
 
 	LayersUIMakeList(bounds)
-	listContainer.PushChild(layerList)
-	listContainer.FlowChildren()
+	layerListContainer.PushChild(layerList)
+	layerListContainer.FlowChildren()
 
-	return listContainer
+	return layerListContainer
 }

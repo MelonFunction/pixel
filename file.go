@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -132,6 +133,13 @@ type LayerSer struct {
 	Width, Height int
 }
 
+// Animation contains data about an animation
+type Animation struct {
+	Name                 string
+	FrameStart, FrameEnd int
+	Timing               time.Duration // time between frames
+}
+
 // File contains all the methods and data required to alter a file
 type File struct {
 	// Save directory of the file
@@ -140,6 +148,9 @@ type File struct {
 
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int
+
+	Animations       []*Animation
+	CurrentAnimation int
 
 	History           []interface{}
 	HistoryMaxActions int
@@ -201,6 +212,9 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 			NewLayer(canvasWidth, canvasHeight, "background", rl.Transparent, true),
 			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
 		},
+
+		Animations: make([]*Animation, 0),
+
 		History:           make([]interface{}, 0, 50),
 		HistoryMaxActions: 50, // TODO get from config
 		deletedLayers:     make([]*Layer, 0, 10),
@@ -443,6 +457,26 @@ func (f *File) MoveSelection(dx, dy int) {
 	}
 
 	cl.Redraw()
+}
+
+// DeleteAnimation deletes an animation
+func (f *File) DeleteAnimation(index int) error {
+	return nil
+}
+
+// SetCurrentAnimation sets the current animation
+func (f *File) SetCurrentAnimation(index int) {
+	f.CurrentAnimation = index
+}
+
+// AddNewAnimation adds a new animation
+func (f *File) AddNewAnimation() {
+	f.Animations = append(f.Animations, &Animation{
+		Name:       "New Animation",
+		FrameStart: 0,
+		FrameEnd:   0,
+		Timing:     time.Second / 10,
+	})
 }
 
 // SetCurrentLayer sets the current layer

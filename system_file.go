@@ -170,6 +170,34 @@ func NewUIFileSystem() *UIFileSystem {
 		}
 	}
 
+	// Left panel
+	animations := NewAnimationsUI(rl.NewRectangle(
+		0,
+		0,
+		rgbWidth+paletteWidth,
+		paletteWidth*2))
+	animations.Snap([]SnapData{
+		{screenBottom, SideBottom, SideTop},
+	})
+	if res, ok := animations.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			// Resize container and inner list to fill the remaining height
+			if mov, ok := entity.GetMoveable(); ok {
+				mov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y
+
+				if lmov, ok := layerList.GetMoveable(); ok {
+					lmov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y - UIButtonHeight
+					if ldraw, ok := layerList.GetDrawable(); ok {
+						if lparentDrawable, ok := ldraw.DrawableType.(*DrawableParent); ok {
+							// Make a new texture for rendering the items to
+							lparentDrawable.Texture = rl.LoadRenderTexture(int(lmov.Bounds.Width), int(lmov.Bounds.Height))
+						}
+					}
+				}
+			}
+		}
+	}
+
 	NewResizeUI()
 
 	return s
