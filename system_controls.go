@@ -222,6 +222,9 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 			if scrollAmount != 0 {
 				UIHasControl = true
 				scrollable.ScrollOffset += scrollAmount
+				if scrollable.ScrollOffset < 0 {
+					scrollable.ScrollOffset = 0
+				}
 				return entity
 			}
 		}
