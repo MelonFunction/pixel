@@ -95,30 +95,32 @@ func ColorToHex(color rl.Color) string {
 
 // HexToColor converts a hex string into a rl.Color
 func HexToColor(color string) (rl.Color, error) {
-	if color[0] == '#' {
-		color = color[1:]
-	}
-
-	var r, g, b, a int64 = 0, 0, 0, 255
-	var err error
-	switch len(color) {
-	case 8:
-		if a, err = strconv.ParseInt(color[6:8], 16, 32); err != nil {
-			log.Println(err)
-		}
-		fallthrough
-	case 6:
-		if r, err = strconv.ParseInt(color[0:2], 16, 32); err != nil {
-			log.Println(err)
-		}
-		if g, err = strconv.ParseInt(color[2:4], 16, 32); err != nil {
-			log.Println(err)
-		}
-		if b, err = strconv.ParseInt(color[4:6], 16, 32); err != nil {
-			log.Println(err)
+	if len(color) > 0 {
+		if color[0] == '#' {
+			color = color[1:]
 		}
 
-		return rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}, nil
+		var r, g, b, a int64 = 0, 0, 0, 255
+		var err error
+		switch len(color) {
+		case 8:
+			if a, err = strconv.ParseInt(color[6:8], 16, 32); err != nil {
+				log.Println(err)
+			}
+			fallthrough
+		case 6:
+			if r, err = strconv.ParseInt(color[0:2], 16, 32); err != nil {
+				log.Println(err)
+			}
+			if g, err = strconv.ParseInt(color[2:4], 16, 32); err != nil {
+				log.Println(err)
+			}
+			if b, err = strconv.ParseInt(color[4:6], 16, 32); err != nil {
+				log.Println(err)
+			}
+
+			return rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}, nil
+		}
 	}
 	return rl.Color{}, fmt.Errorf("color couldn't be created from hex")
 }
