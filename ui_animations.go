@@ -1,35 +1,37 @@
 package main
 
-import rl "github.com/lachee/raylib-goplus/raylib"
+import (
+	rl "github.com/lachee/raylib-goplus/raylib"
+)
 
 var (
 	currentAnimationHoverable *Hoverable
 	animationInteractables    = make(map[int]*Entity)
 
-	animationList          *Entity
-	animationListContainer *Entity
+	animationsList          *Entity
+	animationsListContainer *Entity
 )
 
 // AnimationsUIRebuildList rebuilds the list
 func AnimationsUIRebuildList() {
-	animationList.DestroyNested()
-	animationList.Destroy()
-	animationListContainer.RemoveChild(animationList)
+	animationsList.DestroyNested()
+	animationsList.Destroy()
+	animationsListContainer.RemoveChild(animationsList)
 
-	if res, err := scene.QueryID(animationListContainer.ID); err == nil {
-		moveable := res.Components[animationListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+	if res, err := scene.QueryID(animationsListContainer.ID); err == nil {
+		moveable := res.Components[animationsListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
 		bounds := moveable.Bounds
 		AnimationsUIMakeList(bounds)
-		animationListContainer.PushChild(animationList)
-		animationListContainer.FlowChildren()
+		animationsListContainer.PushChild(animationsList)
+		animationsListContainer.FlowChildren()
 	}
 }
 
 // AnimationsUIMakeBox makes a box for an animatio
 func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 	var bounds rl.Rectangle
-	if res, err := scene.QueryID(animationListContainer.ID); err == nil {
-		moveable := res.Components[animationListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
+	if res, err := scene.QueryID(animationsListContainer.ID); err == nil {
+		moveable := res.Components[animationsListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
 		bounds = moveable.Bounds
 	}
 
@@ -56,6 +58,11 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 	frameSelect := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/frame_selector.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
+			lastTool := CurrentFile.LeftTool
+			CurrentFile.LeftTool = NewSpriteSelectorTool("Sprite Selector L", func(firstSprite, lastSprite int) {
+				CurrentFile.LeftTool = lastTool
+			})
+
 			// if err := CurrentFile.DeleteAnimation(y); err == nil {
 			// 	AnimationsUIRebuildList()
 			// }
@@ -142,13 +149,13 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 
 // AnimationsUIMakeList make a new list of animations
 func AnimationsUIMakeList(bounds rl.Rectangle) {
-	animationList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
+	animationsList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the animations
 	for i, animation := range CurrentFile.Animations {
 
-		animationList.PushChild(AnimationsUIMakeBox(i, animation))
+		animationsList.PushChild(AnimationsUIMakeBox(i, animation))
 	}
-	animationList.FlowChildren()
+	animationsList.FlowChildren()
 }
 
 // NewAnimationsUI creates the UI representation of the CurrentFile's animations
@@ -157,19 +164,18 @@ func NewAnimationsUI(bounds rl.Rectangle) *Entity {
 	newAnimationButton := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), GetFile("./res/icons/plus.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-
 			CurrentFile.AddNewAnimation()
-			animationList.PushChild(AnimationsUIMakeBox(0, CurrentFile.Animations[0]))
-			animationList.FlowChildren()
+			animationsList.PushChild(AnimationsUIMakeBox(0, CurrentFile.Animations[0]))
+			animationsList.FlowChildren()
 		}, nil)
 
-	animationListContainer = NewBox(bounds, []*Entity{
+	animationsListContainer = NewBox(bounds, []*Entity{
 		newAnimationButton,
 	}, FlowDirectionVertical)
 
 	AnimationsUIMakeList(bounds)
-	animationListContainer.PushChild(animationList)
-	animationListContainer.FlowChildren()
+	animationsListContainer.PushChild(animationsList)
+	animationsListContainer.FlowChildren()
 
-	return animationListContainer
+	return animationsListContainer
 }

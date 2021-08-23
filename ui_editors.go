@@ -7,10 +7,12 @@ var (
 	currentButton  *Entity
 )
 
+// EditorsUICloseEditor closes the current editor
 func EditorsUICloseEditor() {
 
 }
 
+// EditorsUIRebuild rebuilds the list of open editors
 func EditorsUIRebuild() {
 	editorsButtons.RemoveChildren()
 
@@ -19,6 +21,7 @@ func EditorsUIRebuild() {
 	}
 }
 
+// EditorsUIAddButton adds a button to the buttons list
 func EditorsUIAddButton(file *File) {
 	isCurrent := file == CurrentFile
 
@@ -59,6 +62,7 @@ func EditorsUIAddButton(file *File) {
 	editorsButtons.FlowChildren()
 }
 
+// NewEditorsUI returns a new entity
 func NewEditorsUI(bounds rl.Rectangle) *Entity {
 	editorsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 	for _, f := range Files {

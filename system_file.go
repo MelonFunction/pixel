@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -157,6 +155,7 @@ func NewUIFileSystem() *UIFileSystem {
 			if mov, ok := entity.GetMoveable(); ok {
 				mov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y
 
+				// Doesn't propagate, manually resize inner
 				if lmov, ok := layerList.GetMoveable(); ok {
 					lmov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y - UIButtonHeight
 					if ldraw, ok := layerList.GetDrawable(); ok {
@@ -171,13 +170,24 @@ func NewUIFileSystem() *UIFileSystem {
 	}
 
 	// Left panel
+	preview := NewPreviewUI(rl.NewRectangle(
+		0,
+		0,
+		rgbWidth,
+		rgbWidth,
+	))
+	preview.Snap([]SnapData{
+		{editors, SideTop, SideBottom},
+	})
+
 	animations := NewAnimationsUI(rl.NewRectangle(
 		0,
 		0,
-		rgbWidth+paletteWidth,
-		paletteWidth*2))
+		rgbWidth,
+		rgbWidth,
+	))
 	animations.Snap([]SnapData{
-		{screenBottom, SideBottom, SideTop},
+		{preview, SideTop, SideBottom},
 	})
 	if res, ok := animations.GetResizeable(); ok {
 		res.OnResize = func(entity *Entity) {
@@ -185,9 +195,10 @@ func NewUIFileSystem() *UIFileSystem {
 			if mov, ok := entity.GetMoveable(); ok {
 				mov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y
 
-				if lmov, ok := layerList.GetMoveable(); ok {
+				// Doesn't propagate, manually resize inner
+				if lmov, ok := animationsList.GetMoveable(); ok {
 					lmov.Bounds.Height = float32(rl.GetScreenHeight()) - mov.Bounds.Y - UIButtonHeight
-					if ldraw, ok := layerList.GetDrawable(); ok {
+					if ldraw, ok := animationsList.GetDrawable(); ok {
 						if lparentDrawable, ok := ldraw.DrawableType.(*DrawableParent); ok {
 							// Make a new texture for rendering the items to
 							lparentDrawable.Texture = rl.LoadRenderTexture(int(lmov.Bounds.Width), int(lmov.Bounds.Height))
@@ -203,6 +214,8 @@ func NewUIFileSystem() *UIFileSystem {
 	return s
 }
 
+// Draw draws everything from the file to the screen
+// TODO move all of this to system_render
 func (s *UIFileSystem) Draw() {
 	layer := CurrentFile.GetCurrentLayer()
 
@@ -306,43 +319,6 @@ func (s *UIFileSystem) Draw() {
 	}
 
 	rl.EndMode2D()
-
-	// Debug text
-	if ShowDebug {
-		incr := 20
-		start := 80 - incr
-		incrY := func() int {
-			start += 20
-			return start
-		}
-
-		rl.DrawText(fmt.Sprintf("UIHasControl: %v", UIHasControl), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("FileHasControl: %v", FileHasControl), 0, incrY(), 20, rl.White)
-
-		rl.DrawText(fmt.Sprintf("CanvasWidthResizePreview: %v", CurrentFile.CanvasWidthResizePreview), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("CanvasHeightResizePreview: %v", CurrentFile.CanvasHeightResizePreview), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("TileWidthResizePreview: %v", CurrentFile.TileWidthResizePreview), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("TileHeightResizePreview: %v", CurrentFile.TileHeightResizePreview), 0, incrY(), 20, rl.White)
-
-		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInput: %v", UIInteractableCapturedInput), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInputLast: %v", UIInteractableCapturedInputLast), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("Left Color: %d", CurrentFile.LeftColor), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("Selection Len: %d", len(CurrentFile.Selection)), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("DoingSelection: %t", CurrentFile.DoingSelection), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("SelectionMoving: %t", CurrentFile.SelectionMoving), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("SelectionResizing: %t", CurrentFile.SelectionResizing), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("IsSelectionPasted: %t", CurrentFile.IsSelectionPasted), 0, incrY(), 20, rl.White)
-		// for y, history := range CurrentFile.History {
-		// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
-		// 		history.LayerIndex,
-		// 		len(history.PixelState))
-		// 	rl.DrawText(str, 20, 20*y+260, 20, rl.White)
-		// }
-	}
 }
 
 func recursiveResize(entity *Entity) {
@@ -434,9 +410,12 @@ func (s *UIFileSystem) Update(dt float32) {
 	s.cursor = rl.GetScreenToWorld2D(rl.GetMousePosition(), s.Camera)
 	s.cursor = s.cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 
+	PreviewUIDrawTile(int(s.cursor.X), int(s.cursor.Y))
+
 	FileHasControl = false
 	if !UIHasControl {
 		if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+
 			FileHasControl = true
 			// Fires once
 			if CurrentFile.HasDoneMouseUpLeft {

@@ -17,7 +17,6 @@ Layers
     //- Hide/show
 
 Menubar
-  # Lets do this today!
   Palettes
     - Maybe show the palette name in the menu item?
     - Save palette
@@ -26,10 +25,11 @@ Menubar
     - Create palette from colors in image
 
 Tools
+  Shade Brush
+
   Pixel Brush
     //- Hold button to draw line
  
-  # Lets do this today!
   Selector
     - Draw in selection/mask
     - Rotate
@@ -43,9 +43,9 @@ Tools
 
 Features
   Animation Tab
-    - Create animation button
-    - List (like layers)
-      - When clicked, allow tiles to be selected
+    //- Create animation button
+    //- List (like layers)
+      //- When clicked, allow tiles to be selected
     - Export
       - Name
       - Frames

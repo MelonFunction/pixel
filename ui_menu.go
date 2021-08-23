@@ -13,47 +13,66 @@ var (
 	menuContexts *Entity
 )
 
+// NewMenuUI returns a new entity
 func NewMenuUI(bounds rl.Rectangle) *Entity {
-	menuButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 	var saveButton, exportButton, openButton, resizeButton, fileButton *Entity
 	hoveredButtons := make([]*Entity, 0, 4)
 
-	fo := rl.MeasureTextEx(*Font, "resize", UIFontSize, 1)
+	measured := rl.MeasureTextEx(*Font, "resize", UIFontSize, 1)
+
 	saveButton = NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"save", false, func(entity *Entity, button rl.MouseButton) {
 			UISave()
 		}, nil)
 	saveButton.Hide()
 
 	exportButton = NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"export", false, func(entity *Entity, button rl.MouseButton) {
 			UIExport()
 		}, nil)
 	exportButton.Hide()
 
 	openButton = NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"open", false, func(entity *Entity, button rl.MouseButton) {
 			UIOpen()
 		}, nil)
 	openButton.Hide()
 
 	resizeButton = NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"resize", false, func(entity *Entity, button rl.MouseButton) {
 			ResizeUIShowDialog()
 		}, nil)
 	resizeButton.Hide()
 
 	// "Parent" button
-	fo = rl.MeasureTextEx(*Font, "file", UIFontSize, 1)
+	measured = rl.MeasureTextEx(*Font, "file", UIFontSize, 1)
+
 	fileButton = NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(100, 100, measured.X+10, UIFontSize*2),
 		"file", false, func(entity *Entity, button rl.MouseButton) {
 		}, nil)
-	menuButtons.PushChild(fileButton)
+	menuButtons = NewBox(bounds, []*Entity{
+		fileButton,
+	}, FlowDirectionHorizontal)
+
+	menuButtons.FlowChildren()
+
+	// Added to scene on first hover
+	bounds.Y += UIFontSize * 2
+	bounds.Height = float32(rl.GetScreenHeight())
+	menuContexts = NewBox(bounds, []*Entity{
+		saveButton,
+		exportButton,
+		openButton,
+		resizeButton,
+	}, FlowDirectionVertical)
+
+	menuContexts.FlowChildren()
+	menuContexts.Hide()
 
 	for _, button := range []*Entity{saveButton, exportButton, openButton, resizeButton, fileButton} {
 		if hoverable, ok := button.GetHoverable(); ok {
@@ -73,6 +92,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 					exportButton.Show()
 					openButton.Show()
 					resizeButton.Show()
+					menuContexts.Show()
 					menuContexts.Scene.MoveEntityToEnd(menuContexts)
 				}
 			}
@@ -91,23 +111,12 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 						exportButton.Hide()
 						openButton.Hide()
 						resizeButton.Hide()
+						menuContexts.Hide()
 					}
 				}()
 			}
 		}
 	}
 
-	// Added to scene on first hover
-	bounds.Y += UIFontSize * 2
-	bounds.Height = float32(rl.GetScreenHeight())
-	menuContexts = NewBox(bounds, []*Entity{
-		saveButton,
-		exportButton,
-		openButton,
-		resizeButton,
-	}, FlowDirectionVertical)
-	menuContexts.FlowChildren()
-
-	menuButtons.FlowChildren()
 	return menuButtons
 }

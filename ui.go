@@ -646,7 +646,7 @@ func (e *Entity) FlowChildren() {
 func NewBlock(
 	bounds rl.Rectangle,
 ) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{})
 	e.Name = "Block"
@@ -659,7 +659,7 @@ func NewRenderTexture(
 	onMouseUp func(entity *Entity, button rl.MouseButton),
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
@@ -681,7 +681,7 @@ func NewButtonTexture(
 	onMouseUp func(entity *Entity, button rl.MouseButton),
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
@@ -702,7 +702,7 @@ func NewButtonText(bounds rl.Rectangle,
 	onMouseUp func(entity *Entity, button rl.MouseButton),
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 ) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
@@ -725,7 +725,7 @@ func NewInput(
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
 	onKeyPress func(entity *Entity, key rl.Key),
 ) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
@@ -751,7 +751,7 @@ func prepareChildren(entity *Entity, children []*Entity) {
 
 // NewBox creates a box which can store children
 func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
@@ -772,7 +772,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 // NewScrollableList creates a box, but it can scroll. Reversed is if the items
 // order should be reversed
 func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *Entity {
-	e := scene.NewEntity(nil).
+	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).

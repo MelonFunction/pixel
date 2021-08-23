@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -93,6 +95,9 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		}
 	}
 
+	// debug bounds
+	// drawBorder(hoverable, moveable)
+
 	switch t := drawable.DrawableType.(type) {
 	case *DrawableParent:
 		if drawable.DrawBackground {
@@ -113,11 +118,12 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		rl.BeginTextureMode(t.Texture)
 		rl.ClearBackground(rl.Transparent)
 
-		// Offset all children the parent's position
+		// Offset all children by the parent's position
 		s.camera.Target.X = moveable.Bounds.X
 		s.camera.Target.Y = moveable.Bounds.Y
 		childOffset := rl.Vector2{}
 		if scrollable != nil {
+			// TODO alter child offset positions here?
 			switch scrollable.ScrollDirection {
 			case ScrollDirectionVertical:
 				s.camera.Target.Y -= float32(scrollable.ScrollOffset) * 16
@@ -184,8 +190,48 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	}
 }
 
+func (s *UIRenderSystem) Update(dt float32) {}
+
 func (s *UIRenderSystem) Draw() {
-	for _, result := range s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"]) {
+	results := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"])
+	for _, result := range results {
 		s.draw(result, false, rl.Vector2{})
+	}
+
+	// Debug text
+	if ShowDebug {
+		incr := 20
+		start := 80 - incr
+		incrY := func() int {
+			start += 20
+			return start
+		}
+
+		rl.DrawText(fmt.Sprintf("UIHasControl: %v", UIHasControl), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("FileHasControl: %v", FileHasControl), 0, incrY(), 20, rl.White)
+
+		rl.DrawText(fmt.Sprintf("CanvasWidthResizePreview: %v", CurrentFile.CanvasWidthResizePreview), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("CanvasHeightResizePreview: %v", CurrentFile.CanvasHeightResizePreview), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("TileWidthResizePreview: %v", CurrentFile.TileWidthResizePreview), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("TileHeightResizePreview: %v", CurrentFile.TileHeightResizePreview), 0, incrY(), 20, rl.White)
+
+		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInput: %v", UIInteractableCapturedInput), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("UIInteractableCapturedInputLast: %v", UIInteractableCapturedInputLast), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("UIEntityCapturedInput: %v", UIEntityCapturedInput), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Colors: Left: %d, Right: %d", CurrentFile.LeftColor, CurrentFile.RightColor), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Selection Len: %d", len(CurrentFile.Selection)), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("DoingSelection: %t", CurrentFile.DoingSelection), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("SelectionMoving: %t", CurrentFile.SelectionMoving), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("SelectionResizing: %t", CurrentFile.SelectionResizing), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("IsSelectionPasted: %t", CurrentFile.IsSelectionPasted), 0, incrY(), 20, rl.White)
+		// for y, history := range CurrentFile.History {
+		// 	str := fmt.Sprintf("Layer: %d, Diff: %d",
+		// 		history.LayerIndex,
+		// 		len(history.PixelState))
+		// 	rl.DrawText(str, 20, 20*y+260, 20, rl.White)
+		// }
 	}
 }

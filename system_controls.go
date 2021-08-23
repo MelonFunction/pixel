@@ -546,22 +546,16 @@ func (s *UIControlSystem) Update(dt float32) {
 		return
 	}
 
-	res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["scrollable"], s.Scene.Tags["interactable"])
-	// Reverse order so that entities that are on top can get input and return
-	// TODO check if this actually matters or does anything
-	for i := len(res)/2 - 1; i >= 0; i-- {
-		opp := len(res) - 1 - i
-		res[i], res[opp] = res[opp], res[i]
-	}
+	res := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"])
 
 	var entity *Entity
 	UIHasControl = false
 
-	// entity = UIEntityCapturedInput
+	// Reverse order so that entities that are on top can get input and return
 	// the entity which would be returned from process()
 	var newEntity *Entity
-	for _, result := range res {
-		newEntity = s.process(result, false)
+	for i := len(res) - 1; i > 0; i-- {
+		newEntity = s.process(res[i], false)
 		if newEntity != nil {
 			break
 		}

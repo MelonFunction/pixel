@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -14,12 +12,14 @@ type SpriteSelectorTool struct {
 	lastPos   IntVec2 // the last tile selected
 
 	firstSprite, lastSprite int // sprite sheet position of the selected sprites
+	onMouseUp               func(firstSprite, lastSprite int)
 }
 
 // NewSpriteSelectorTool returns the fill tool. Requires a name.
-func NewSpriteSelectorTool(name string) *SpriteSelectorTool {
+func NewSpriteSelectorTool(name string, onMouseUp func(firstSprite, lastSprite int)) *SpriteSelectorTool {
 	return &SpriteSelectorTool{
-		name: name,
+		name:      name,
+		onMouseUp: onMouseUp,
 	}
 }
 
@@ -38,7 +38,6 @@ func (t *SpriteSelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 	t.lastPos = tilePos
 	t.lastSprite = sheetPos
-	log.Println(t.firstSprite, t.lastSprite)
 
 	// Don't let the lastPos be in front of the firstPos
 	if t.firstPos.Y > t.lastPos.Y || (t.firstPos.Y >= t.lastPos.Y && t.firstPos.X > t.lastPos.X) {
@@ -52,6 +51,8 @@ func (t *SpriteSelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	case rl.MouseLeftButton:
 	case rl.MouseRightButton:
 	}
+
+	t.onMouseUp(t.firstSprite, t.lastSprite)
 
 	t.firstDown = false
 

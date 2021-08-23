@@ -26,6 +26,7 @@ func main() {
 	rl.SetTraceLogLevel(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(1920*0.75, 1080*0.75, "Pixel")
+	rl.SetWindowPosition(1100, 500)
 	rl.SetTargetFPS(60)
 	rl.SetExitKey(0)
 
