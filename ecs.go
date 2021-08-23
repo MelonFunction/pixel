@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"sync/atomic"
 )
@@ -79,7 +78,6 @@ func (t Tag) matches(comp Tag) bool {
 
 // BuildTag generates the tag and stores it in cache
 func (s *Scene) BuildTag(name string, components ...interface{}) Tag {
-
 	t := Tag{
 		name: name,
 	}
@@ -138,6 +136,8 @@ func (s *Scene) NewComponent(name string) *Component {
 }
 
 // NewEntity creates and returns an Entity.
+// It's better to instantiate a lot of entities at the same time so that the
+// cache isn't rebuilt every time!
 // If the ID is non-zero, it will use that instead of the automatic one.
 // If the ID is provided and it already exists, it will be removed and
 // replaced
@@ -219,6 +219,8 @@ func (c *Component) SetDestructor(d func(e *Entity, data interface{})) {
 }
 
 // AddComponent adds a component to an entity, it returns itself for chaining
+// It's better to instantiate a lot of entities at the same time so that the
+// cache isn't rebuilt every time!
 // A Component and a struct related to the data being stored should be created,
 // ```
 //
@@ -233,17 +235,10 @@ func (c *Component) SetDestructor(d func(e *Entity, data interface{})) {
 // ````
 func (e *Entity) AddComponent(c *Component, data interface{}) *Entity {
 	c.Lock()
+	e.Scene.destroyCache()
 	defer c.Unlock()
 	c.entities[e.ID] = data
 	e.Tag.flags |= c.tag.flags
-
-	// Remove cache entries which use this tag
-	for tag := range e.Scene.cache {
-		if tag&c.tag.flags == c.tag.flags {
-			log.Println("deleted cache entry", tag)
-			delete(e.Scene.cache, tag)
-		}
-	}
 
 	return e
 }
@@ -262,10 +257,12 @@ func (e *Entity) RemoveComponent(c *Component) *Entity {
 		}
 		c.RUnlock()
 	}
+
 	c.Lock()
+	e.Scene.destroyCache()
+	defer c.Unlock()
 	delete(c.entities, e.ID)
 	e.Tag.flags ^= c.tag.flags
-	c.Unlock()
 	return e
 }
 
@@ -339,7 +336,7 @@ func (s *Scene) QueryTag(tags ...Tag) []*QueryResult {
 	}
 
 	// Update cache
-	log.Println("Not found, adding: ", queryTag, tags)
+	// log.Println("Not found, adding: ", queryTag, tags)
 	s.cache[queryTag] = ret
 
 	return ret
@@ -373,6 +370,7 @@ func (s *Scene) QueryID(id uint32) (*QueryResult, error) {
 // MoveEntityToEnd removes and reappends the entity
 func (s *Scene) MoveEntityToEnd(entity *Entity) error {
 	s.Lock()
+	s.destroyCache()
 	defer s.Unlock()
 
 	found := false
@@ -391,4 +389,11 @@ func (s *Scene) MoveEntityToEnd(entity *Entity) error {
 	}
 
 	return nil
+}
+
+// destroyCache destroys the cache. Call this after s.Lock()
+func (s *Scene) destroyCache() {
+	for key := range s.cache {
+		delete(s.cache, key)
+	}
 }
