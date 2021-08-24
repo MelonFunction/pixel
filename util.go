@@ -129,6 +129,7 @@ func HexToColor(color string) (rl.Color, error) {
 var f embed.FS
 
 // SetupFiles creates temp files from the embedded files in ./res
+// It overwrites existing files
 func SetupFiles() error {
 	ex, err := os.UserCacheDir()
 	if err != nil {
@@ -144,11 +145,9 @@ func SetupFiles() error {
 			savePath := path.Join(savePath, p)
 			nestedPath := filepath.Dir(savePath)
 
-			if _, err := os.Stat(savePath); os.IsNotExist(err) {
-				log.Println("Creating cache file: ", savePath)
-				os.MkdirAll(nestedPath, 0700)
-				os.WriteFile(savePath, data, 0666)
-			}
+			log.Println("Creating cache file: ", savePath)
+			os.MkdirAll(nestedPath, 0700)
+			os.WriteFile(savePath, data, 0666)
 		}
 
 		return err

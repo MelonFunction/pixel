@@ -31,6 +31,7 @@ Tools
     //- Hold button to draw line
  
   Selector
+    - CTRL+A should select everything (and switch tool to selector)
     - Draw in selection/mask
     - Rotate
     //- Copy
