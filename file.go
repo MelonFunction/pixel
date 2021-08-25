@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -137,7 +136,7 @@ type LayerSer struct {
 type Animation struct {
 	Name                 string
 	FrameStart, FrameEnd int
-	Timing               time.Duration // time between frames
+	Timing               float32 // time between frames
 }
 
 // File contains all the methods and data required to alter a file
@@ -468,14 +467,41 @@ func (f *File) SetCurrentAnimation(index int) {
 	f.CurrentAnimation = index
 }
 
+// GetCurrentAnimation sets the current animation
+func (f *File) GetCurrentAnimation() *Animation {
+	if len(f.Animations) == 0 {
+		return nil
+	}
+	return f.Animations[f.CurrentAnimation]
+}
+
 // AddNewAnimation adds a new animation
 func (f *File) AddNewAnimation() {
 	f.Animations = append(f.Animations, &Animation{
-		Name:       "New Animation",
+		Name:       fmt.Sprintf("Anim %d", len(f.Animations)),
 		FrameStart: 0,
 		FrameEnd:   0,
-		Timing:     time.Second / 10,
+		Timing:     1.0 / 2.0, // 10 fps
 	})
+}
+
+// SetCurrentAnimationFrames sets the current animation's frames
+func (f *File) SetCurrentAnimationFrames(firstSprite, lastSprite int) {
+	anim := f.GetCurrentAnimation()
+	anim.FrameStart = firstSprite
+	anim.FrameEnd = lastSprite
+}
+
+// SetCurrentAnimationTiming sets the current animation's timing
+func (f *File) SetCurrentAnimationTiming(timing float32) {
+	anim := f.GetCurrentAnimation()
+	anim.Timing = timing
+}
+
+// SetCurrentAnimationName sets the current animation's name
+func (f *File) SetCurrentAnimationName(name string) {
+	anim := f.GetCurrentAnimation()
+	anim.Name = name
 }
 
 // SetCurrentLayer sets the current layer

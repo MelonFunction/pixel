@@ -145,7 +145,6 @@ func SetupFiles() error {
 			savePath := path.Join(savePath, p)
 			nestedPath := filepath.Dir(savePath)
 
-			log.Println("Creating cache file: ", savePath)
 			os.MkdirAll(nestedPath, 0700)
 			os.WriteFile(savePath, data, 0666)
 		}

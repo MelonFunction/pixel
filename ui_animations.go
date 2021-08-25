@@ -61,6 +61,8 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 			lastTool := CurrentFile.LeftTool
 			CurrentFile.LeftTool = NewSpriteSelectorTool("Sprite Selector L", func(firstSprite, lastSprite int) {
 				CurrentFile.LeftTool = lastTool
+
+				CurrentFile.SetCurrentAnimationFrames(firstSprite, lastSprite)
 			})
 
 			// if err := CurrentFile.DeleteAnimation(y); err == nil {
@@ -89,6 +91,8 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), animation.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
+			anim := CurrentFile.GetCurrentAnimation()
+			previewAnimationFrame = anim.FrameStart
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			if entity == nil {
@@ -109,6 +113,8 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 			// key pressed
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					// TODO this could probably be added to util since the same
+					// code exists in multiple places
 					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
 						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 					} else if len(drawableText.Label) < 12 {
@@ -123,7 +129,7 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 							drawableText.Label += string(rune(key))
 						}
 					}
-					CurrentFile.Animations[y].Name = drawableText.Label
+					CurrentFile.SetCurrentAnimationName(drawableText.Label)
 				}
 			}
 
@@ -165,8 +171,7 @@ func NewAnimationsUI(bounds rl.Rectangle) *Entity {
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			CurrentFile.AddNewAnimation()
-			animationsList.PushChild(AnimationsUIMakeBox(0, CurrentFile.Animations[0]))
-			animationsList.FlowChildren()
+			AnimationsUIRebuildList()
 		}, nil)
 
 	animationsListContainer = NewBox(bounds, []*Entity{

@@ -4,9 +4,13 @@ Refactor
     
 UI
   - Resize element
+  - Double click to change text in label, single click to activate it
 
 System
   - Serialize state data into file (like .ase etc)
+
+Testing
+  - lol
   
 Layers
   Actions
@@ -53,6 +57,9 @@ Features
       - Delays
   
   Tiles Tab
+    actually, maybe the current spritesheet could just be extended and used like
+    how the workflow would be in asesprite. maybe a tile/selection stamping tool
+    could be made
     - Tiles from the tilemap can be placed in a grid
     - Each tile placed will map to a location on the spritesheet
     - Export
