@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"strconv"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -21,6 +25,7 @@ var (
 	previewCurrentTileButton      *Entity
 	previewCurrentAnimationButton *Entity
 	previewCurrentPixelButton     *Entity
+	previewCurrentAnimationTiming *Entity // input which displays the current animation's timing
 )
 
 type previewMode int
@@ -33,8 +38,19 @@ const (
 	previewCurrentAnimation                    // shows the current animation
 )
 
+// PreviewUISetTiming sets the timing in the preview input
+func PreviewUISetTiming(timing float32) {
+	if drawable, ok := previewCurrentAnimationTiming.GetDrawable(); ok {
+		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+			drawableText.Label = fmt.Sprintf("%00.f", timing)
+			CurrentFile.SetCurrentAnimationTiming(timing)
+		}
+	}
+}
+
 // PreviewUIDrawTile draws the tile in the preview
 func PreviewUIDrawTile(x, y int) {
+	// TODO squish data from all layers
 	drawable, ok := previewArea.GetDrawable()
 	if ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
@@ -44,39 +60,17 @@ func PreviewUIDrawTile(x, y int) {
 
 			switch currentPreviewMode {
 			case previewCurrentSheet:
-				rl.DrawTexturePro(
-					CurrentFile.GetCurrentLayer().Canvas.Texture,
-					// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
-					rl.NewRectangle(
-						0,
-						0,
-						float32(CurrentFile.CanvasWidth),
-						-float32(CurrentFile.CanvasHeight)),
-					rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
-					rl.NewVector2(0, 0),
-					0,
-					rl.White,
-				)
-
-			case previewCurrentTile:
-				clampedPos := GetClampedCoordinates(x, y)
-				tilePos := GetTilePosition(clampedPos.X, clampedPos.Y)
-
-				for x := 0; x < 3; x++ {
-					for y := 0; y < 3; y++ {
+				for _, layer := range CurrentFile.Layers {
+					if !layer.Hidden {
 						rl.DrawTexturePro(
-							CurrentFile.GetCurrentLayer().Canvas.Texture,
+							layer.Canvas.Texture,
 							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
 							rl.NewRectangle(
-								float32(tilePos.X),
-								-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
-								float32(CurrentFile.TileWidth),
-								-float32(CurrentFile.TileHeight)),
-							rl.NewRectangle(
-								float32(renderTexture.Texture.Texture.Width)/3*float32(x),
-								float32(renderTexture.Texture.Texture.Height)/3*float32(y),
-								float32(renderTexture.Texture.Texture.Width)/3,
-								float32(renderTexture.Texture.Texture.Height)/3),
+								0,
+								0,
+								float32(CurrentFile.CanvasWidth),
+								-float32(CurrentFile.CanvasHeight)),
+							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
 							rl.NewVector2(0, 0),
 							0,
 							rl.White,
@@ -84,22 +78,63 @@ func PreviewUIDrawTile(x, y int) {
 					}
 				}
 
+			case previewCurrentTile:
+				// TODO button to select and lock the tile being previewed
+				clampedPos := GetClampedCoordinates(x, y)
+				tilePos := GetTilePosition(clampedPos.X, clampedPos.Y)
+
+				for x := 0; x < 3; x++ {
+					for y := 0; y < 3; y++ {
+						for i, layer := range CurrentFile.Layers {
+							if i == len(CurrentFile.Layers)-1 {
+								continue
+							}
+							if !layer.Hidden {
+								rl.DrawTexturePro(
+									layer.Canvas.Texture,
+									// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
+									rl.NewRectangle(
+										float32(tilePos.X),
+										-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
+										float32(CurrentFile.TileWidth),
+										-float32(CurrentFile.TileHeight)),
+									rl.NewRectangle(
+										float32(renderTexture.Texture.Texture.Width)/3*float32(x),
+										float32(renderTexture.Texture.Texture.Height)/3*float32(y),
+										float32(renderTexture.Texture.Texture.Width)/3,
+										float32(renderTexture.Texture.Texture.Height)/3),
+									rl.NewVector2(0, 0),
+									0,
+									rl.White,
+								)
+							}
+						}
+					}
+				}
+
 			case previewCurrentPixel:
 				clampedPos := GetClampedCoordinates(x, y)
 
-				rl.DrawTexturePro(
-					CurrentFile.GetCurrentLayer().Canvas.Texture,
-					// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
-					rl.NewRectangle(
-						float32(clampedPos.X)-float32(CurrentFile.TileWidth)/2,
-						-float32(clampedPos.Y)-float32(CurrentFile.TileHeight)/2,
-						float32(CurrentFile.TileWidth),
-						-float32(CurrentFile.TileHeight)),
-					rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
-					rl.NewVector2(0, 0),
-					0,
-					rl.White,
-				)
+				for i, layer := range CurrentFile.Layers {
+					if i == len(CurrentFile.Layers)-1 {
+						continue
+					}
+					if !layer.Hidden {
+						rl.DrawTexturePro(
+							layer.Canvas.Texture,
+							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
+							rl.NewRectangle(
+								float32(clampedPos.X)-float32(CurrentFile.TileWidth)/2,
+								-float32(clampedPos.Y)-float32(CurrentFile.TileHeight)/2,
+								float32(CurrentFile.TileWidth),
+								-float32(CurrentFile.TileHeight)),
+							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+							rl.NewVector2(0, 0),
+							0,
+							rl.White,
+						)
+					}
+				}
 
 				// Draw 2 rectangles so that the pixel is always highlighted
 				// regardless of the color
@@ -130,7 +165,7 @@ func PreviewUIDrawTile(x, y int) {
 					previewAnimationTimer += rl.GetFrameTime()
 				}
 				if anim != nil {
-					if previewAnimationTimer > anim.Timing {
+					if previewAnimationTimer > 1.0/anim.Timing {
 						// Get next frame
 						previewAnimationTimer = 0
 						previewAnimationFrame++
@@ -145,19 +180,26 @@ func PreviewUIDrawTile(x, y int) {
 					Y: ((previewAnimationFrame * CurrentFile.TileHeight) / (CurrentFile.CanvasWidth)) * CurrentFile.TileHeight,
 				}
 
-				rl.DrawTexturePro(
-					CurrentFile.GetCurrentLayer().Canvas.Texture,
-					// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
-					rl.NewRectangle(
-						float32(tilePos.X),
-						-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
-						float32(CurrentFile.TileWidth),
-						-float32(CurrentFile.TileHeight)),
-					rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
-					rl.NewVector2(0, 0),
-					0,
-					rl.White,
-				)
+				for i, layer := range CurrentFile.Layers {
+					if i == len(CurrentFile.Layers)-1 {
+						continue
+					}
+					if !layer.Hidden {
+						rl.DrawTexturePro(
+							layer.Canvas.Texture,
+							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
+							rl.NewRectangle(
+								float32(tilePos.X),
+								-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
+								float32(CurrentFile.TileWidth),
+								-float32(CurrentFile.TileHeight)),
+							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+							rl.NewVector2(0, 0),
+							0,
+							rl.White,
+						)
+					}
+				}
 
 			}
 
@@ -240,6 +282,59 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 
 		}, nil)
 
+	previewCurrentAnimationTiming = NewInput(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight/2), "10", false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+
+		},
+		nil,
+		func(entity *Entity, key rl.Key) {
+			// key pressed
+			if drawable, ok := entity.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					// TODO this could probably be added to util since the same
+					// code exists in multiple places
+					if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
+						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
+					} else if len(drawableText.Label) < 12 {
+						switch {
+						// 0 to 9
+						case key >= 48 && key <= 57:
+							fallthrough
+						// a to z
+						case key >= 97 && key <= 97+26:
+							fallthrough
+						case key >= rl.KeyA && key <= rl.KeyZ:
+							drawableText.Label += string(rune(key))
+						}
+
+						fl, err := strconv.ParseFloat(drawableText.Label, 32)
+						if err != nil {
+							log.Println(err)
+						}
+						drawableText.Label = fmt.Sprintf("%00.f", fl)
+						CurrentFile.SetCurrentAnimationTiming(float32(fl))
+					}
+				}
+			}
+
+		})
+	if interactable, ok := previewCurrentAnimationTiming.GetInteractable(); ok {
+		interactable.OnScroll = func(direction int) {
+			if drawable, ok := previewCurrentAnimationTiming.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					fl, err := strconv.ParseFloat(drawableText.Label, 32)
+					if err != nil {
+						log.Println(err)
+					}
+					fl += float64(direction)
+					drawableText.Label = fmt.Sprintf("%00.f", fl)
+					CurrentFile.SetCurrentAnimationTiming(float32(fl))
+				}
+			}
+		}
+	}
+
 	// Animation controls
 	previewAnimationButtonsContainer = NewBox(
 		rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight),
@@ -270,6 +365,8 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 						previewAnimationFrame = anim.FrameStart
 					}
 				}, nil),
+
+			previewCurrentAnimationTiming,
 		},
 		FlowDirectionHorizontal)
 	previewAnimationButtonsContainer.Hide()
