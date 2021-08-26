@@ -217,14 +217,23 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		}
 
 		// Scroll logic
+		scrollAmount := rl.GetMouseWheelMove()
 		if scrollable != nil {
-			scrollAmount := rl.GetMouseWheelMove()
 			if scrollAmount != 0 {
 				UIHasControl = true
 				scrollable.ScrollOffset += scrollAmount
 				if scrollable.ScrollOffset < 0 {
 					scrollable.ScrollOffset = 0
 				}
+
+				return entity
+			}
+		}
+
+		// Scroll event
+		if interactable != nil {
+			if interactable.OnScroll != nil && scrollAmount != 0 {
+				interactable.OnScroll(scrollAmount)
 				return entity
 			}
 		}
@@ -237,7 +246,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 				// Mouse events are handled by the caller function (Update)
 				if interactable.OnMouseDown != nil || interactable.OnMouseUp != nil {
 					interactable.ButtonDown = button
-					// SetCapturedInput(entity, interactable)
+					SetCapturedInput(entity, interactable)
 					return entity
 				}
 			}
@@ -632,6 +641,16 @@ func (s *UIControlSystem) Update(dt float32) {
 
 		if entity != UIEntityCapturedInput && button != MouseButtonNone {
 			RemoveCapturedInput()
+		}
+
+		// Mouse up event on entities capturing input
+		// TODO There is probably a cleaner way of handling this
+		if button == MouseButtonNone && UIInteractableCapturedInput.ButtonReleased == false {
+			UIInteractableCapturedInput.ButtonReleased = true
+			if UIInteractableCapturedInput.OnMouseUp != nil {
+				UIInteractableCapturedInput.OnMouseUp(UIEntityCapturedInput, UIInteractableCapturedInput.ButtonDown)
+			}
+			UIIsDraggingEntity = false
 		}
 	} else if (UIEntityCapturedInput != nil || UIIsDraggingEntity) && button == MouseButtonNone {
 		// Handle mouse up event
