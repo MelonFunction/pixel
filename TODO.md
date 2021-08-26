@@ -8,6 +8,8 @@ UI
 
 System
   - Serialize state data into file (like .ase etc)
+    //- Animations
+    //- Layers
 
 Testing
   - lol

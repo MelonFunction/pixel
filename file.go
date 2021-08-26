@@ -123,13 +123,23 @@ func (f *File) ClearBackground(color rl.Color) {
 type FileSer struct {
 	DrawGrid bool
 
-	Layers []*LayerSer
+	Layers     []*LayerSer
+	Animations []*AnimationSer
 }
+
+// LayerSer contains only the fields that need to be serialized
 type LayerSer struct {
 	Hidden        bool
 	Name          string
 	PixelData     map[IntVec2]rl.Color
 	Width, Height int
+}
+
+// AnimationSer contains only the fields that need to be serialized
+type AnimationSer struct {
+	Name                 string
+	FrameStart, FrameEnd int
+	Timing               float32
 }
 
 // Animation contains data about an animation
@@ -215,7 +225,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		Animations: make([]*Animation, 0),
 
 		History:           make([]interface{}, 0, 50),
-		HistoryMaxActions: 50, // TODO get from config
+		HistoryMaxActions: 500, // TODO get from config
 		deletedLayers:     make([]*Layer, 0, 10),
 
 		LeftColor:  rl.Red,
@@ -459,6 +469,14 @@ func (f *File) MoveSelection(dx, dy int) {
 
 // DeleteAnimation deletes an animation
 func (f *File) DeleteAnimation(index int) error {
+	if index-1 >= len(f.Animations) {
+		return fmt.Errorf("Animation not in range")
+	}
+
+	f.Animations = append(f.Animations[:index], f.Animations[index+1:]...)
+	// set animation to last
+	f.CurrentAnimation = len(f.Animations) - 1
+
 	return nil
 }
 
@@ -467,12 +485,20 @@ func (f *File) SetCurrentAnimation(index int) {
 	f.CurrentAnimation = index
 }
 
-// GetCurrentAnimation sets the current animation
+// GetCurrentAnimation gets the current animation
 func (f *File) GetCurrentAnimation() *Animation {
 	if len(f.Animations) == 0 {
 		return nil
 	}
 	return f.Animations[f.CurrentAnimation]
+}
+
+// GetAnimation gets the animation at the specified index
+func (f *File) GetAnimation(index int) (*Animation, error) {
+	if index-1 >= len(f.Animations) {
+		return nil, fmt.Errorf("Animation not in range")
+	}
+	return f.Animations[index], nil
 }
 
 // AddNewAnimation adds a new animation
@@ -481,26 +507,35 @@ func (f *File) AddNewAnimation() {
 		Name:       fmt.Sprintf("Anim %d", len(f.Animations)),
 		FrameStart: 0,
 		FrameEnd:   0,
-		Timing:     1.0 / 2.0, // 10 fps
+		Timing:     5.0, // 5 fps
 	})
 }
 
-// SetCurrentAnimationFrames sets the current animation's frames
-func (f *File) SetCurrentAnimationFrames(firstSprite, lastSprite int) {
-	anim := f.GetCurrentAnimation()
+// SetAnimationFrames sets the current animation's frames
+func (f *File) SetAnimationFrames(index, firstSprite, lastSprite int) {
+	anim, err := f.GetAnimation(index)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	anim.FrameStart = firstSprite
 	anim.FrameEnd = lastSprite
 }
 
 // SetCurrentAnimationTiming sets the current animation's timing
+// The argument is the frames per second
 func (f *File) SetCurrentAnimationTiming(timing float32) {
 	anim := f.GetCurrentAnimation()
 	anim.Timing = timing
 }
 
-// SetCurrentAnimationName sets the current animation's name
-func (f *File) SetCurrentAnimationName(name string) {
-	anim := f.GetCurrentAnimation()
+// SetAnimationName sets the current animation's name
+func (f *File) SetAnimationName(index int, name string) {
+	anim, err := f.GetAnimation(index)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	anim.Name = name
 }
 
@@ -518,7 +553,6 @@ func (f *File) GetCurrentLayer() *Layer {
 // Won't delete anything if only one visible layer exists
 // Sets the current layer to the top-most layer
 func (f *File) DeleteLayer(index int, appendHistory bool) error {
-	// TODO history
 	if len(f.Layers) > 2 {
 		f.deletedLayers = append(f.deletedLayers, f.Layers[index])
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -557,12 +591,15 @@ func (f *File) AddNewLayer() {
 }
 
 // MoveLayerUp moves the layer up
-func (f *File) MoveLayerUp(index int) error {
+func (f *File) MoveLayerUp(index int, appendHistory bool) error {
 	if index < len(f.Layers)-2 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
 		f.Layers = append(f.Layers[:index], append([]*Layer{f.Layers[index], toMove}, f.Layers[index+1:]...)...)
 
+		if appendHistory {
+			f.AppendHistory(HistoryLayer{HistoryLayerActionMoveUp, index})
+		}
 		return nil
 	}
 
@@ -570,9 +607,8 @@ func (f *File) MoveLayerUp(index int) error {
 }
 
 // MoveLayerDown moves the layer down
-func (f *File) MoveLayerDown(index int) error {
+func (f *File) MoveLayerDown(index int, appendHistory bool) error {
 	// TODO history
-	log.Println(index)
 	if index > 0 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -582,6 +618,9 @@ func (f *File) MoveLayerDown(index int) error {
 			f.Layers = append(f.Layers[:index-1], append([]*Layer{toMove}, f.Layers[index-1:]...)...)
 		}
 
+		if appendHistory {
+			f.AppendHistory(HistoryLayer{HistoryLayerActionMoveDown, index})
+		}
 		return nil
 	}
 
@@ -776,8 +815,9 @@ func (f *File) Undo() {
 			case HistoryLayerActionCreate:
 				f.DeleteLayer(typed.LayerIndex, false)
 			case HistoryLayerActionMoveUp:
-				// TODO
+				f.MoveLayerUp(typed.LayerIndex, false)
 			case HistoryLayerActionMoveDown:
+				f.MoveLayerDown(typed.LayerIndex, false)
 			}
 		case HistoryResize:
 			f.CanvasWidthResizePreview = typed.PrevWidth
@@ -832,7 +872,9 @@ func (f *File) Redo() {
 			case HistoryLayerActionCreate:
 				f.RestoreLayer(typed.LayerIndex)
 			case HistoryLayerActionMoveUp:
+				f.MoveLayerUp(typed.LayerIndex, false)
 			case HistoryLayerActionMoveDown:
+				f.MoveLayerDown(typed.LayerIndex, false)
 			}
 		case HistoryResize:
 			f.CanvasWidthResizePreview = typed.CurrentWidth
@@ -871,15 +913,15 @@ func (f *File) Save(path string) {
 		log.Fatal(err)
 	}
 
-	log.Println("saving file", path)
 	enc := gob.NewEncoder(file)
 
 	gob.Register(rl.Color{})
 	gob.Register(IntVec2{})
 
 	fSer := &FileSer{
-		DrawGrid: f.DrawGrid,
-		Layers:   make([]*LayerSer, len(f.Layers)),
+		DrawGrid:   f.DrawGrid,
+		Layers:     make([]*LayerSer, len(f.Layers)),
+		Animations: make([]*AnimationSer, len(f.Animations)),
 	}
 	for l := range f.Layers {
 		fSer.Layers[l] = &LayerSer{
@@ -888,6 +930,14 @@ func (f *File) Save(path string) {
 			PixelData: f.Layers[l].PixelData,
 			Width:     f.Layers[l].Width,
 			Height:    f.Layers[l].Height,
+		}
+	}
+	for a := range f.Animations {
+		fSer.Animations[a] = &AnimationSer{
+			Name:       f.Animations[a].Name,
+			FrameStart: f.Animations[a].FrameStart,
+			FrameEnd:   f.Animations[a].FrameEnd,
+			Timing:     f.Animations[a].Timing,
 		}
 	}
 
@@ -985,7 +1035,22 @@ func Open(openPath string) *File {
 				}
 				f.Layers[i].Redraw()
 			}
+			f.Animations = make([]*Animation, len(fileSer.Animations))
+			for i, animation := range fileSer.Animations {
+				f.Animations[i] = &Animation{
+					Name:       animation.Name,
+					FrameStart: animation.FrameStart,
+					FrameEnd:   animation.FrameEnd,
+					Timing:     animation.Timing,
+				}
+			}
 
+			spl := strings.Split(openPath, "/")
+			f.Filename = spl[len(spl)-1]
+
+			CurrentFile = f
+
+			AnimationsUIRebuildList()
 			LayersUIRebuildList()
 
 		case ".png":
@@ -1020,6 +1085,8 @@ func Open(openPath string) *File {
 			f.Filename = spl[len(spl)-1]
 		}
 	}
+
+	CurrentFile = f
 
 	return f
 }

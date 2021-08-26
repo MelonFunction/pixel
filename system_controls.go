@@ -264,10 +264,10 @@ func UIOpen() {
 		case name := <-UIControlSystemReturns:
 			waiting = false
 			if len(name) > 0 {
+				// open also sets the currentfile before rebuilding ui
 				file := Open(name)
 				// log.Println(file)
 				Files = append(Files, file)
-				CurrentFile = file
 				EditorsUIAddButton(file)
 			}
 		}

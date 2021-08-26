@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -24,6 +26,8 @@ func AnimationsUIRebuildList() {
 		AnimationsUIMakeList(bounds)
 		animationsListContainer.PushChild(animationsList)
 		animationsListContainer.FlowChildren()
+	} else {
+		log.Println(err)
 	}
 }
 
@@ -35,26 +39,6 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 		bounds = moveable.Bounds
 	}
 
-	// moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
-	// 	func(entity *Entity, button rl.MouseButton) {
-	// 		// button up
-	// 		if err := CurrentFile.MoveLayerUp(y); err == nil {
-	// 			if CurrentFile.CurrentLayer == y {
-	// 				CurrentFile.SetCurrentLayer(y + 1)
-	// 			}
-	// 			AnimationsUIRebuildList()
-	// 		}
-	// 	}, nil)
-	// moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
-	// 	func(entity *Entity, button rl.MouseButton) {
-	// 		// button up
-	// 		if err := CurrentFile.MoveLayerDown(y); err == nil {
-	// 			if CurrentFile.CurrentLayer == y {
-	// 				CurrentFile.SetCurrentLayer(y - 1)
-	// 			}
-	// 			AnimationsUIRebuildList()
-	// 		}
-	// 	}, nil)
 	frameSelect := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/frame_selector.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
@@ -62,12 +46,8 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 			CurrentFile.LeftTool = NewSpriteSelectorTool("Sprite Selector L", func(firstSprite, lastSprite int) {
 				CurrentFile.LeftTool = lastTool
 
-				CurrentFile.SetCurrentAnimationFrames(firstSprite, lastSprite)
+				CurrentFile.SetAnimationFrames(y, firstSprite, lastSprite)
 			})
-
-			// if err := CurrentFile.DeleteAnimation(y); err == nil {
-			// 	AnimationsUIRebuildList()
-			// }
 		}, nil)
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
@@ -78,20 +58,25 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 		}, nil)
 
 	// Keep the buttons organized
-	buttonBox := NewBox(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight),
+	buttonBox := NewBox(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		[]*Entity{
-			// moveUp,
-			// moveDown,
 			frameSelect,
 			delete,
 		},
 		FlowDirectionHorizontal)
 
 	isCurrent := CurrentFile.CurrentAnimation == y
-	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), animation.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight, UIButtonHeight), animation.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			anim := CurrentFile.GetCurrentAnimation()
+			// Convert back into fps
+			anim, err := CurrentFile.GetAnimation(y)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			CurrentFile.SetCurrentAnimation(y)
+			PreviewUISetTiming(anim.Timing)
 			previewAnimationFrame = anim.FrameStart
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
@@ -105,8 +90,6 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 				}
 				currentAnimationHoverable = hoverable
 				hoverable.Selected = true
-
-				CurrentFile.SetCurrentAnimation(y)
 			}
 		},
 		func(entity *Entity, key rl.Key) {
@@ -129,7 +112,7 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 							drawableText.Label += string(rune(key))
 						}
 					}
-					CurrentFile.SetCurrentAnimationName(drawableText.Label)
+					CurrentFile.SetAnimationName(y, drawableText.Label)
 				}
 			}
 
@@ -158,7 +141,6 @@ func AnimationsUIMakeList(bounds rl.Rectangle) {
 	animationsList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
 	// All of the animations
 	for i, animation := range CurrentFile.Animations {
-
 		animationsList.PushChild(AnimationsUIMakeBox(i, animation))
 	}
 	animationsList.FlowChildren()

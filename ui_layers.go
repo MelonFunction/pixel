@@ -86,7 +86,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			if err := CurrentFile.MoveLayerUp(y); err == nil {
+			if err := CurrentFile.MoveLayerUp(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y + 1)
 				}
@@ -96,7 +96,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			if err := CurrentFile.MoveLayerDown(y); err == nil {
+			if err := CurrentFile.MoveLayerDown(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y - 1)
 				}
@@ -134,12 +134,6 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-		},
-		func(entity *Entity, button rl.MouseButton, isHeld bool) {
-			if entity == nil {
-				// TODO find why the first call is nil
-				return
-			}
 			if hoverable, ok := entity.GetHoverable(); ok {
 				if currentLayerHoverable != nil {
 					currentLayerHoverable.Selected = false
@@ -150,6 +144,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				CurrentFile.SetCurrentLayer(y)
 			}
 		},
+		nil,
 		func(entity *Entity, key rl.Key) {
 			// key pressed
 			if drawable, ok := entity.GetDrawable(); ok {
@@ -208,7 +203,7 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 			}
 
 			layerList.PushChild(LayersUIMakeBox(max-2, last))
-			layerList.FlowChildren()
+			LayersUIRebuildList()
 		}, nil)
 
 	layerListContainer = NewBox(bounds, []*Entity{
