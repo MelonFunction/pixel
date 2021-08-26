@@ -72,8 +72,8 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 
 	// Right panel
-	var rgbWidth float32 = 255.0
-	var paletteWidth float32 = 128
+	var rgbWidth = UIButtonHeight * 5
+	var paletteWidth = UIButtonHeight * 3
 
 	rightPanel := NewBox(rl.NewRectangle(0, 0, rgbWidth+paletteWidth, float32(rl.GetScreenHeight())),
 		[]*Entity{}, FlowDirectionNone)

@@ -608,7 +608,6 @@ func (f *File) MoveLayerUp(index int, appendHistory bool) error {
 
 // MoveLayerDown moves the layer down
 func (f *File) MoveLayerDown(index int, appendHistory bool) error {
-	// TODO history
 	if index > 0 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)

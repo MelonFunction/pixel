@@ -285,7 +285,6 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 	previewCurrentAnimationTiming = NewInput(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight/2), "10", false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-
 		},
 		nil,
 		func(entity *Entity, key rl.Key) {
@@ -317,8 +316,8 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 					}
 				}
 			}
-
 		})
+
 	if interactable, ok := previewCurrentAnimationTiming.GetInteractable(); ok {
 		interactable.OnScroll = func(direction int) {
 			if drawable, ok := previewCurrentAnimationTiming.GetDrawable(); ok {
