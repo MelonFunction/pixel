@@ -30,6 +30,8 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 	toolSettings.RemoveChildren()
 
 	switch entity {
+	case toolEraser:
+		fallthrough
 	case toolPencil:
 		var size int
 		if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
@@ -87,7 +89,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 							drawableText.Label = fmt.Sprintf("%d", lt.GetSize())
 						}
 						if rt, ok := CurrentFile.RightTool.(*PixelBrushTool); ok {
-							rt.SetSize(rt.GetSize() + direction)
+							rt.SetSize(rt.GetSize())
 							drawableText.Label = fmt.Sprintf("%d", rt.GetSize())
 						}
 					}

@@ -13,6 +13,10 @@ System
 
 Testing
   - lol
+
+Previews (including layers)
+  - non-square canvas shouldn't squish
+  - allow movement/zoom
   
 Layers
   Actions

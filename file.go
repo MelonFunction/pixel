@@ -78,7 +78,6 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 				oldColor = rl.Transparent
 			}
 
-			// TODO don't allow multiple opacity compressions per frame/event
 			if color != rl.Transparent {
 				color = BlendWithOpacity(oldColor, color)
 			}
@@ -100,11 +99,16 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 
 			// Change pixel data to the new color
 			layer.PixelData[IntVec2{x, y}] = color
-			layer.Redraw()
+
+			rl.BeginTextureMode(layer.Canvas)
+			if color == rl.Transparent {
+				rl.DrawPixel(x, y, rl.Black)
+			} else {
+				rl.DrawPixel(x, y, color)
+			}
+			rl.EndTextureMode()
 		}
-
 	}
-
 }
 
 // ClearBackground fills the initial PixelData
@@ -166,6 +170,8 @@ type File struct {
 	historyOffset     int      // How many undos have been made
 	deletedLayers     []*Layer // stack of layers, AddNewLayer destroys history chain
 
+	BrushSize  int
+	EraserSize int
 	LeftTool   Tool
 	RightTool  Tool
 	LeftColor  rl.Color
@@ -228,6 +234,9 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HistoryMaxActions: 500, // TODO get from config
 		deletedLayers:     make([]*Layer, 0, 10),
 
+		BrushSize:  1,
+		EraserSize: 1,
+
 		LeftColor:  rl.Red,
 		RightColor: rl.Blue,
 
@@ -248,8 +257,11 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
 	}
-	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
-	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
+
+	defer func() {
+		f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+		f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
+	}()
 
 	return f
 }

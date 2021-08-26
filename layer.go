@@ -21,13 +21,10 @@ type Layer struct {
 func (l *Layer) Redraw() {
 	rl.BeginTextureMode(l.Canvas)
 	rl.ClearBackground(rl.Transparent)
-	for x := 0; x < CurrentFile.CanvasWidth; x++ {
-		for y := 0; y < CurrentFile.CanvasHeight; y++ {
-			if color, ok := l.PixelData[IntVec2{x, y}]; ok {
-				rl.DrawPixel(x, y, color)
-			}
-		}
+	for p, color := range l.PixelData {
+		rl.DrawPixel(p.X, p.Y, color)
 	}
+
 	rl.EndTextureMode()
 }
 
