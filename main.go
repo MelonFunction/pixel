@@ -33,7 +33,21 @@ func main() {
 	// Make the files
 	Files = []*File{}
 
+	CurrentFile = NewFile(64, 64, 8, 8)
+	Files = append(Files, CurrentFile)
+
+	// Load the settings
+	err := LoadSettings()
+	if err != nil {
+		log.Println(err)
+	}
+
+	InitUI(NewKeymap(Settings.KeymapData))
+
 	if len(os.Args) > 1 {
+		// delete starting/empty file
+		Files = []*File{}
+
 		for _, argPath := range os.Args[1:] {
 			// Default path
 			pathDir, err := os.Getwd()
@@ -46,21 +60,12 @@ func main() {
 			log.Println(pathDir)
 
 			newFile := Open(pathDir)
-			CurrentFile = newFile
 			Files = append(Files, newFile)
 		}
-	} else {
-		CurrentFile = NewFile(64, 64, 8, 8)
-		Files = append(Files, CurrentFile)
 	}
 
-	// Load the settings
-	err := LoadSettings()
-	if err != nil {
-		log.Println(err)
-	}
-
-	InitUI(NewKeymap(Settings.KeymapData))
+	// show filename(s) in tab
+	EditorsUIRebuild()
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
