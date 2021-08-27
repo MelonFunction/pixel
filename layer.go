@@ -85,6 +85,8 @@ func (l *Layer) Resize(width, height int, direction ResizeDirection) {
 	}
 	rl.EndTextureMode()
 	l.PixelData = newPixelData
+	l.Width = width
+	l.Height = height
 }
 
 // NewLayer returns a pointer to a new Layer

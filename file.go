@@ -125,7 +125,8 @@ func (f *File) ClearBackground(color rl.Color) {
 
 // FileSer contains only the fields that need to be serialized
 type FileSer struct {
-	DrawGrid bool
+	DrawGrid                                         bool
+	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
 
 	Layers     []*LayerSer
 	Animations []*AnimationSer
@@ -930,9 +931,13 @@ func (f *File) Save(path string) {
 	gob.Register(IntVec2{})
 
 	fSer := &FileSer{
-		DrawGrid:   f.DrawGrid,
-		Layers:     make([]*LayerSer, len(f.Layers)),
-		Animations: make([]*AnimationSer, len(f.Animations)),
+		DrawGrid:     f.DrawGrid,
+		CanvasWidth:  f.CanvasWidth,
+		CanvasHeight: f.CanvasHeight,
+		TileWidth:    f.TileWidth,
+		TileHeight:   f.TileHeight,
+		Layers:       make([]*LayerSer, len(f.Layers)),
+		Animations:   make([]*AnimationSer, len(f.Animations)),
 	}
 	for l := range f.Layers {
 		fSer.Layers[l] = &LayerSer{
@@ -1032,6 +1037,12 @@ func Open(openPath string) *File {
 			if err := dec.Decode(&fileSer); err != nil {
 				log.Println(err)
 			}
+
+			f.DrawGrid = fileSer.DrawGrid
+			f.CanvasWidth = fileSer.CanvasWidth
+			f.CanvasHeight = fileSer.CanvasHeight
+			f.TileWidth = fileSer.TileWidth
+			f.TileHeight = fileSer.TileHeight
 
 			f.Layers = make([]*Layer, len(fileSer.Layers))
 			for i, layer := range fileSer.Layers {
