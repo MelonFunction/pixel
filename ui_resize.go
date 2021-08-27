@@ -154,10 +154,10 @@ func NewResizeUI() *Entity {
 	}, FlowDirectionHorizontal)
 	anchorBox.FlowChildren()
 
-	heightInput = ResizeUIMakeInput(func() *int { return &CurrentFile.CanvasHeightResizePreview }, nil)
-	widthInput = ResizeUIMakeInput(func() *int { return &CurrentFile.CanvasWidthResizePreview }, heightInput)
 	tileHeightInput = ResizeUIMakeInput(func() *int { return &CurrentFile.TileHeightResizePreview }, nil)
 	tileWidthInput = ResizeUIMakeInput(func() *int { return &CurrentFile.TileWidthResizePreview }, tileHeightInput)
+	heightInput = ResizeUIMakeInput(func() *int { return &CurrentFile.CanvasHeightResizePreview }, tileWidthInput)
+	widthInput = ResizeUIMakeInput(func() *int { return &CurrentFile.CanvasWidthResizePreview }, heightInput)
 
 	canvasTextBoxes := NewBox(rl.NewRectangle(
 		float32(cx),

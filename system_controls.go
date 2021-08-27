@@ -637,10 +637,16 @@ func (s *UIControlSystem) Update(dt float32) {
 
 		if uint32(lastKey) != math.MaxUint32 {
 			UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, lastKey)
+			// Some callbacks might call RemoveCapturedInput() so double check
+			// that we still have an entity focused
+			if UIInteractableCapturedInput == nil {
+				return
+			}
 		}
 
 		if entity != UIEntityCapturedInput && button != MouseButtonNone {
 			RemoveCapturedInput()
+			return
 		}
 
 		// Mouse up event on entities capturing input
@@ -666,6 +672,7 @@ func (s *UIControlSystem) Update(dt float32) {
 		if UIInteractableCapturedInput.OnKeyPress == nil {
 			RemoveCapturedInput()
 			UIHasControl = false
+			return
 		}
 	}
 }
