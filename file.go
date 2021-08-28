@@ -911,7 +911,8 @@ func (f *File) Destroy() {
 	}
 }
 
-// Save the file into binary with gob
+// Save saves the file differently depending on the extension
+// TODO remember last save path so resaving/exporting is faster
 func (f *File) Save(path string) {
 	file, err := os.Create(path)
 	if err != nil {
@@ -919,86 +920,82 @@ func (f *File) Save(path string) {
 	}
 	defer file.Close()
 
-	enc := gob.NewEncoder(file)
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".png":
+		// Create a colored image of the given width and height.
+		img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))
 
-	gob.Register(rl.Color{})
-	gob.Register(IntVec2{})
-
-	fSer := &FileSer{
-		DrawGrid:     f.DrawGrid,
-		CanvasWidth:  f.CanvasWidth,
-		CanvasHeight: f.CanvasHeight,
-		TileWidth:    f.TileWidth,
-		TileHeight:   f.TileHeight,
-		Layers:       make([]*LayerSer, len(f.Layers)),
-		Animations:   make([]*AnimationSer, len(f.Animations)),
-	}
-	for l := range f.Layers {
-		fSer.Layers[l] = &LayerSer{
-			Name:      f.Layers[l].Name,
-			Hidden:    f.Layers[l].Hidden,
-			PixelData: f.Layers[l].PixelData,
-			Width:     f.Layers[l].Width,
-			Height:    f.Layers[l].Height,
-		}
-	}
-	for a := range f.Animations {
-		fSer.Animations[a] = &AnimationSer{
-			Name:       f.Animations[a].Name,
-			FrameStart: f.Animations[a].FrameStart,
-			FrameEnd:   f.Animations[a].FrameEnd,
-			Timing:     f.Animations[a].Timing,
-		}
-	}
-
-	if err := enc.Encode(fSer); err != nil {
-		log.Println(err)
-	}
-
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Change name in the tab
-	spl := strings.Split(path, "/")
-	f.Filename = spl[len(spl)-1]
-	EditorsUIRebuild()
-}
-
-// Export the file into .png etc
-// TODO remember last save path so resaving/exporting is faster
-func (f *File) Export(path string) {
-	// Create a colored image of the given width and height.
-	img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))
-
-	for _, layer := range f.Layers[:len(f.Layers)-1] {
-		if !layer.Hidden {
-			for pos, data := range layer.PixelData {
-				// TODO layer blend modes
-				if data.A != 0 {
-					img.Set(pos.X, pos.Y, color.NRGBA{
-						R: data.R,
-						G: data.G,
-						B: data.B,
-						A: data.A,
-					})
+		for _, layer := range f.Layers[:len(f.Layers)-1] {
+			if !layer.Hidden {
+				for pos, data := range layer.PixelData {
+					// TODO layer blend modes
+					if data.A != 0 {
+						img.Set(pos.X, pos.Y, color.NRGBA{
+							R: data.R,
+							G: data.G,
+							B: data.B,
+							A: data.A,
+						})
+					}
 				}
 			}
 		}
-	}
 
-	file, err := os.Create(path)
-	if err != nil {
-		log.Fatal(err)
-	}
+		file, err := os.Create(path)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if err := png.Encode(file, img); err != nil {
-		file.Close()
-		log.Fatal(err)
-	}
+		if err := png.Encode(file, img); err != nil {
+			file.Close()
+			log.Fatal(err)
+		}
 
-	if err := file.Close(); err != nil {
-		log.Fatal(err)
+		if err := file.Close(); err != nil {
+			log.Fatal(err)
+		}
+
+	case ".pix":
+		enc := gob.NewEncoder(file)
+
+		gob.Register(rl.Color{})
+		gob.Register(IntVec2{})
+
+		fSer := &FileSer{
+			DrawGrid:     f.DrawGrid,
+			CanvasWidth:  f.CanvasWidth,
+			CanvasHeight: f.CanvasHeight,
+			TileWidth:    f.TileWidth,
+			TileHeight:   f.TileHeight,
+			Layers:       make([]*LayerSer, len(f.Layers)),
+			Animations:   make([]*AnimationSer, len(f.Animations)),
+		}
+		for l := range f.Layers {
+			fSer.Layers[l] = &LayerSer{
+				Name:      f.Layers[l].Name,
+				Hidden:    f.Layers[l].Hidden,
+				PixelData: f.Layers[l].PixelData,
+				Width:     f.Layers[l].Width,
+				Height:    f.Layers[l].Height,
+			}
+		}
+		for a := range f.Animations {
+			fSer.Animations[a] = &AnimationSer{
+				Name:       f.Animations[a].Name,
+				FrameStart: f.Animations[a].FrameStart,
+				FrameEnd:   f.Animations[a].FrameEnd,
+				Timing:     f.Animations[a].Timing,
+			}
+		}
+
+		if err := enc.Encode(fSer); err != nil {
+			log.Println(err)
+		}
+
+	default:
+		log.Printf("Can't save: extension \"%s\" not supported\n", ext)
+		return
 	}
 
 	// Change name in the tab

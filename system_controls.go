@@ -92,31 +92,6 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					}
 					fc.Destroy()
 
-				case "export":
-					fc, err := gtk.FileChooserNativeDialogNew(
-						"Select file to export",
-						win,
-						gtk.FILE_CHOOSER_ACTION_SAVE,
-						"export",
-						"cancel",
-					)
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					fc.SetCurrentFolder(CurrentFile.PathDir)
-					fc.SetFilename(CurrentFile.Filename)
-
-					switch fc.Run() {
-					case int(gtk.RESPONSE_ACCEPT):
-						name := fc.GetFilename()
-						log.Println(name)
-						returns <- name
-					default:
-						returns <- ""
-					}
-					fc.Destroy()
-
 				case "save":
 					fc, err := gtk.FileChooserNativeDialogNew(
 						"Select file to save",
@@ -279,21 +254,6 @@ func UIOpen() {
 				// log.Println(file)
 				Files = append(Files, file)
 				EditorsUIAddButton(file)
-			}
-		}
-	}
-}
-
-// UIExport exports the file
-func UIExport() {
-	UIControlSystemCmds <- "export"
-	waiting := true
-	for waiting {
-		select {
-		case name := <-UIControlSystemReturns:
-			waiting = false
-			if len(name) > 0 {
-				CurrentFile.Export(name)
 			}
 		}
 	}
@@ -463,8 +423,6 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 				UIOpen()
 			case "save":
 				UISave()
-			case "export":
-				UIExport()
 			case "undo":
 				CurrentFile.Undo()
 			case "redo":
