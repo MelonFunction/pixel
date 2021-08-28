@@ -200,13 +200,6 @@ type File struct {
 	// To check if the selection was moved
 	OrigSelectionBounds [4]int
 
-	// CopiedSelection holds the selection when File.Copy is called
-	CopiedSelection       map[IntVec2]rl.Color
-	CopiedSelectionPixels []rl.Color
-	// If the layer data should be moved or not
-	IsSelectionPasted     bool
-	CopiedSelectionBounds [4]int
-
 	CurrentPalette int
 
 	// Canvas and tile dimensions
@@ -322,19 +315,19 @@ func (f *File) CancelSelection() {
 
 // Copy the selection
 func (f *File) Copy() {
-	f.CopiedSelection = make(map[IntVec2]rl.Color)
-	f.CopiedSelectionPixels = make([]rl.Color, 0, len(f.SelectionPixels))
+	CopiedSelection = make(map[IntVec2]rl.Color)
+	CopiedSelectionPixels = make([]rl.Color, 0, len(f.SelectionPixels))
 
 	// Copy selection if there is one
 	if len(f.Selection) > 0 {
 		for v, c := range f.Selection {
-			f.CopiedSelection[v] = c
+			CopiedSelection[v] = c
 		}
 		for _, v := range f.SelectionPixels {
-			f.CopiedSelectionPixels = append(f.CopiedSelectionPixels, v)
+			CopiedSelectionPixels = append(CopiedSelectionPixels, v)
 		}
 		for i, v := range f.SelectionBounds {
-			f.CopiedSelectionBounds[i] = v
+			CopiedSelectionBounds[i] = v
 		}
 		return
 	}
@@ -342,9 +335,9 @@ func (f *File) Copy() {
 	// Otherwise copy the entire current layer
 	cl := f.GetCurrentLayer()
 	for v, c := range cl.PixelData {
-		f.CopiedSelection[v] = c
+		CopiedSelection[v] = c
 	}
-	f.CopiedSelectionBounds = [4]int{
+	CopiedSelectionBounds = [4]int{
 		0,
 		0,
 		f.CanvasWidth - 1,
@@ -359,19 +352,19 @@ func (f *File) Paste() {
 
 	// Appends history
 	f.SelectionMoving = false
-	f.IsSelectionPasted = true
+	IsSelectionPasted = true
 	f.MoveSelection(0, 0)
 	f.DoingSelection = true
 
 	f.Selection = make(map[IntVec2]rl.Color)
-	for v, c := range f.CopiedSelection {
+	for v, c := range CopiedSelection {
 		f.Selection[v] = c
 	}
-	for _, v := range f.CopiedSelectionPixels {
+	for _, v := range CopiedSelectionPixels {
 		f.SelectionPixels = append(f.SelectionPixels, v)
 	}
 
-	for i, v := range f.CopiedSelectionBounds {
+	for i, v := range CopiedSelectionBounds {
 		f.SelectionBounds[i] = v
 	}
 
@@ -383,7 +376,7 @@ func (f *File) Paste() {
 
 // CommitSelection "stamps" the floating selection in place
 func (f *File) CommitSelection() {
-	f.IsSelectionPasted = false
+	IsSelectionPasted = false
 	f.DoingSelection = false
 
 	if f.SelectionMoving {
@@ -451,14 +444,14 @@ func (f *File) MoveSelection(dx, dy int) {
 				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 				if ok {
 					ps := latestHistory.PixelState[loc]
-					if !f.IsSelectionPasted {
+					if !IsSelectionPasted {
 						ps.Current = rl.Transparent
 						ps.Prev = cl.PixelData[loc]
 						latestHistory.PixelState[loc] = ps
 					}
 				}
 
-				if !f.IsSelectionPasted {
+				if !IsSelectionPasted {
 					cl.PixelData[loc] = rl.Transparent
 				}
 			}
@@ -924,6 +917,7 @@ func (f *File) Save(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
 	enc := gob.NewEncoder(file)
 

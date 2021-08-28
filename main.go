@@ -14,6 +14,15 @@ var (
 	// Files is a slice of all the files currently loaded
 	Files = make([]*File, 0, 8)
 
+	// CopiedSelection holds the selection when File.Copy is called
+	CopiedSelection map[IntVec2]rl.Color
+	// CopiedSelectionPixels is a different format of the above
+	CopiedSelectionPixels []rl.Color
+	// IsSelectionPasted defines if the layer data should be moved or not
+	IsSelectionPasted bool
+	// CopiedSelectionBounds is the bounds of the copied selection
+	CopiedSelectionBounds [4]int
+
 	// ShowDebug enables debug overlays when true
 	ShowDebug = false
 )
