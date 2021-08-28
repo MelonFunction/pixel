@@ -15,10 +15,17 @@ var (
 
 // NewMenuUI returns a new entity
 func NewMenuUI(bounds rl.Rectangle) *Entity {
-	var saveButton, exportButton, openButton, resizeButton, fileButton *Entity
+	var newButton, saveButton, exportButton, openButton, resizeButton, fileButton *Entity
 	hoveredButtons := make([]*Entity, 0, 4)
 
 	measured := rl.MeasureTextEx(*Font, "resize", UIFontSize, 1)
+
+	newButton = NewButtonText(
+		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+		"new", false, func(entity *Entity, button rl.MouseButton) {
+			UINew()
+		}, nil)
+	newButton.Hide()
 
 	saveButton = NewButtonText(
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
@@ -65,6 +72,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	bounds.Y += UIFontSize * 2
 	bounds.Height = float32(rl.GetScreenHeight())
 	menuContexts = NewBox(bounds, []*Entity{
+		newButton,
 		saveButton,
 		exportButton,
 		openButton,
@@ -74,7 +82,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	menuContexts.FlowChildren()
 	menuContexts.Hide()
 
-	for _, button := range []*Entity{saveButton, exportButton, openButton, resizeButton, fileButton} {
+	for _, button := range []*Entity{newButton, saveButton, exportButton, openButton, resizeButton, fileButton} {
 		if hoverable, ok := button.GetHoverable(); ok {
 			hoverable.OnMouseEnter = func(entity *Entity) {
 				found := false
@@ -88,6 +96,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 				}
 
 				if len(hoveredButtons) > 0 {
+					newButton.Show()
 					saveButton.Show()
 					exportButton.Show()
 					openButton.Show()
@@ -107,6 +116,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 				go func() {
 					time.Sleep(500 * time.Millisecond)
 					if len(hoveredButtons) == 0 {
+						newButton.Hide()
 						saveButton.Hide()
 						exportButton.Hide()
 						openButton.Hide()

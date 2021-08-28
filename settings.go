@@ -110,6 +110,7 @@ var (
 		"paste":  {{rl.KeyLeftControl, rl.KeyV}},
 		"delete": {{rl.KeyDelete}},
 
+		"new":    {{rl.KeyLeftControl, rl.KeyN}},
 		"open":   {{rl.KeyLeftControl, rl.KeyO}},
 		"save":   {{rl.KeyLeftControl, rl.KeyS}},
 		"export": {{rl.KeyLeftControl, rl.KeyE}},

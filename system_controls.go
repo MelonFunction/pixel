@@ -24,6 +24,7 @@ var (
 	UIControlSystemReturns chan string
 )
 
+// UIControlSystem handles keyboard and mouse controls
 type UIControlSystem struct {
 	BasicSystem
 
@@ -37,6 +38,7 @@ type UIControlSystem struct {
 	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
 }
 
+// NewUIControlSystem creates and returns a new NewUIControlSystem reference
 func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	UIControlSystemCmds = make(chan string)
 	UIControlSystemReturns = make(chan string)
@@ -256,6 +258,14 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 	return nil
 }
 
+// UINew creates a new file
+func UINew() {
+	CurrentFile = NewFile(64, 64, 8, 8)
+	Files = append(Files, CurrentFile)
+	EditorsUIRebuild()
+}
+
+// UIOpen opens a file
 func UIOpen() {
 	UIControlSystemCmds <- "open"
 	waiting := true
@@ -274,6 +284,7 @@ func UIOpen() {
 	}
 }
 
+// UIExport exports the file
 func UIExport() {
 	UIControlSystemCmds <- "export"
 	waiting := true
@@ -288,6 +299,7 @@ func UIExport() {
 	}
 }
 
+// UISave saves the file
 func UISave() {
 	UIControlSystemCmds <- "save"
 	waiting := true
@@ -302,6 +314,7 @@ func UISave() {
 	}
 }
 
+// HandleKeyboardEvents handles keyboard events
 func (s *UIControlSystem) HandleKeyboardEvents() {
 	// Handle keyboard events
 	for key := range s.keysAwaitingRelease {
@@ -444,6 +457,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 					CurrentFile.CurrentLayer = 0
 				}
 				LayersUISetCurrentLayer(CurrentFile.CurrentLayer)
+			case "new":
+				UINew()
 			case "open":
 				UIOpen()
 			case "save":
@@ -547,6 +562,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 	}
 }
 
+// Update updates the control system
 func (s *UIControlSystem) Update(dt float32) {
 	s.HandleKeyboardEvents()
 
