@@ -223,7 +223,6 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 				// Mouse events are handled by the caller function (Update)
 				if interactable.OnMouseDown != nil || interactable.OnMouseUp != nil {
 					interactable.ButtonDown = button
-					SetCapturedInput(entity, interactable)
 					return entity
 				}
 			}
