@@ -39,6 +39,11 @@ const (
 	HistoryLayerActionMoveDown
 )
 
+//CompoundHistory is a group of history actions
+type CompoundHistory struct {
+	Actions []interface{}
+}
+
 // HistoryLayer is for layer operations
 type HistoryLayer struct {
 	HistoryLayerAction
@@ -581,8 +586,57 @@ func (f *File) RestoreLayer(index int) error {
 		return fmt.Errorf("No layers to restore")
 	}
 
-	f.Layers = append(f.Layers[:index], append([]*Layer{f.deletedLayers[len(f.deletedLayers)-1]}, f.Layers[index:]...)...)
-	f.deletedLayers = append(f.deletedLayers[:len(f.deletedLayers)-1], f.deletedLayers[len(f.deletedLayers):]...)
+	f.Layers = append(
+		f.Layers[:index],
+		append(
+			[]*Layer{f.deletedLayers[len(f.deletedLayers)-1]},
+			f.Layers[index:]...)...)
+	f.deletedLayers = append(
+		f.deletedLayers[:len(f.deletedLayers)-1],
+		f.deletedLayers[len(f.deletedLayers):]...)
+
+	return nil
+}
+
+// MergeLayerDown merges the layer with the one below
+func (f *File) MergeLayerDown(index int) error {
+	if len(f.Layers) <= 2 {
+		return fmt.Errorf("Couldn't merge layer down: Not enough layers")
+	}
+	if index == 0 {
+		return fmt.Errorf("Couldn't merge layer down: Can't merge lowest layer")
+	}
+
+	// old layer pixel state
+	historyPixel := HistoryPixel{make(map[IntVec2]PixelStateData), index - 1}
+	from := f.Layers[index]
+	to := f.Layers[index-1]
+	for loc, color := range from.PixelData {
+		hist := historyPixel.PixelState[loc]
+		hist.Prev = to.PixelData[loc]
+		newColor := BlendWithOpacity(to.PixelData[loc], color)
+		to.PixelData[loc] = newColor
+		hist.Current = newColor
+
+		// Save back into the map
+		historyPixel.PixelState[loc] = hist
+
+		if color != rl.Transparent && color != to.PixelData[loc] {
+		}
+	}
+	to.Redraw()
+
+	if err := f.DeleteLayer(index, false); err != nil {
+		return err
+	}
+
+	comp := CompoundHistory{
+		Actions: []interface{}{
+			historyPixel,
+			HistoryLayer{HistoryLayerActionDelete, index},
+		},
+	}
+	f.AppendHistory(comp)
 
 	return nil
 }
@@ -783,57 +837,66 @@ func (f *File) Undo() {
 		index := len(f.History) - f.historyOffset
 		history := f.History[index]
 
-		switch typed := history.(type) {
-		case HistoryPixel:
-			if f.DoingSelection {
-				f.Selection = make(map[IntVec2]rl.Color)
-				f.DoingSelection = false
-				f.SelectionMoving = false
-			}
-			current := f.CurrentLayer
-			f.SetCurrentLayer(typed.LayerIndex)
-			layer := f.GetCurrentLayer()
-			shouldDraw := true
-			for v, color := range layer.PixelData {
-				shouldDraw = true
-				for pos, psd := range typed.PixelState {
-					if v.X == pos.X && v.Y == pos.Y {
-						// Update current color with previous color
-						layer.PixelData[v] = psd.Prev
-						// Overwrite
-						color = psd.Prev
-						if psd.Prev == rl.Transparent {
-							shouldDraw = false
+		var process func(historyItem interface{})
+		process = func(historyItem interface{}) {
+			switch typed := historyItem.(type) {
+			case CompoundHistory:
+				for i := 0; i < len(typed.Actions); i++ {
+					process(typed.Actions[i])
+				}
+			case HistoryPixel:
+				if f.DoingSelection {
+					f.Selection = make(map[IntVec2]rl.Color)
+					f.DoingSelection = false
+					f.SelectionMoving = false
+				}
+				current := f.CurrentLayer
+				f.SetCurrentLayer(typed.LayerIndex)
+				layer := f.GetCurrentLayer()
+				shouldDraw := true
+				for v, color := range layer.PixelData {
+					shouldDraw = true
+					for pos, psd := range typed.PixelState {
+						if v.X == pos.X && v.Y == pos.Y {
+							// Update current color with previous color
+							layer.PixelData[v] = psd.Prev
+							// Overwrite
+							color = psd.Prev
+							if psd.Prev == rl.Transparent {
+								shouldDraw = false
+							}
 						}
 					}
+					if shouldDraw {
+						layer.PixelData[v] = color
+					}
 				}
-				if shouldDraw {
-					layer.PixelData[v] = color
+				f.SetCurrentLayer(current)
+				layer.Redraw()
+			case HistoryLayer:
+				switch typed.HistoryLayerAction {
+				case HistoryLayerActionDelete:
+					f.RestoreLayer(typed.LayerIndex)
+				case HistoryLayerActionCreate:
+					f.DeleteLayer(typed.LayerIndex, false)
+				case HistoryLayerActionMoveUp:
+					f.MoveLayerUp(typed.LayerIndex, false)
+				case HistoryLayerActionMoveDown:
+					f.MoveLayerDown(typed.LayerIndex, false)
 				}
-			}
-			f.SetCurrentLayer(current)
-			layer.Redraw()
-		case HistoryLayer:
-			switch typed.HistoryLayerAction {
-			case HistoryLayerActionDelete:
-				f.RestoreLayer(typed.LayerIndex)
-			case HistoryLayerActionCreate:
-				f.DeleteLayer(typed.LayerIndex, false)
-			case HistoryLayerActionMoveUp:
-				f.MoveLayerUp(typed.LayerIndex, false)
-			case HistoryLayerActionMoveDown:
-				f.MoveLayerDown(typed.LayerIndex, false)
-			}
-		case HistoryResize:
-			f.CanvasWidthResizePreview = typed.PrevWidth
-			f.CanvasHeightResizePreview = typed.PrevHeight
-			f.CanvasWidth = typed.PrevWidth
-			f.CanvasHeight = typed.PrevHeight
-			for i, layer := range typed.PrevLayerState {
-				f.Layers[i].PixelData = layer
-				f.Layers[i].Resize(typed.PrevWidth, typed.PrevHeight, ResizeTL)
+			case HistoryResize:
+				f.CanvasWidthResizePreview = typed.PrevWidth
+				f.CanvasHeightResizePreview = typed.PrevHeight
+				f.CanvasWidth = typed.PrevWidth
+				f.CanvasHeight = typed.PrevHeight
+				for i, layer := range typed.PrevLayerState {
+					f.Layers[i].PixelData = layer
+					f.Layers[i].Resize(typed.PrevWidth, typed.PrevHeight, ResizeTL)
+				}
 			}
 		}
+
+		process(history)
 
 		LayersUIRebuildList()
 	}
@@ -844,55 +907,64 @@ func (f *File) Redo() {
 	if f.historyOffset > 0 {
 		current := f.CurrentLayer
 		index := len(f.History) - f.historyOffset
+		f.historyOffset--
 		history := f.History[index]
 
-		switch typed := history.(type) {
-		case HistoryPixel:
-			f.SetCurrentLayer(typed.LayerIndex)
-			layer := f.GetCurrentLayer()
-			rl.BeginTextureMode(layer.Canvas)
-			rl.ClearBackground(rl.Transparent)
-			shouldDraw := true
-			for v, color := range layer.PixelData {
-				shouldDraw = true
-				for pos, psd := range typed.PixelState {
-					if v.X == pos.X && v.Y == pos.Y {
-						layer.PixelData[v] = psd.Current
-						color = psd.Current
-						if psd.Current == rl.Transparent {
-							shouldDraw = false
+		var process func(historyItem interface{})
+		process = func(historyItem interface{}) {
+			switch typed := historyItem.(type) {
+			case CompoundHistory:
+				for i := len(typed.Actions) - 1; i >= 0; i-- {
+					process(typed.Actions[i])
+				}
+			case HistoryPixel:
+				f.SetCurrentLayer(typed.LayerIndex)
+				layer := f.GetCurrentLayer()
+				rl.BeginTextureMode(layer.Canvas)
+				rl.ClearBackground(rl.Transparent)
+				shouldDraw := true
+				for v, color := range layer.PixelData {
+					shouldDraw = true
+					for pos, psd := range typed.PixelState {
+						if v.X == pos.X && v.Y == pos.Y {
+							layer.PixelData[v] = psd.Current
+							color = psd.Current
+							if psd.Current == rl.Transparent {
+								shouldDraw = false
+							}
 						}
 					}
+					if shouldDraw {
+						rl.DrawPixel(v.X, v.Y, color)
+					}
 				}
-				if shouldDraw {
-					rl.DrawPixel(v.X, v.Y, color)
+				rl.EndTextureMode()
+				f.SetCurrentLayer(current)
+			case HistoryLayer:
+				switch typed.HistoryLayerAction {
+				case HistoryLayerActionDelete:
+					f.DeleteLayer(typed.LayerIndex, false)
+				case HistoryLayerActionCreate:
+					f.RestoreLayer(typed.LayerIndex)
+				case HistoryLayerActionMoveUp:
+					f.MoveLayerUp(typed.LayerIndex, false)
+				case HistoryLayerActionMoveDown:
+					f.MoveLayerDown(typed.LayerIndex, false)
 				}
-			}
-			rl.EndTextureMode()
-			f.SetCurrentLayer(current)
-		case HistoryLayer:
-			switch typed.HistoryLayerAction {
-			case HistoryLayerActionDelete:
-				f.DeleteLayer(typed.LayerIndex, false)
-			case HistoryLayerActionCreate:
-				f.RestoreLayer(typed.LayerIndex)
-			case HistoryLayerActionMoveUp:
-				f.MoveLayerUp(typed.LayerIndex, false)
-			case HistoryLayerActionMoveDown:
-				f.MoveLayerDown(typed.LayerIndex, false)
-			}
-		case HistoryResize:
-			f.CanvasWidthResizePreview = typed.CurrentWidth
-			f.CanvasHeightResizePreview = typed.CurrentHeight
-			f.CanvasWidth = typed.CurrentWidth
-			f.CanvasHeight = typed.CurrentHeight
-			for i, layer := range typed.CurrentLayerState {
-				f.Layers[i].PixelData = layer
-				f.Layers[i].Resize(typed.CurrentWidth, typed.CurrentHeight, ResizeTL)
+			case HistoryResize:
+				f.CanvasWidthResizePreview = typed.CurrentWidth
+				f.CanvasHeightResizePreview = typed.CurrentHeight
+				f.CanvasWidth = typed.CurrentWidth
+				f.CanvasHeight = typed.CurrentHeight
+				for i, layer := range typed.CurrentLayerState {
+					f.Layers[i].PixelData = layer
+					f.Layers[i].Resize(typed.CurrentWidth, typed.CurrentHeight, ResizeTL)
+				}
 			}
 		}
 
-		f.historyOffset--
+		process(history)
+
 		LayersUIRebuildList()
 	}
 }
@@ -1038,13 +1110,12 @@ func Open(openPath string) *File {
 			f.Layers = make([]*Layer, len(fileSer.Layers))
 			for i, layer := range fileSer.Layers {
 				f.Layers[i] = &Layer{
-					Name:           layer.Name,
-					Hidden:         layer.Hidden,
-					PixelData:      layer.PixelData,
-					Width:          layer.Width,
-					Height:         layer.Height,
-					Canvas:         rl.LoadRenderTexture(layer.Width, layer.Height),
-					hasInitialFill: true,
+					Name:      layer.Name,
+					Hidden:    layer.Hidden,
+					PixelData: layer.PixelData,
+					Width:     layer.Width,
+					Height:    layer.Height,
+					Canvas:    rl.LoadRenderTexture(layer.Width, layer.Height),
 				}
 				f.Layers[i].Redraw()
 			}

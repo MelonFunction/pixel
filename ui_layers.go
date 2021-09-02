@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
@@ -103,6 +105,18 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 				LayersUIRebuildList()
 			}
 		}, nil)
+	mergeDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/merge_down.png"), false,
+		func(entity *Entity, button rl.MouseButton) {
+			// button up
+			if err := CurrentFile.MergeLayerDown(y); err == nil {
+				if CurrentFile.CurrentLayer == y {
+					CurrentFile.SetCurrentLayer(y - 1)
+				}
+				LayersUIRebuildList()
+			} else {
+				log.Println(err)
+			}
+		}, nil)
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
@@ -117,6 +131,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 			hidden,
 			moveUp,
 			moveDown,
+			mergeDown,
 			delete,
 		},
 		FlowDirectionHorizontal)
