@@ -30,6 +30,7 @@ var (
 	hexColor rl.Color
 )
 
+// SetUIHexColor sets the hex color label
 func SetUIHexColor(color rl.Color) {
 	hexColor = color
 
@@ -186,6 +187,7 @@ func makeOpacitySliderArea(color rl.Color) {
 	}
 }
 
+// MoveAreaSelector moves the area selector
 func MoveAreaSelector(mx, my int) {
 	if moveable, ok := rgbArea.GetMoveable(); ok {
 		if mx < 0 {
@@ -216,6 +218,7 @@ func MoveAreaSelector(mx, my int) {
 	}
 }
 
+// MoveColorSelector moves the color selector
 func MoveColorSelector(mx int) {
 	if moveable, ok := colorSlider.GetMoveable(); ok {
 		my := int(moveable.Bounds.Height) / 2

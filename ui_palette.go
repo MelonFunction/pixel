@@ -13,11 +13,13 @@ var (
 	movingColor *Moveable
 )
 
+// PaletteUIRemoveColor removes an color from the palette
 func PaletteUIRemoveColor(child *Entity) {
 	paletteEntity.RemoveChild(child)
 	paletteEntity.FlowChildren()
 }
 
+// PaletteUIAddColor adds a color to the palette
 func PaletteUIAddColor(color rl.Color, index int) {
 	var w float32
 	var h float32
@@ -134,6 +136,7 @@ func PaletteUIAddColor(color rl.Color, index int) {
 	paletteEntity.FlowChildren()
 }
 
+// NewPaletteUI returns a new PaletteUI
 func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	paletteEntity = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
 	for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {

@@ -72,6 +72,7 @@ type Moveable struct {
 	Draggable bool
 }
 
+// GetMoveable returns the Moveable from the Entity
 func (entity *Entity) GetMoveable() (t *Moveable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
@@ -124,6 +125,7 @@ func (entity *Entity) Snap(data []SnapData) error {
 	return nil
 }
 
+// GetResizeable returns the Resizable from the Entity
 func (entity *Entity) GetResizeable() (t *Resizeable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["resizeable"]].(*Resizeable)
@@ -167,6 +169,7 @@ type Interactable struct {
 	OnFocus func(entity *Entity)
 }
 
+// GetInteractable returns the Interactable from the Entity
 func (entity *Entity) GetInteractable() (t *Interactable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["interactable"]].(*Interactable)
@@ -210,6 +213,7 @@ type Scrollable struct {
 	// TODO stuff for rendering scrollbars differently
 }
 
+// GetScrollable returns the Scrollable from the Entity
 func (entity *Entity) GetScrollable() (t *Scrollable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["scrollable"]].(*Scrollable)
@@ -233,6 +237,7 @@ type Hoverable struct {
 	SelectedRight bool
 }
 
+// GetHoverable returns the Hoverable from the Entity
 func (entity *Entity) GetHoverable() (t *Hoverable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["hoverable"]].(*Hoverable)
@@ -262,6 +267,7 @@ type Drawable struct {
 	DrawBackground bool
 }
 
+// GetDrawable returns the Drawable from the Entity
 func (entity *Entity) GetDrawable() (t *Drawable, ok bool) {
 	if result, err := entity.Scene.QueryID(entity.ID); err == nil {
 		t, ok = result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
@@ -374,8 +380,8 @@ func DrawUI() {
 }
 
 // Hide sets the drawable component's Hidden value to true
-func (e *Entity) Hide() error {
-	if result, err := scene.QueryID(e.ID); err == nil {
+func (entity *Entity) Hide() error {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		if !ok {
 			return fmt.Errorf("No drawable component on entity")
@@ -383,11 +389,11 @@ func (e *Entity) Hide() error {
 		drawable.Hidden = true
 
 		if drawable.OnHide != nil {
-			drawable.OnHide(e)
+			drawable.OnHide(entity)
 		}
 
 		// Recursively call Hide on each child
-		if children, err := e.GetChildren(); err == nil {
+		if children, err := entity.GetChildren(); err == nil {
 			for _, child := range children {
 				child.Hide()
 			}
@@ -397,8 +403,8 @@ func (e *Entity) Hide() error {
 }
 
 // Show sets the drawable component's Hidden value to true
-func (e *Entity) Show() error {
-	if result, err := scene.QueryID(e.ID); err == nil {
+func (entity *Entity) Show() error {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		if !ok {
 			return fmt.Errorf("No drawable component on entity")
@@ -406,24 +412,24 @@ func (e *Entity) Show() error {
 		drawable.Hidden = false
 
 		if drawable.OnShow != nil {
-			drawable.OnShow(e)
+			drawable.OnShow(entity)
 		}
 
 		// Recursively call Show on each child
-		if children, err := e.GetChildren(); err == nil {
+		if children, err := entity.GetChildren(); err == nil {
 			for _, child := range children {
 				child.Show()
 			}
 		}
 
-		scene.MoveEntityToEnd(e)
+		scene.MoveEntityToEnd(entity)
 	}
 	return nil
 }
 
 // GetChildren returns a copy of all of the children entities from an entity
-func (e *Entity) GetChildren() ([]*Entity, error) {
-	if result, err := scene.QueryID(e.ID); err == nil {
+func (entity *Entity) GetChildren() ([]*Entity, error) {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
 
@@ -436,8 +442,8 @@ func (e *Entity) GetChildren() ([]*Entity, error) {
 
 // RemoveChild removes a child from the DrawableParent and returns true if
 // something was removed
-func (e *Entity) RemoveChild(child *Entity) bool {
-	if result, err := scene.QueryID(e.ID); err == nil {
+func (entity *Entity) RemoveChild(child *Entity) bool {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
 
@@ -454,26 +460,27 @@ func (e *Entity) RemoveChild(child *Entity) bool {
 }
 
 // RemoveChildren removes all of the children from an entity
-func (e *Entity) RemoveChildren() error {
-	children, err := e.GetChildren()
+func (entity *Entity) RemoveChildren() error {
+	children, err := entity.GetChildren()
 	if err != nil {
 		return err
 	}
 
 	for i := len(children) - 1; i > -1; i-- {
 		child := children[i]
-		e.RemoveChild(child)
+		entity.RemoveChild(child)
 	}
 
 	return nil
 }
 
-func (e *Entity) DestroyNested() {
-	if result, err := scene.QueryID(e.ID); err == nil {
+// DestroyNested recursively destroys children
+func (entity *Entity) DestroyNested() {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
 		if !ok {
-			e.Destroy()
+			entity.Destroy()
 			return
 		}
 
@@ -485,9 +492,9 @@ func (e *Entity) DestroyNested() {
 }
 
 // PushChild adds a child to a drawables children list
-func (e *Entity) PushChild(child *Entity) (*Entity, error) {
+func (entity *Entity) PushChild(child *Entity) (*Entity, error) {
 	var err error
-	if result, err := scene.QueryID(e.ID); err == nil {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		parentDrawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		parentMoveable := result.Components[scene.ComponentsMap["moveable"]].(*Moveable)
 
@@ -526,6 +533,7 @@ func (e *Entity) PushChild(child *Entity) (*Entity, error) {
 	return nil, err
 }
 
+// SetCapturedInput sets the entity and interactable to be the globally selected ones
 func SetCapturedInput(entity *Entity, interactable *Interactable) {
 	if entity == nil || interactable == nil {
 		log.Fatal("Cannot set captured input to a nil entity")
@@ -544,6 +552,7 @@ func SetCapturedInput(entity *Entity, interactable *Interactable) {
 	}
 }
 
+// RemoveCapturedInput removes the globally captured input
 func RemoveCapturedInput() {
 	UIEntityCapturedInputLast = UIEntityCapturedInput
 	UIInteractableCapturedInputLast = UIInteractableCapturedInput
@@ -558,8 +567,8 @@ func RemoveCapturedInput() {
 // FlowChildren aligns the children based on their LayoutTag and alignment
 // options
 // TODO clip child bounds if they overflow parent
-func (e *Entity) FlowChildren() {
-	if result, err := scene.QueryID(e.ID); err == nil {
+func (entity *Entity) FlowChildren() {
+	if result, err := scene.QueryID(entity.ID); err == nil {
 		parentDrawable, ok := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		if !ok {
 			return
@@ -579,8 +588,8 @@ func (e *Entity) FlowChildren() {
 			return
 		}
 
-		var fixNested func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable)
-		fixNested = func(e *Entity, parentDrawable *Drawable, parentMoveable *Moveable) {
+		var fixNested func(entity *Entity, parentDrawable *Drawable, parentMoveable *Moveable)
+		fixNested = func(entity *Entity, parentDrawable *Drawable, parentMoveable *Moveable) {
 			var children []*Entity
 
 			switch typed := parentDrawable.DrawableType.(type) {

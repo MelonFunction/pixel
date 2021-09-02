@@ -227,9 +227,9 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	avg := (c.R + c.G + c.B) / 3
 	if avg > 255/2 {
-		rl.DrawPixel(x, y, rl.Color{0, 0, 0, 192})
+		rl.DrawPixel(x, y, rl.NewColor(0, 0, 0, 192))
 	} else {
-		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
+		rl.DrawPixel(x, y, rl.NewColor(255, 255, 255, 192))
 	}
 
 	// Draw selection overlay with handles after selection has finished
@@ -242,25 +242,25 @@ func (t *SelectorTool) DrawPreview(x, y int) {
 			rl.NewVector2(float32(pa.X), float32(pa.Y)),
 			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
 			1,
-			rl.Color{255, 255, 255, 192})
+			rl.NewColor(255, 255, 255, 192))
 		// bottom
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pa.X), float32(pb.Y+2)),
 			rl.NewVector2(float32(pb.X+1), float32(pb.Y+2)),
 			1,
-			rl.Color{255, 255, 255, 192})
+			rl.NewColor(255, 255, 255, 192))
 		// left
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pa.X-1), float32(pa.Y)),
 			rl.NewVector2(float32(pa.X-1), float32(pb.Y+1)),
 			1,
-			rl.Color{255, 255, 255, 192})
+			rl.NewColor(255, 255, 255, 192))
 		// right
 		rl.DrawLineEx(
 			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
 			rl.NewVector2(float32(pb.X+1), float32(pb.Y+1)),
 			1,
-			rl.Color{255, 255, 255, 192})
+			rl.NewColor(255, 255, 255, 192))
 
 		// Draw the selected pixels
 		for loc, color := range CurrentFile.Selection {

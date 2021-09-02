@@ -6,11 +6,13 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// UIRenderSystem renders everything in the ECS
 type UIRenderSystem struct {
 	BasicSystem
 	camera rl.Camera2D
 }
 
+// NewUIRenderSystem returs a new UIRenderSystem
 func NewUIRenderSystem() *UIRenderSystem {
 	return &UIRenderSystem{camera: rl.Camera2D{Zoom: 1}}
 }
@@ -70,14 +72,14 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	drawBackground := func(hoverable *Hoverable, moveable *Moveable) {
 		if hoverable.Hovered {
 			hoverable.Hovered = false
-			rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
+			rl.DrawRectangleRec(moveable.Bounds, rl.NewColor(0, 0, 0, 255*0.8))
 		} else {
 			if hoverable.Selected {
 				// TODO colorscheme
 				// Same as hover for now
-				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
+				rl.DrawRectangleRec(moveable.Bounds, rl.NewColor(0, 0, 0, 255*0.8))
 			} else {
-				rl.DrawRectangleRec(moveable.Bounds, rl.Color{0, 0, 0, 255 * 0.8})
+				rl.DrawRectangleRec(moveable.Bounds, rl.NewColor(0, 0, 0, 255*0.8))
 			}
 		}
 	}
@@ -190,8 +192,10 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	}
 }
 
+// Update updates the system
 func (s *UIRenderSystem) Update(dt float32) {}
 
+// Draw draws the system
 func (s *UIRenderSystem) Draw() {
 	results := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"])
 	for _, result := range results {

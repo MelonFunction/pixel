@@ -58,6 +58,7 @@ func Line(x0, y0, x1, y1 int, drawFunc func(x, y int)) {
 	}
 }
 
+// AddAndClampUint8 adds two ints and caps them at uint8 max
 func AddAndClampUint8(a, b uint8) uint8 {
 	if int(a)+int(b) > 255 {
 		return 255
@@ -119,7 +120,7 @@ func HexToColor(color string) (rl.Color, error) {
 				log.Println(err)
 			}
 
-			return rl.Color{uint8(r), uint8(g), uint8(b), uint8(a)}, nil
+			return rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a)), nil
 		}
 	}
 	return rl.Color{}, fmt.Errorf("color couldn't be created from hex")

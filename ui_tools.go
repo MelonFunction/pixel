@@ -18,6 +18,9 @@ var (
 	toolSettings         *Entity // extra space which can be used by other ui
 )
 
+// ToolsUISetCurrentToolSelected makes the tool have the selected appearance
+// It also changes the UI to show additional items in the empty space to the
+// right of the tools
 func ToolsUISetCurrentToolSelected(entity *Entity) {
 	if hoverable, ok := entity.GetHoverable(); ok {
 		if currentToolHoverable != nil {

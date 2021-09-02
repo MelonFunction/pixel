@@ -43,9 +43,9 @@ func (t *PickerTool) DrawPreview(x, y int) {
 	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	avg := (c.R + c.G + c.B) / 3
 	if avg > 255/2 {
-		rl.DrawPixel(x, y, rl.Color{0, 0, 0, 192})
+		rl.DrawPixel(x, y, rl.NewColor(0, 0, 0, 192))
 	} else {
-		rl.DrawPixel(x, y, rl.Color{255, 255, 255, 192})
+		rl.DrawPixel(x, y, rl.NewColor(255, 255, 255, 192))
 	}
 }
 

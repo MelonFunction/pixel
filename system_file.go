@@ -4,6 +4,7 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// UIFileSystem handles non-ui drawing, including drawing the layer canvases
 type UIFileSystem struct {
 	BasicSystem
 
@@ -19,6 +20,7 @@ type UIFileSystem struct {
 	cursor rl.Vector2
 }
 
+// NewUIFileSystem returns a new UIFileSystem
 func NewUIFileSystem() *UIFileSystem {
 	s := &UIFileSystem{
 		Camera:                  rl.Camera2D{Zoom: 8.0},
@@ -354,6 +356,7 @@ func recursiveResize(entity *Entity) {
 	}
 }
 
+// Resize is called when a resize event happens
 func (s *UIFileSystem) Resize() {
 	s.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
 	s.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
@@ -367,6 +370,7 @@ func (s *UIFileSystem) Resize() {
 
 }
 
+// Update updates the system
 func (s *UIFileSystem) Update(dt float32) {
 	// Move target
 	if rl.IsWindowResized() || s.hasDoneFirstFrameResize == false {

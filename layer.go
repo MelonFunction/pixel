@@ -15,6 +15,7 @@ type Layer struct {
 	PixelData map[IntVec2]rl.Color
 }
 
+// Redraw redraws the layer
 func (l *Layer) Redraw() {
 	rl.BeginTextureMode(l.Canvas)
 	rl.ClearBackground(rl.Transparent)

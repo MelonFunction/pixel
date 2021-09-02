@@ -15,11 +15,13 @@ var (
 	tileWidthInput  *Entity
 )
 
+// ResizeUIShowDialog shows the dialog
 func ResizeUIShowDialog() {
 	resizeButtons.Show()
 	CurrentFile.DoingResize = true
 }
 
+// ResizeUIHideDialog hides the dialog
 func ResizeUIHideDialog() {
 	resizeButtons.Hide()
 	CurrentFile.DoingResize = false
@@ -79,6 +81,7 @@ func ResizeUIMakeInput(linkedValueCallback func() *int, tabNext *Entity) *Entity
 	return i
 }
 
+// NewResizeUI returns a new NewResizeUI
 func NewResizeUI() *Entity {
 	var closeResizeButton *Entity
 

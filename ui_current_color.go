@@ -24,6 +24,7 @@ const (
 	editingB
 )
 
+// SetUIColors moves the pointers in the color areas
 func SetUIColors(color rl.Color) {
 	cc := color
 	// If it's R, G or B which is incremented in the loop

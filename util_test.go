@@ -7,8 +7,8 @@ import (
 )
 
 func TestBlendWithOpacity(t *testing.T) {
-	a := rl.Color{255, 0, 0, 128}
-	b := rl.Color{255, 0, 0, 128}
+	a := rl.NewColor(255, 0, 0, 128)
+	b := rl.NewColor(255, 0, 0, 128)
 
 	c := BlendWithOpacity(a, b)
 	if c.A != 255 {

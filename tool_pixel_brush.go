@@ -148,11 +148,11 @@ func (t *PixelBrushTool) DrawPreview(x, y int) {
 
 	if t.isLineModifierDown() {
 		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
-			t.drawPixel(x, y, rl.Color{255, 255, 255, 192}, false)
+			t.drawPixel(x, y, rl.NewColor(255, 255, 255, 192), false)
 		})
 	}
 
-	t.drawPixel(x, y, rl.Color{255, 255, 255, 192}, false)
+	t.drawPixel(x, y, rl.NewColor(255, 255, 255, 192), false)
 }
 
 func (t *PixelBrushTool) String() string {
