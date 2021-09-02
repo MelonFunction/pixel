@@ -293,8 +293,6 @@ func (s *Scene) RemoveEntity(e *Entity) {
 // QueryTag can accept a Tag or a uint32. Multiple tags can be used which will
 // include all entities which have that singlular tag. A composite tag made
 // with s.BuildTag will exclude an entity if it's missing a component.
-// TODO replace s.entities with s.taggedEntities or something similar
-// TODO use multiple queries
 func (s *Scene) QueryTag(tags ...Tag) []*QueryResult {
 	s.RLock()
 	defer s.RUnlock()

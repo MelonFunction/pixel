@@ -217,16 +217,6 @@ func NewUIFileSystem() *UIFileSystem {
 // Draw draws everything from the file to the screen
 // TODO move all of this to system_render
 func (s *UIFileSystem) Draw() {
-	layer := CurrentFile.GetCurrentLayer()
-
-	// Draw
-	rl.BeginTextureMode(layer.Canvas)
-	if !layer.hasInitialFill {
-		CurrentFile.ClearBackground(layer.InitialFillColor)
-		layer.hasInitialFill = true
-	}
-	rl.EndTextureMode()
-
 	// Draw temp layer
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
