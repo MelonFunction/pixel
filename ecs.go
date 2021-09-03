@@ -272,8 +272,9 @@ func (s *Scene) RemoveEntity(e *Entity) {
 	s.Lock()
 	defer s.Unlock()
 
+	var entity *Entity
 	for i := 0; i < len(s.entities); i++ {
-		entity := s.entities[i]
+		entity = s.entities[i]
 		if e.ID == entity.ID {
 			for _, component := range s.components {
 				component.RLock()

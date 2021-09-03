@@ -47,9 +47,9 @@ func LayersUIMakeList(bounds rl.Rectangle) {
 
 // LayersUIRebuildList rebuilds the list
 func LayersUIRebuildList() {
+	layerListContainer.RemoveChild(layerList)
 	layerList.DestroyNested()
 	layerList.Destroy()
-	layerListContainer.RemoveChild(layerList)
 
 	if res, err := scene.QueryID(layerListContainer.ID); err == nil {
 		moveable := res.Components[layerListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)

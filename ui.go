@@ -479,15 +479,14 @@ func (entity *Entity) DestroyNested() {
 	if result, err := scene.QueryID(entity.ID); err == nil {
 		drawable := result.Components[scene.ComponentsMap["drawable"]].(*Drawable)
 		drawableParent, ok := drawable.DrawableType.(*DrawableParent)
-		if !ok {
-			entity.Destroy()
-			return
+		if ok {
+			for _, child := range drawableParent.Children {
+				child.DestroyNested()
+				drawableParent.Children = nil
+			}
 		}
 
-		for _, child := range drawableParent.Children {
-			child.DestroyNested()
-		}
-		drawableParent.Children = nil
+		entity.Destroy()
 	}
 }
 
