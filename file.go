@@ -853,26 +853,11 @@ func (f *File) Undo() {
 				current := f.CurrentLayer
 				f.SetCurrentLayer(typed.LayerIndex)
 				layer := f.GetCurrentLayer()
-				shouldDraw := true
-				for v, color := range layer.PixelData {
-					shouldDraw = true
-					for pos, psd := range typed.PixelState {
-						if v.X == pos.X && v.Y == pos.Y {
-							// Update current color with previous color
-							layer.PixelData[v] = psd.Prev
-							// Overwrite
-							color = psd.Prev
-							if psd.Prev == rl.Transparent {
-								shouldDraw = false
-							}
-						}
-					}
-					if shouldDraw {
-						layer.PixelData[v] = color
-					}
+				for pos, psd := range typed.PixelState {
+					layer.PixelData[pos] = psd.Prev
 				}
-				f.SetCurrentLayer(current)
 				layer.Redraw()
+				f.SetCurrentLayer(current)
 			case HistoryLayer:
 				switch typed.HistoryLayerAction {
 				case HistoryLayerActionDelete:
@@ -905,7 +890,6 @@ func (f *File) Undo() {
 // Redo redoes an action
 func (f *File) Redo() {
 	if f.historyOffset > 0 {
-		current := f.CurrentLayer
 		index := len(f.History) - f.historyOffset
 		f.historyOffset--
 		history := f.History[index]
@@ -918,27 +902,13 @@ func (f *File) Redo() {
 					process(typed.Actions[i])
 				}
 			case HistoryPixel:
+				current := f.CurrentLayer
 				f.SetCurrentLayer(typed.LayerIndex)
 				layer := f.GetCurrentLayer()
-				rl.BeginTextureMode(layer.Canvas)
-				rl.ClearBackground(rl.Transparent)
-				shouldDraw := true
-				for v, color := range layer.PixelData {
-					shouldDraw = true
-					for pos, psd := range typed.PixelState {
-						if v.X == pos.X && v.Y == pos.Y {
-							layer.PixelData[v] = psd.Current
-							color = psd.Current
-							if psd.Current == rl.Transparent {
-								shouldDraw = false
-							}
-						}
-					}
-					if shouldDraw {
-						rl.DrawPixel(v.X, v.Y, color)
-					}
+				for pos, psd := range typed.PixelState {
+					layer.PixelData[pos] = psd.Current
 				}
-				rl.EndTextureMode()
+				layer.Redraw()
 				f.SetCurrentLayer(current)
 			case HistoryLayer:
 				switch typed.HistoryLayerAction {
