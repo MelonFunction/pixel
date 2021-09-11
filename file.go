@@ -570,8 +570,8 @@ func (f *File) DeleteLayer(index int, appendHistory bool) error {
 
 		if appendHistory {
 			f.AppendHistory(HistoryLayer{HistoryLayerActionDelete, index})
-			f.SetCurrentLayer(len(f.Layers) - 2)
 		}
+		f.SetCurrentLayer(len(f.Layers) - 2)
 
 		return nil
 	}
