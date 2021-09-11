@@ -38,7 +38,7 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 	var recFill func(rx, ry int)
 	recFill = func(rx, ry int) {
 		if pd[IntVec2{rx, ry}] == clickedColor && color != clickedColor {
-			CurrentFile.DrawPixel(rx, ry, color, true)
+			pd[IntVec2{rx, ry}] = color
 			if rx+1 < CurrentFile.CanvasWidth {
 				recFill(rx+1, ry)
 			}
@@ -52,9 +52,9 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 				recFill(rx, ry-1)
 			}
 		}
-
 	}
 	recFill(x, y)
+	CurrentFile.GetCurrentLayer().Redraw()
 }
 
 // DrawPreview is for drawing the preview
