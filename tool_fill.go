@@ -38,7 +38,22 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 	var recFill func(rx, ry int)
 	recFill = func(rx, ry int) {
 		if pd[IntVec2{rx, ry}] == clickedColor && color != clickedColor {
+			// Set color
+			oldColor := pd[IntVec2{rx, ry}]
 			pd[IntVec2{rx, ry}] = color
+
+			// Append history
+			if oldColor != color {
+				latestHistoryInterface := CurrentFile.History[len(CurrentFile.History)-1]
+				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+				if ok {
+					ps := latestHistory.PixelState[IntVec2{rx, ry}]
+					ps.Current = color
+					ps.Prev = oldColor
+					latestHistory.PixelState[IntVec2{rx, ry}] = ps
+				}
+			}
+
 			if rx+1 < CurrentFile.CanvasWidth {
 				recFill(rx+1, ry)
 			}
