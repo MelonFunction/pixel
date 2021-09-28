@@ -162,7 +162,9 @@ type Animation struct {
 // File contains all the methods and data required to alter a file
 type File struct {
 	// Save directory of the file
-	PathDir  string
+	PathDir string
+	// Save location of the file
+	FileDir  string
 	Filename string
 
 	Layers       []*Layer // The last one is for tool previews
@@ -220,7 +222,13 @@ type File struct {
 // NewFile returns a pointer to a new File
 func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 
+	pathDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	f := &File{
+		PathDir:  pathDir,
 		Filename: "filename",
 		Layers: []*Layer{
 			NewLayer(canvasWidth, canvasHeight, "background", rl.Transparent, true),
@@ -956,9 +964,8 @@ func (f *File) Destroy() {
 	}
 }
 
-// Save saves the file differently depending on the extension
-// TODO remember last save path so resaving/exporting is faster
-func (f *File) Save(path string) {
+// SaveAs saves the file differently depending on the extension
+func (f *File) SaveAs(path string) {
 	file, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
@@ -1046,6 +1053,9 @@ func (f *File) Save(path string) {
 	// Change name in the tab
 	spl := strings.Split(path, "/")
 	f.Filename = spl[len(spl)-1]
+	f.PathDir = strings.Join(spl[:len(spl)-1], "/")
+	f.FileDir = path
+	log.Println(f.Filename, f.PathDir, f.FileDir)
 	EditorsUIRebuild()
 }
 
@@ -1054,6 +1064,7 @@ func Open(openPath string) *File {
 	f := NewFile(64, 64, 8, 8)
 	f.Filename = "Drawing"
 	f.PathDir = path.Dir(openPath)
+	f.FileDir = openPath
 
 	fi, err := os.Stat(openPath)
 	if err != nil {

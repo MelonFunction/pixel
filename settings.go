@@ -113,6 +113,7 @@ var (
 		"new":    {{rl.KeyLeftControl, rl.KeyN}},
 		"open":   {{rl.KeyLeftControl, rl.KeyO}},
 		"save":   {{rl.KeyLeftControl, rl.KeyS}},
+		"saveAs": {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyS}},
 		"export": {{rl.KeyLeftControl, rl.KeyE}},
 		"undo":   {{rl.KeyLeftControl, rl.KeyZ}},
 		"redo":   {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyZ}, {rl.KeyLeftControl, rl.KeyY}},

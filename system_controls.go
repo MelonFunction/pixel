@@ -85,7 +85,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
 						name := fc.GetFilename()
-						log.Println(name)
+						log.Println("Opened file: ", name)
 						returns <- name
 					default:
 						returns <- ""
@@ -110,7 +110,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					switch fc.Run() {
 					case int(gtk.RESPONSE_ACCEPT):
 						name := fc.GetFilename()
-						log.Println(name)
+						log.Println("Saved file: ", name)
 						returns <- name
 					default:
 						returns <- ""
@@ -258,8 +258,8 @@ func UIOpen() {
 	}
 }
 
-// UISave saves the file
-func UISave() {
+// UISaveAs saves the file
+func UISaveAs() {
 	UIControlSystemCmds <- "save"
 	waiting := true
 	for waiting {
@@ -267,7 +267,7 @@ func UISave() {
 		case name := <-UIControlSystemReturns:
 			waiting = false
 			if len(name) > 0 {
-				CurrentFile.Save(name)
+				CurrentFile.SaveAs(name)
 			}
 		}
 	}
@@ -421,7 +421,13 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			case "open":
 				UIOpen()
 			case "save":
-				UISave()
+				if len(CurrentFile.FileDir) > 0 {
+					CurrentFile.SaveAs(CurrentFile.FileDir)
+				} else {
+					UISaveAs()
+				}
+			case "saveAs":
+				UISaveAs()
 			case "undo":
 				CurrentFile.Undo()
 			case "redo":
