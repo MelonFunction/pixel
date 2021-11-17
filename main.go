@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path"
 
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
@@ -58,18 +57,18 @@ func main() {
 		Files = []*File{}
 
 		for _, argPath := range os.Args[1:] {
-			// Default path
-			pathDir, err := os.Getwd()
-			if err != nil {
+			// Try using explicit/full path
+			fi, err := os.Stat(argPath)
+			if err == nil {
+				if fi.Mode().IsRegular() {
+					newFile := Open(argPath)
+					Files = append(Files, newFile)
+					continue
+				}
+			} else {
 				log.Println(err)
 				return
 			}
-			log.Println(pathDir)
-			pathDir = path.Join(pathDir, argPath)
-			log.Println(pathDir)
-
-			newFile := Open(pathDir)
-			Files = append(Files, newFile)
 		}
 	}
 
