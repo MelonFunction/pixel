@@ -4,6 +4,15 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// BrushShape defines what shape the brush is
+type BrushShape int
+
+// Brush Shapes
+const (
+	BrushShapeSquare BrushShape = iota
+	BrushShapeCircle
+)
+
 // PixelBrushTool draws a single pixel at a time and can also double as an
 // eraser if eraser is true
 type PixelBrushTool struct {
@@ -12,6 +21,7 @@ type PixelBrushTool struct {
 	eraser                 bool
 	shouldConnectToLastPos bool
 	size                   int // brush size
+	shape                  BrushShape
 	// Don't draw over the same pixel multiple times, prevents opacity stacking
 	drawnPixels map[IntVec2]bool
 
@@ -68,28 +78,72 @@ func (t *PixelBrushTool) SetSize(size int) {
 	}
 }
 
-func (t *PixelBrushTool) drawPixel(x, y int, color rl.Color, fileDraw bool) {
+// genFillShape  d is the diamater/width
+func (t *PixelBrushTool) genFillShape(d int, shape BrushShape) map[IntVec2]bool {
+	r := make(map[IntVec2]bool)
 
-	var min, max int
-	if t.size%2 == 0 {
-		min = -t.size / 2
-		max = t.size/2 - 1
-	} else {
-		min = -t.size / 2
-		max = t.size / 2
-	}
-	for xx := min; xx <= max; xx++ {
-		for yy := min; yy <= max; yy++ {
-			// Don't draw already drawn pixels
-			if !t.exists(IntVec2{x + xx, y + yy}) {
-				if fileDraw {
-					CurrentFile.DrawPixel(x+xx, y+yy, color, true)
-					t.drawnPixels[IntVec2{x + xx, y + yy}] = true
-				} else {
-					rl.DrawPixel(x+xx, y+yy, color)
-				}
+	switch shape {
+	case BrushShapeCircle:
+		// TODO
+		d = d / 2
+		if d < 0 {
+			return nil
+		}
+		x, y := 0, 0
+		// Bresenham algorithm
+		x1, y1, err := -d, 0, 2-2*d
+		for {
+			r[IntVec2{x - x1, y + y1}] = true
+			r[IntVec2{x - y1, y - x1}] = true
+			r[IntVec2{x + x1, y - y1}] = true
+			r[IntVec2{x + y1, y + x1}] = true
+			d = err
+			if d > x1 {
+				x1++
+				err += x1*2 + 1
 			}
+			if d <= y1 {
+				y1++
+				err += y1*2 + 1
+			}
+			if x1 >= 0 {
+				break
+			}
+		}
+	case BrushShapeSquare:
+		var min, max int
+		if d%2 == 0 {
+			min = -d / 2
+			max = d/2 - 1
+		} else {
+			min = -d / 2
+			max = d / 2
+		}
+		for xx := min; xx <= max; xx++ {
+			for yy := min; yy <= max; yy++ {
+				// Don't draw already drawn pixels
+				r[IntVec2{xx, yy}] = true
+			}
+		}
+	default:
+		panic("Shape not specified")
+	}
 
+	return r
+}
+
+// drawPixel draws the brush stroke
+func (t *PixelBrushTool) drawPixel(x, y int, color rl.Color, fileDraw bool) {
+	sh := t.genFillShape(t.size, BrushShapeSquare)
+	for pos := range sh {
+		sx, sy := x+pos.X, y+pos.Y
+		if !t.exists(IntVec2{sx, sy}) {
+			if fileDraw {
+				CurrentFile.DrawPixel(sx, sy, color, true)
+				t.drawnPixels[IntVec2{sx, sy}] = true
+			} else {
+				rl.DrawPixel(sx, sy, color)
+			}
 		}
 	}
 }

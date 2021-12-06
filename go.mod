@@ -1,6 +1,6 @@
-module github.com/scarycoffee/pixel
+module github.com/MelonFunction/pixel
 
-replace github.com/scarycoffee/pixel => /home/brandon/Code/pixel
+replace github.com/MelonFunction/pixel => /home/brandon/Code/pixel
 
 go 1.16
 
