@@ -394,7 +394,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	makeColorArea()
 
 	hexColor = CurrentFile.LeftColor
-	hexInput = NewInput(sliderBounds, "#00000000", false, func(entity *Entity, button rl.MouseButton) {}, nil,
+	hexInput = NewInput(sliderBounds, "#00000000", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {}, nil,
 		func(entity *Entity, key rl.Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {

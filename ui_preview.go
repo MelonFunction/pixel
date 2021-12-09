@@ -282,7 +282,7 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 
 		}, nil)
 
-	previewCurrentAnimationTiming = NewInput(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight/2), "10", false,
+	previewCurrentAnimationTiming = NewInput(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight/2), "10", TextAlignCenter, false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		},

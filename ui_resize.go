@@ -32,7 +32,7 @@ func ResizeUIHideDialog() {
 // ResizeUIMakeInput is a helper function which binds to a value. Optionally,
 //an *Entity can be provided to switch focus to when tab is pressed.
 func ResizeUIMakeInput(linkedValueCallback func() *int, tabNext *Entity) *Entity {
-	i := NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(*linkedValueCallback()), false,
+	i := NewInput(rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight), fmt.Sprint(*linkedValueCallback()), TextAlignCenter, false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 		}, nil,
@@ -97,7 +97,7 @@ func NewResizeUI() *Entity {
 
 	closeResizeButton = NewButtonText(
 		rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		"X", false, func(entity *Entity, button rl.MouseButton) {
+		"X", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 			ResizeUIHideDialog()
 		}, nil)
 	// closeResizeButton.Hide()
@@ -111,47 +111,47 @@ func NewResizeUI() *Entity {
 	), []*Entity{
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			".", false, func(entity *Entity, button rl.MouseButton) {
+			".", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeTL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			"^", false, func(entity *Entity, button rl.MouseButton) {
+			"^", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeTC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			".", false, func(entity *Entity, button rl.MouseButton) {
+			".", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeTR
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			"<", false, func(entity *Entity, button rl.MouseButton) {
+			"<", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeCL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			".", false, func(entity *Entity, button rl.MouseButton) {
+			".", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeCC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			">", false, func(entity *Entity, button rl.MouseButton) {
+			">", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeCR
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			".", false, func(entity *Entity, button rl.MouseButton) {
+			".", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeBL
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			"v", false, func(entity *Entity, button rl.MouseButton) {
+			"v", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeBC
 			}, nil),
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2, UIFontSize*2),
-			".", false, func(entity *Entity, button rl.MouseButton) {
+			".", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.CanvasDirectionResizePreview = ResizeBR
 			}, nil),
 	}, FlowDirectionHorizontal)
@@ -172,7 +172,7 @@ func NewResizeUI() *Entity {
 		heightInput,
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight),
-			"Resize Canvas", false, func(entity *Entity, button rl.MouseButton) {
+			"Resize Canvas", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.ResizeCanvas(CurrentFile.CanvasWidthResizePreview, CurrentFile.CanvasHeightResizePreview, CurrentFile.CanvasDirectionResizePreview)
 			}, nil),
 	}, FlowDirectionVertical)
@@ -187,7 +187,7 @@ func NewResizeUI() *Entity {
 		tileHeightInput,
 		NewButtonText(
 			rl.NewRectangle(0, 0, UIFontSize*2*10, UIButtonHeight),
-			"Resize Tiles", false, func(entity *Entity, button rl.MouseButton) {
+			"Resize Tiles", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.ResizeTileSize(CurrentFile.TileWidthResizePreview, CurrentFile.TileHeightResizePreview)
 			}, nil),
 	}, FlowDirectionVertical)

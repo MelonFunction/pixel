@@ -66,7 +66,7 @@ func AnimationsUIMakeBox(y int, animation *Animation) *Entity {
 		FlowDirectionHorizontal)
 
 	isCurrent := CurrentFile.CurrentAnimation == y
-	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight, UIButtonHeight), animation.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight, UIButtonHeight), animation.Name, TextAlignCenter, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			// Convert back into fps

@@ -40,7 +40,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 		if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
 			size = lt.GetSize()
 		}
-		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3, UIButtonHeight), fmt.Sprintf("%d", size), false,
+		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3, UIButtonHeight), fmt.Sprintf("%d", size), TextAlignCenter, false,
 			func(entity *Entity, button rl.MouseButton) {
 				// button up
 			},

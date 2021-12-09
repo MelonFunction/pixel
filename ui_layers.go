@@ -146,7 +146,7 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 	}
 
 	isCurrent := CurrentFile.CurrentLayer == y
-	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, isCurrent,
+	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, TextAlignCenter, isCurrent,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
 			if hoverable, ok := entity.GetHoverable(); ok {

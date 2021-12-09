@@ -275,9 +275,20 @@ func (entity *Entity) GetDrawable() (t *Drawable, ok bool) {
 	return t, ok
 }
 
+// TextAlign defines how label should be aligned in bounds
+type TextAlign int
+
+// TextAlign
+const (
+	TextAlignLeft TextAlign = iota
+	TextAlignRight
+	TextAlignCenter
+)
+
 // DrawableText draws text
 type DrawableText struct {
 	Label string
+	TextAlign
 }
 
 // SetTexture sets the texture of a DrawableTexture to the path given.
@@ -706,6 +717,7 @@ func NewButtonTexture(
 // NewButtonText creates a button which renders text
 func NewButtonText(bounds rl.Rectangle,
 	label string,
+	align TextAlign,
 	selected bool,
 	onMouseUp func(entity *Entity, button rl.MouseButton),
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
@@ -716,7 +728,7 @@ func NewButtonText(bounds rl.Rectangle,
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{
-			DrawableType:   &DrawableText{label},
+			DrawableType:   &DrawableText{label, align},
 			DrawBorder:     true,
 			DrawBackground: true,
 		})
@@ -728,6 +740,7 @@ func NewButtonText(bounds rl.Rectangle,
 func NewInput(
 	bounds rl.Rectangle,
 	label string,
+	align TextAlign,
 	selected bool,
 	onMouseUp func(entity *Entity, button rl.MouseButton),
 	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
@@ -739,7 +752,7 @@ func NewInput(
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
 		AddComponent(drawable, &Drawable{
-			DrawableType:   &DrawableText{label},
+			DrawableType:   &DrawableText{label, align},
 			DrawBorder:     true,
 			DrawBackground: true,
 		})
