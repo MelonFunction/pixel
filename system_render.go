@@ -98,7 +98,9 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 	}
 
 	// debug bounds
-	// drawBorder(hoverable, moveable)
+	if ShowDebug {
+		drawBorder(hoverable, moveable)
+	}
 
 	switch t := drawable.DrawableType.(type) {
 	case *DrawableParent:
