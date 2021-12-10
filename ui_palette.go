@@ -8,6 +8,7 @@ import (
 
 var (
 	paletteEntity *Entity
+	paletteName   *Entity
 
 	// The palette item being dragged
 	movingColor *Moveable
@@ -17,6 +18,25 @@ var (
 func PaletteUIRemoveColor(child *Entity) {
 	paletteEntity.RemoveChild(child)
 	paletteEntity.FlowChildren()
+}
+
+// PaletteUIRebuildPalette rebuilds the current palette
+func PaletteUIRebuildPalette() {
+	if drawable, ok := paletteName.GetDrawable(); ok {
+		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+			drawableText.Label = Settings.PaletteData[CurrentFile.CurrentPalette].Name
+		}
+
+		if children, err := paletteEntity.GetChildren(); err == nil {
+			for i := len(children) - 1; i >= 0; i-- {
+				paletteEntity.RemoveChild(children[i])
+			}
+		}
+
+		for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
+			PaletteUIAddColor(color, i)
+		}
+	}
 }
 
 // PaletteUIAddColor adds a color to the palette
@@ -138,10 +158,41 @@ func PaletteUIAddColor(color rl.Color, index int) {
 
 // NewPaletteUI returns a new PaletteUI
 func NewPaletteUI(bounds rl.Rectangle) *Entity {
-	paletteEntity = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
+	paletteEntity = NewScrollableList(rl.NewRectangle(0, 0, bounds.Width, bounds.Height-UIButtonHeight/2), []*Entity{}, FlowDirectionHorizontal)
+
 	for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
 		PaletteUIAddColor(color, i)
 	}
 
-	return paletteEntity
+	paletteName = NewInput(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight/2),
+		Settings.PaletteData[CurrentFile.CurrentPalette].Name,
+		TextAlignCenter,
+		false, func(entity *Entity, button rl.MouseButton) {}, nil,
+		func(entity *Entity, key rl.Key) {
+			if drawable, ok := entity.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					if key == rl.KeyEnter {
+						RemoveCapturedInput()
+					} else if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
+						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
+					} else if len(drawableText.Label) < 8 {
+						drawableText.Label += string(rune(key))
+					}
+
+					Settings.PaletteData[CurrentFile.CurrentPalette].Name = drawableText.Label
+				}
+			}
+		})
+	if interactable, ok := paletteName.GetInteractable(); ok {
+		interactable.OnBlur = func(entity *Entity) {
+			SaveSettings()
+		}
+	}
+
+	paletteContainer := NewBox(bounds, []*Entity{
+		paletteName,
+		paletteEntity,
+	}, FlowDirectionVertical)
+
+	return paletteContainer
 }
