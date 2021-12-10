@@ -7,7 +7,8 @@ UI
   - Double click to change text in label, single click to activate it
 
 System
-  - Serialize state data into file (like .ase etc)
+  - Dropping a file on the window should open it
+  //- Serialize state data into file (like .ase etc)
     //- Animations
     //- Layers
 
@@ -20,7 +21,7 @@ Previews (including layers)
   
 Layers
   Actions
-    - Merge down
+    //- Merge down
     //- Delete
     //- Move up
     //- Move down
@@ -28,11 +29,11 @@ Layers
 
 Menubar
   Palettes
-    - Maybe show the palette name in the menu item?
-    - Save palette
-    - Load palette
-    - Rename palette
-    - Create palette from colors in image
+    //- Maybe show the palette name in the menu item?
+    //- Save palette
+    //- Load palette
+    //- Rename palette
+    //- Create palette from colors in image
 
 Tools
   Shade Brush
@@ -71,9 +72,9 @@ Features
     - Export
   
   Preview Panel
-    - Show the animation if the animation tab is selected
-      - Animation speed
-      - Pause/play
-    - Show the tile/map editor/placer if the tiles tab is selected
-      - Show the current tile being tiled in all directions
-      - Allow editing
+    //- Show the animation if the animation tab is selected
+      //- Animation speed
+      //- Pause/play
+    //- Show the tile/map editor/placer if the tiles tab is selected
+      //- Show the current tile being tiled in all directions
+      - Allow editing in preview panel

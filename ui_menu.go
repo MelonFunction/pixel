@@ -20,7 +20,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	// fileButton buttons
 	var newButton, saveButton, saveAsButton, openButton, resizeButton *Entity
 	// paletteButton buttons
-	var newPaletteButton, savePaletteButton, deletePaletteButton, duplicatePaletteButton, canvasToPaletteButton, spacerPaletteButton *Entity
+	var newPaletteButton, deletePaletteButton, duplicatePaletteButton, canvasToPaletteButton, spacerPaletteButton *Entity
 	// submenus
 	var fileSubMenu, paletteSubMenu *Entity
 
@@ -151,31 +151,70 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	//
 	// paletteButton contents
 	//
-	measured = rl.MeasureTextEx(*Font, "create from image ", UIFontSize, 1)
+	measured = rl.MeasureTextEx(*Font, "delete (hold shift) ", UIFontSize, 1)
 
 	newPaletteButton = NewButtonText(
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"new", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-		}, nil)
+			Settings.PaletteData = append(Settings.PaletteData, Palette{
+				Name: "new",
+			})
+			currentPalette := len(Settings.PaletteData) - 1
+			CurrentFile.CurrentPalette = currentPalette
+			SaveSettings()
 
-	savePaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"save", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+			PaletteUIRebuildPalette()
+			paletteSubMenu.Hide()
 		}, nil)
 
 	deletePaletteButton = NewButtonText(
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"delete", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+		"delete (hold shift)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+			if (rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift)) && CurrentFile.CurrentPalette != 0 {
+				Settings.PaletteData = append(Settings.PaletteData[:CurrentFile.CurrentPalette], Settings.PaletteData[CurrentFile.CurrentPalette+1:]...)
+				CurrentFile.CurrentPalette = 0
+				SaveSettings()
+
+				PaletteUIRebuildPalette()
+				paletteSubMenu.Hide()
+			}
 		}, nil)
 
 	duplicatePaletteButton = NewButtonText(
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"duplicate", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+			Settings.PaletteData = append(Settings.PaletteData, Settings.PaletteData[CurrentFile.CurrentPalette])
+			currentPalette := len(Settings.PaletteData) - 1
+			CurrentFile.CurrentPalette = currentPalette
+			Settings.PaletteData[currentPalette].Name += "(1)"
+			SaveSettings()
+
+			PaletteUIRebuildPalette()
+			paletteSubMenu.Hide()
 		}, nil)
 
 	canvasToPaletteButton = NewButtonText(
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"create from image", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+			colors := make(map[rl.Color]struct{})
+			for _, color := range CurrentFile.GetCurrentLayer().PixelData {
+				colors[color] = struct{}{}
+			}
+			colorsSlice := make([]rl.Color, 0)
+			for color := range colors {
+				colorsSlice = append(colorsSlice, color)
+			}
+
+			Settings.PaletteData = append(Settings.PaletteData, Palette{
+				Name: "new",
+				data: colorsSlice,
+			})
+			currentPalette := len(Settings.PaletteData) - 1
+			CurrentFile.CurrentPalette = currentPalette
+			SaveSettings()
+
+			PaletteUIRebuildPalette()
+			paletteSubMenu.Hide()
 		}, nil)
 
 	spacerPaletteButton = NewButtonText(
@@ -192,7 +231,6 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	bounds.Width = measured.X + 10
 	paletteSubMenu = NewScrollableList(bounds, []*Entity{
 		newPaletteButton,
-		savePaletteButton,
 		deletePaletteButton,
 		duplicatePaletteButton,
 		canvasToPaletteButton,
