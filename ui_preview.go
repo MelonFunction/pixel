@@ -203,6 +203,8 @@ func PreviewUIDrawTile(x, y int) {
 
 			}
 
+			rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
+
 			rl.EndTextureMode()
 		}
 	}
