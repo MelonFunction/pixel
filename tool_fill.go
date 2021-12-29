@@ -85,6 +85,11 @@ func (t *FillTool) DrawPreview(x, y int) {
 	}
 }
 
+// DrawUI is for drawing the UI
+func (t *FillTool) DrawUI(camera rl.Camera2D) {
+
+}
+
 func (t *FillTool) String() string {
 	return t.name
 }

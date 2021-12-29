@@ -37,14 +37,13 @@ func NewSelectorTool(name string) *SelectorTool {
 // MouseDown is for mouse down events
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
-
 	cl := CurrentFile.GetCurrentLayer()
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
 		t.firstPos = GetClampedCoordinates(x, y)
 
-		// Trigger resize event
+		// Resize selection
 		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
 		x1, y1 := CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]
 		if t.mouseReleased == true {
@@ -89,7 +88,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	t.lastPos = GetClampedCoordinates(x, y)
 	firstPosClone := t.firstPos
 
-	// Do resize event
+	// Bounds resizing
 	if CurrentFile.SelectionResizing == true {
 		if t.oldSelectionCopied == false {
 			t.oldSelectionCopied = true
@@ -112,22 +111,22 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 		// Resize selection bounds
 		switch t.resizeSide {
-		case ResizeCL: // left
-			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
-		case ResizeCR: // right
-			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
-		case ResizeTC: // top
-			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
-		case ResizeBC: // bottom
-			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
 		case ResizeTL:
 			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+		case ResizeTC:
 			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
 		case ResizeTR:
 			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
 			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+		case ResizeCL:
+			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+		case ResizeCR:
+			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
 		case ResizeBL:
 			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+		case ResizeBC:
 			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
 		case ResizeBR:
 			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
@@ -163,6 +162,13 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		return
 	}
 
+	if t.lastPos.X < firstPosClone.X {
+		t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
+	}
+	if t.lastPos.Y < firstPosClone.Y {
+		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
+	}
+
 	if t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
 		t.firstPos.Y > CurrentFile.SelectionBounds[1] && t.firstPos.Y < CurrentFile.SelectionBounds[3] {
 		CurrentFile.MoveSelection(x-t.firstPos.X, y-t.firstPos.Y)
@@ -180,24 +186,15 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 	}
 
-	if t.lastPos.X < firstPosClone.X {
-		t.lastPos.X, firstPosClone.X = firstPosClone.X, t.lastPos.X
-	}
-	if t.lastPos.Y < firstPosClone.Y {
-		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
-	}
-
 	// Reset the selection
 	// TODO it creates a lot of objects, not very efficient
 	CurrentFile.Selection = make(map[IntVec2]rl.Color)
 	CurrentFile.SelectionPixels = make([]rl.Color, 0, (t.lastPos.X-firstPosClone.X)*(t.lastPos.Y-firstPosClone.Y))
 
-	// TODO use comparison to make sure this is correct when using brush selector
 	CurrentFile.SelectionBounds[0] = firstPosClone.X
 	CurrentFile.SelectionBounds[1] = firstPosClone.Y
 	CurrentFile.SelectionBounds[2] = t.lastPos.X
 	CurrentFile.SelectionBounds[3] = t.lastPos.Y
-
 	CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
 
 	// Selection is being displayed on screen
@@ -223,50 +220,41 @@ func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 // DrawPreview is for drawing the preview
 func (t *SelectorTool) DrawPreview(x, y int) {
 	rl.ClearBackground(rl.Transparent)
-	// Preview pixel location with a suitable color
-	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
-	avg := (c.R + c.G + c.B) / 3
-	if avg > 255/2 {
-		rl.DrawPixel(x, y, rl.NewColor(0, 0, 0, 192))
-	} else {
-		rl.DrawPixel(x, y, rl.NewColor(255, 255, 255, 192))
-	}
 
-	// Draw selection overlay with handles after selection has finished
 	if CurrentFile.DoingSelection {
-		pa := IntVec2{CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]}
-		pb := IntVec2{CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]}
-
-		// top
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X), float32(pa.Y)),
-			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
-			1,
-			rl.NewColor(255, 255, 255, 192))
-		// bottom
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X), float32(pb.Y+2)),
-			rl.NewVector2(float32(pb.X+1), float32(pb.Y+2)),
-			1,
-			rl.NewColor(255, 255, 255, 192))
-		// left
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pa.X-1), float32(pa.Y)),
-			rl.NewVector2(float32(pa.X-1), float32(pb.Y+1)),
-			1,
-			rl.NewColor(255, 255, 255, 192))
-		// right
-		rl.DrawLineEx(
-			rl.NewVector2(float32(pb.X+1), float32(pa.Y)),
-			rl.NewVector2(float32(pb.X+1), float32(pb.Y+1)),
-			1,
-			rl.NewColor(255, 255, 255, 192))
-
 		// Draw the selected pixels
 		for loc, color := range CurrentFile.Selection {
 			rl.DrawPixel(loc.X, loc.Y, color)
 		}
 	}
+}
+
+// DrawUI is for drawing the UI
+func (t *SelectorTool) DrawUI(camera rl.Camera2D) {
+	if !CurrentFile.DoingSelection {
+		return
+	}
+	pos := rl.GetWorldToScreen2D(rl.Vector2{X: float32(CurrentFile.SelectionBounds[0]) - float32(CurrentFile.CanvasWidth)/2, Y: float32(CurrentFile.SelectionBounds[1]) - float32(CurrentFile.CanvasHeight)/2}, camera)
+	x := pos.X
+	y := pos.Y
+	w := float32(CurrentFile.SelectionBounds[2]-CurrentFile.SelectionBounds[0]+1) * camera.Zoom
+	h := float32(CurrentFile.SelectionBounds[3]-CurrentFile.SelectionBounds[1]+1) * camera.Zoom
+
+	if w <= 0 {
+		x += w - 1*camera.Zoom
+		w = w*-1 + 2*camera.Zoom
+	}
+	if h <= 0 {
+		y += h - 1*camera.Zoom
+		h = h*-1 + 2*camera.Zoom
+	}
+
+	p := camera.Zoom                                                          // pixel size
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x, y, w, h), 4, rl.White)         // main
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, w+p*2, p), 2, rl.White) // top
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y+h, w+p*2, p), 2, rl.White) // bottom
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, p, h+p*2), 2, rl.White) // left
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x+w, y-p, p, h+p*2), 2, rl.White) // right
 }
 
 func (t *SelectorTool) String() string {

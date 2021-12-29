@@ -49,6 +49,11 @@ func (t *PickerTool) DrawPreview(x, y int) {
 	}
 }
 
+// DrawUI is for drawing the UI
+func (t *PickerTool) DrawUI(camera rl.Camera2D) {
+
+}
+
 func (t *PickerTool) String() string {
 	return t.name
 }

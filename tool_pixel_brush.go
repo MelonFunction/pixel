@@ -209,6 +209,11 @@ func (t *PixelBrushTool) DrawPreview(x, y int) {
 	t.drawPixel(x, y, rl.NewColor(255, 255, 255, 192), false)
 }
 
+// DrawUI is for drawing the UI
+func (t *PixelBrushTool) DrawUI(camera rl.Camera2D) {
+
+}
+
 func (t *PixelBrushTool) String() string {
 	return t.name
 }

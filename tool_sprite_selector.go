@@ -73,6 +73,11 @@ func (t *SpriteSelectorTool) DrawPreview(x, y int) {
 	}
 }
 
+// DrawUI is for drawing the UI
+func (t *SpriteSelectorTool) DrawUI(camera rl.Camera2D) {
+
+}
+
 func (t *SpriteSelectorTool) String() string {
 	return t.name
 }

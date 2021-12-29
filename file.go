@@ -26,6 +26,10 @@ type Tool interface {
 	// Takes the current mouse position. Called every frame the tool is
 	// selected. Draw calls are drawn on the preview layer.
 	DrawPreview(x, y int)
+
+	// DrawUI is used to draw the UI for the current tool.
+	// This doesn't draw to the preview layer.
+	DrawUI(camera rl.Camera2D)
 }
 
 // HistoryLayerAction specifies the action which has been called upon the layer
@@ -206,6 +210,8 @@ type File struct {
 	SelectionBounds [4]int
 	// To check if the selection was moved
 	OrigSelectionBounds [4]int
+	// True if paste event has just happened
+	IsSelectionPasted bool
 
 	CurrentPalette int
 
@@ -244,8 +250,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		BrushSize:  1,
 		EraserSize: 1,
 
-		LeftColor:  rl.Red,
-		RightColor: rl.Blue,
+		LeftColor:  rl.White,
+		RightColor: rl.Black,
 
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
@@ -265,10 +271,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		TileHeightResizePreview:   tileHeight,
 	}
 
-	defer func() {
-		f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
-		f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
-	}()
+	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
 	return f
 }
@@ -317,6 +321,7 @@ func (f *File) ResizeTileSize(width, height int) {
 func (f *File) DeleteSelection() {
 	f.MoveSelection(0, 0)
 	f.Selection = make(map[IntVec2]rl.Color)
+	f.SelectionPixels = make([]rl.Color, 0)
 }
 
 // CancelSelection cancels the selection
@@ -365,7 +370,7 @@ func (f *File) Paste() {
 
 	// Appends history
 	f.SelectionMoving = false
-	IsSelectionPasted = true
+	f.IsSelectionPasted = true
 	f.MoveSelection(0, 0)
 	f.DoingSelection = true
 
@@ -389,11 +394,15 @@ func (f *File) Paste() {
 
 // CommitSelection "stamps" the floating selection in place
 func (f *File) CommitSelection() {
-	IsSelectionPasted = false
+	f.IsSelectionPasted = false
 	f.DoingSelection = false
 
 	if f.SelectionMoving {
 		f.SelectionMoving = false
+
+		if len(f.History) <= 0 {
+			return
+		}
 
 		cl := f.GetCurrentLayer()
 
@@ -435,9 +444,7 @@ func (f *File) CommitSelection() {
 
 	// Reset the selection
 	f.Selection = make(map[IntVec2]rl.Color)
-	// Not important to reset this, but I'm doing it just because it feels right
 	f.SelectionPixels = make([]rl.Color, 0, 0)
-
 }
 
 // MoveSelection moves the selection in the specified direction by one pixel
@@ -457,14 +464,14 @@ func (f *File) MoveSelection(dx, dy int) {
 				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
 				if ok {
 					ps := latestHistory.PixelState[loc]
-					if !IsSelectionPasted {
+					if !f.IsSelectionPasted {
 						ps.Current = rl.Transparent
 						ps.Prev = cl.PixelData[loc]
 						latestHistory.PixelState[loc] = ps
 					}
 				}
 
-				if !IsSelectionPasted {
+				if !f.IsSelectionPasted {
 					cl.PixelData[loc] = rl.Transparent
 				}
 			}

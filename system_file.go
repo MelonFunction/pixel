@@ -5,6 +5,8 @@ import (
 )
 
 // UIFileSystem handles non-ui drawing, including drawing the layer canvases
+// TODO rename because it has nothing to do with FileSystem, only drawing the
+// current File
 type UIFileSystem struct {
 	BasicSystem
 
@@ -74,7 +76,7 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 
 	// Right panel
-	var rgbWidth = UIButtonHeight * 5
+	var rgbWidth = UIButtonHeight * 5.5
 	var paletteWidth = UIButtonHeight * 3
 
 	rightPanel := NewBox(rl.NewRectangle(0, 0, rgbWidth+paletteWidth, float32(rl.GetScreenHeight())),
@@ -243,7 +245,6 @@ func (s *UIFileSystem) Draw() {
 	}
 
 	// Grid drawing
-	// TODO use a high resolution texture to draw grids, then we won't need to draw lines each draw call
 	if CurrentFile.DrawGrid {
 		for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
 			rl.DrawLine(
@@ -306,10 +307,17 @@ func (s *UIFileSystem) Draw() {
 		rl.DrawRectangleLinesEx(
 			rl.NewRectangle(x, y, w, h),
 			1,
-			rl.Red,
+			rl.White,
 		)
 	}
+	rl.EndMode2D()
 
+	rl.BeginMode2D(rl.Camera2D{Zoom: 1.0})
+	if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		CurrentFile.RightTool.DrawUI(s.Camera)
+	} else {
+		CurrentFile.LeftTool.DrawUI(s.Camera)
+	}
 	rl.EndMode2D()
 }
 

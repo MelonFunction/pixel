@@ -41,14 +41,14 @@ func main() {
 	// Make the files
 	Files = []*File{}
 
-	CurrentFile = NewFile(64, 64, 8, 8)
-	Files = append(Files, CurrentFile)
-
 	// Load the settings
 	err := LoadSettings()
 	if err != nil {
 		log.Println(err)
 	}
+
+	CurrentFile = NewFile(64, 64, 8, 8)
+	Files = append(Files, CurrentFile)
 
 	InitUI(NewKeymap(Settings.KeymapData))
 
@@ -74,6 +74,11 @@ func main() {
 
 	// show filename(s) in tab
 	EditorsUIRebuild()
+
+	// TODO remove this
+	if interactable, ok := toolSelector.GetInteractable(); ok {
+		interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
+	}
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
