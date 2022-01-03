@@ -24,13 +24,23 @@ type SelectorTool struct {
 	// Cancels the selection if a click happens without drag
 	firstDownTime time.Time
 	name          string
+
+	selectionFadeColor                     int
+	selectionFadeColorIncrease             int // increase by amount
+	selectionFadeColorIncreasing           bool
+	selectionFadeColorIncreaseTimeLast     time.Time
+	selectionFadeColorIncreaseTimeInterval time.Duration // fps independence
 }
 
 // NewSelectorTool returns the selector tool
 func NewSelectorTool(name string) *SelectorTool {
 	return &SelectorTool{
-		name:          name,
-		mouseReleased: true,
+		name:                                   name,
+		mouseReleased:                          true,
+		selectionFadeColor:                     128,
+		selectionFadeColorIncrease:             8,
+		selectionFadeColorIncreasing:           true,
+		selectionFadeColorIncreaseTimeInterval: time.Second / 60,
 	}
 }
 
@@ -249,12 +259,33 @@ func (t *SelectorTool) DrawUI(camera rl.Camera2D) {
 		h = h*-1 + 2*camera.Zoom
 	}
 
-	p := camera.Zoom                                                          // pixel size
-	rl.DrawRectangleLinesEx(rl.NewRectangle(x, y, w, h), 4, rl.White)         // main
-	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, w+p*2, p), 2, rl.White) // top
-	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y+h, w+p*2, p), 2, rl.White) // bottom
-	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, p, h+p*2), 2, rl.White) // left
-	rl.DrawRectangleLinesEx(rl.NewRectangle(x+w, y-p, p, h+p*2), 2, rl.White) // right
+	if time.Now().Sub(t.selectionFadeColorIncreaseTimeLast) > t.selectionFadeColorIncreaseTimeInterval {
+		t.selectionFadeColorIncreaseTimeLast = time.Now()
+
+		if t.selectionFadeColorIncreasing {
+			t.selectionFadeColor += t.selectionFadeColorIncrease
+		} else {
+			t.selectionFadeColor -= t.selectionFadeColorIncrease
+		}
+
+		if t.selectionFadeColor >= 255 {
+			t.selectionFadeColorIncreasing = false
+			t.selectionFadeColor = 255
+		} else if t.selectionFadeColor <= 128 {
+			t.selectionFadeColorIncreasing = true
+			t.selectionFadeColor = 128
+		}
+	}
+
+	// log.Println(t.selectionFadeColor)
+	c := rl.NewColor(uint8(t.selectionFadeColor), uint8(t.selectionFadeColor), uint8(t.selectionFadeColor), 255)
+
+	p := camera.Zoom                                                   // pixel size
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x, y, w, h), 4, c)         // main
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, w+p*2, p), 2, c) // top
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y+h, w+p*2, p), 2, c) // bottom
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x-p, y-p, p, h+p*2), 2, c) // left
+	rl.DrawRectangleLinesEx(rl.NewRectangle(x+w, y-p, p, h+p*2), 2, c) // right
 }
 
 func (t *SelectorTool) String() string {
