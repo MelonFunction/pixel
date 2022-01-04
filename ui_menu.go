@@ -197,12 +197,16 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 		"create from image", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
 			colors := make(map[rl.Color]struct{})
-			for _, color := range CurrentFile.GetCurrentLayer().PixelData {
-				colors[color] = struct{}{}
-			}
 			colorsSlice := make([]rl.Color, 0)
-			for color := range colors {
-				colorsSlice = append(colorsSlice, color)
+			cl := CurrentFile.GetCurrentLayer().PixelData
+			for x := 0; x < CurrentFile.CanvasWidth; x++ {
+				for y := 0; y < CurrentFile.CanvasHeight; y++ {
+					color := cl[IntVec2{x, y}]
+					if _, ok := colors[color]; !ok {
+						colorsSlice = append(colorsSlice, color)
+						colors[color] = struct{}{}
+					}
+				}
 			}
 
 			Settings.PaletteData = append(Settings.PaletteData, Palette{
