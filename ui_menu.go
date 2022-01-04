@@ -250,8 +250,14 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 			log.Panic(err)
 		}
 
+		var alreadyShowing bool
+
 		drawable.OnShow = func(entity *Entity) {
 			// add an entry for every palette available to be loaded
+			if alreadyShowing {
+				return
+			}
+			alreadyShowing = true
 			for i, palette := range Settings.PaletteData {
 				p := i
 				paletteSubMenu.PushChild(
@@ -265,6 +271,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 			paletteSubMenu.FlowChildren()
 		}
 		drawable.OnHide = func(entity *Entity) {
+			alreadyShowing = false
 			// clear away the available palettes
 			if children, err := paletteSubMenu.GetChildren(); err == nil {
 				for i := len(children) - 1; i >= originalChildrenLen; i-- {
