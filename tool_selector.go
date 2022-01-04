@@ -118,29 +118,41 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 
 		// Make a new image using the old data since ResizeNN is a pointer
 		t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
+		// log.Println("img loaded")
 
 		// Resize selection bounds
 		switch t.resizeSide {
 		case ResizeTL:
-			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
-			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+			CurrentFile.SelectionBounds[0] = t.lastPos.X
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y
 		case ResizeTC:
-			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y
 		case ResizeTR:
-			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
-			CurrentFile.SelectionBounds[1] = t.lastPos.Y + 1
+			CurrentFile.SelectionBounds[2] = t.lastPos.X
+			CurrentFile.SelectionBounds[1] = t.lastPos.Y
 		case ResizeCL:
-			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
+			CurrentFile.SelectionBounds[0] = t.lastPos.X
 		case ResizeCR:
-			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
+			CurrentFile.SelectionBounds[2] = t.lastPos.X
 		case ResizeBL:
-			CurrentFile.SelectionBounds[0] = t.lastPos.X + 1
-			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+			CurrentFile.SelectionBounds[0] = t.lastPos.X
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y
 		case ResizeBC:
-			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y
 		case ResizeBR:
-			CurrentFile.SelectionBounds[2] = t.lastPos.X - 1
-			CurrentFile.SelectionBounds[3] = t.lastPos.Y - 1
+			CurrentFile.SelectionBounds[2] = t.lastPos.X
+			CurrentFile.SelectionBounds[3] = t.lastPos.Y
+		}
+
+		// Don't include the first pixel location when resizing, selection
+		// needs to flip along an axis
+		CurrentFile.SelectionBounds[0] = CurrentFile.OrigSelectionBounds[0]
+		if CurrentFile.SelectionBounds[2] <= CurrentFile.SelectionBounds[0]-1 {
+			CurrentFile.SelectionBounds[0] = CurrentFile.OrigSelectionBounds[0] - 1
+		}
+		CurrentFile.SelectionBounds[1] = CurrentFile.OrigSelectionBounds[1]
+		if CurrentFile.SelectionBounds[3] <= CurrentFile.SelectionBounds[1]-1 {
+			CurrentFile.SelectionBounds[1] = CurrentFile.OrigSelectionBounds[1] - 1
 		}
 
 		// Do the resize
@@ -151,23 +163,36 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		// TODO it creates a lot of objects, not very efficient
 		CurrentFile.Selection = make(map[IntVec2]rl.Color)
 
+		// Handle selection flips
+		if newWidth <= 0 {
+			newWidth *= -1
+			newWidth += 2
+			t.oldImg.FlipHorizontal()
+		}
+		if newHeight <= 0 {
+			newHeight *= -1
+			newHeight += 2
+			t.oldImg.FlipVertical()
+		}
+
 		// TODO flip selection if inverted
 		if newWidth > 0 && newHeight > 0 {
 			t.oldImg.ResizeNN(newWidth, newHeight)
-			imgPixels := t.oldImg.GetPixels()
-			CurrentFile.SelectionPixels = imgPixels
+		}
 
-			// Dump pixels back into the selection
-			var count int
-			for y := CurrentFile.SelectionBounds[1]; y <= CurrentFile.SelectionBounds[3]; y++ {
-				for x := CurrentFile.SelectionBounds[0]; x <= CurrentFile.SelectionBounds[2]; x++ {
-					if count < len(imgPixels) {
-						CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
-						count++
-					}
+		// Dump pixels back into the selection
+		imgPixels := t.oldImg.GetPixels()
+		CurrentFile.SelectionPixels = imgPixels
+		var count int
+		for y := MinInt(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y <= MaxInt(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y++ {
+			for x := MinInt(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x <= MaxInt(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x++ {
+				if count < len(imgPixels) {
+					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
+					count++
 				}
 			}
 		}
+		// log.Println(newWidth, newHeight)
 
 		return
 	}
