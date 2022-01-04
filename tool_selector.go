@@ -56,39 +56,37 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		// Resize selection
 		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
 		x1, y1 := CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]
-		if t.mouseReleased == true {
-			if t.firstPos.Y >= y0-1 && t.firstPos.Y-1 <= y1 {
-				if t.firstPos.X == x0-1 {
-					t.resizeSide = ResizeCL
-					CurrentFile.SelectionResizing = true
-				}
-				if t.firstPos.X-1 == x1 {
-					t.resizeSide = ResizeCR
-					CurrentFile.SelectionResizing = true
-				}
+		if t.firstPos.Y >= y0-1 && t.firstPos.Y-1 <= y1 {
+			if t.firstPos.X == x0-1 {
+				t.resizeSide = ResizeCL
+				CurrentFile.SelectionResizing = true
 			}
-			if t.firstPos.X >= x0-1 && t.firstPos.X-1 <= x1 {
-				if t.firstPos.Y == y0-1 {
-					// TODO use bit operations
-					if t.resizeSide == ResizeCL {
-						t.resizeSide = ResizeTL
-					} else if t.resizeSide == ResizeCR {
-						t.resizeSide = ResizeTR
-					} else {
-						t.resizeSide = ResizeTC
-					}
-					CurrentFile.SelectionResizing = true
+			if t.firstPos.X-1 == x1 {
+				t.resizeSide = ResizeCR
+				CurrentFile.SelectionResizing = true
+			}
+		}
+		if t.firstPos.X >= x0-1 && t.firstPos.X-1 <= x1 {
+			if t.firstPos.Y == y0-1 {
+				// TODO use bit operations
+				if t.resizeSide == ResizeCL {
+					t.resizeSide = ResizeTL
+				} else if t.resizeSide == ResizeCR {
+					t.resizeSide = ResizeTR
+				} else {
+					t.resizeSide = ResizeTC
 				}
-				if t.firstPos.Y-1 == y1 {
-					if t.resizeSide == ResizeCL {
-						t.resizeSide = ResizeBL
-					} else if t.resizeSide == ResizeCR {
-						t.resizeSide = ResizeBR
-					} else {
-						t.resizeSide = ResizeBC
-					}
-					CurrentFile.SelectionResizing = true
+				CurrentFile.SelectionResizing = true
+			}
+			if t.firstPos.Y-1 == y1 {
+				if t.resizeSide == ResizeCL {
+					t.resizeSide = ResizeBL
+				} else if t.resizeSide == ResizeCR {
+					t.resizeSide = ResizeBR
+				} else {
+					t.resizeSide = ResizeBC
 				}
+				CurrentFile.SelectionResizing = true
 			}
 		}
 
@@ -209,6 +207,9 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		CurrentFile.MoveSelection(x-t.firstPos.X, y-t.firstPos.Y)
 		t.firstPos.X = x
 		t.firstPos.Y = y
+
+		CurrentFile.OrigSelectionBounds[0] = CurrentFile.SelectionBounds[0]
+		CurrentFile.OrigSelectionBounds[1] = CurrentFile.SelectionBounds[1]
 		return
 	}
 
@@ -230,7 +231,10 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	CurrentFile.SelectionBounds[1] = firstPosClone.Y
 	CurrentFile.SelectionBounds[2] = t.lastPos.X
 	CurrentFile.SelectionBounds[3] = t.lastPos.Y
-	CurrentFile.OrigSelectionBounds = CurrentFile.SelectionBounds
+	CurrentFile.OrigSelectionBounds[0] = CurrentFile.SelectionBounds[0]
+	CurrentFile.OrigSelectionBounds[1] = CurrentFile.SelectionBounds[1]
+	CurrentFile.OrigSelectionBounds[2] = CurrentFile.SelectionBounds[2]
+	CurrentFile.OrigSelectionBounds[3] = CurrentFile.SelectionBounds[3]
 
 	// Selection is being displayed on screen
 	CurrentFile.DoingSelection = true
