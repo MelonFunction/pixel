@@ -42,9 +42,11 @@ Tools
     //- Hold button to draw line
  
   Selector
+    - Resize should flip selection
     - CTRL+A should select everything (and switch tool to selector)
     - Draw in selection/mask
     - Rotate
+    - Resize UI controls should have handles larger than 1px
     //- Copy
     //- Paste
     //- Copy/paste while moving

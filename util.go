@@ -199,3 +199,19 @@ func GetTilePosition(x, y int) IntVec2 {
 		Y: y / CurrentFile.TileHeight * CurrentFile.TileHeight,
 	}
 }
+
+// MaxInt returns the bigger int of the two args
+func MaxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// MinInt returns the smaller int of the two args
+func MinInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
