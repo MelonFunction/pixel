@@ -50,7 +50,6 @@ func PreviewUISetTiming(timing float32) {
 
 // PreviewUIDrawTile draws the tile in the preview
 func PreviewUIDrawTile(x, y int) {
-	// TODO squish data from all layers
 	drawable, ok := previewArea.GetDrawable()
 	if ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
@@ -58,8 +57,20 @@ func PreviewUIDrawTile(x, y int) {
 			rl.BeginTextureMode(renderTexture.Texture)
 			rl.ClearBackground(rl.Black)
 
+			ratio := float32(CurrentFile.CanvasWidth) / float32(CurrentFile.CanvasHeight)
+
 			switch currentPreviewMode {
 			case previewCurrentSheet:
+
+				// Preview ratio
+				dst := rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width)*ratio, float32(renderTexture.Texture.Texture.Height))
+				if ratio >= 1 {
+					dst = rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)/ratio)
+				}
+				// Preview position/offset
+				dst.X = (float32(renderTexture.Texture.Texture.Width) - dst.Width) / 2
+				dst.Y = (float32(renderTexture.Texture.Texture.Height) - dst.Height) / 2
+
 				for _, layer := range CurrentFile.Layers {
 					if !layer.Hidden {
 						rl.DrawTexturePro(
@@ -70,7 +81,7 @@ func PreviewUIDrawTile(x, y int) {
 								0,
 								float32(CurrentFile.CanvasWidth),
 								-float32(CurrentFile.CanvasHeight)),
-							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+							dst,
 							rl.NewVector2(0, 0),
 							0,
 							rl.White,

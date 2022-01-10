@@ -75,11 +75,6 @@ func main() {
 	// show filename(s) in tab
 	EditorsUIRebuild()
 
-	// TODO remove this
-	if interactable, ok := toolSelector.GetInteractable(); ok {
-		interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
-	}
-
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Black)
