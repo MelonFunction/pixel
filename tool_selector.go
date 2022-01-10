@@ -222,7 +222,6 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 				}
 			}
 		}
-		// log.Println(newWidth, newHeight)
 
 		return
 	}
@@ -286,6 +285,7 @@ func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 	t.mouseReleased = true
 	t.oldSelectionCopied = false
 	CurrentFile.SelectionResizing = false
+	t.resizeSide = ResizeNone
 
 	if CurrentFile.SelectionBounds[2] < CurrentFile.SelectionBounds[0] {
 		CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[0] = CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]

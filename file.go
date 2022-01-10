@@ -291,6 +291,7 @@ const (
 	ResizeBL
 	ResizeBC
 	ResizeBR
+	ResizeNone
 )
 
 // ResizeCanvas resizes the canvas from a specified edge
