@@ -65,11 +65,18 @@ func PreviewUIDrawTile(x, y int) {
 				// Preview ratio
 				dst := rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width)*ratio, float32(renderTexture.Texture.Texture.Height))
 				if ratio >= 1 {
+					// Width bigger
 					dst = rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)/ratio)
 				}
 				// Preview position/offset
 				dst.X = (float32(renderTexture.Texture.Texture.Width) - dst.Width) / 2
 				dst.Y = (float32(renderTexture.Texture.Texture.Height) - dst.Height) / 2
+
+				// Borders/shutters
+				rl.DrawRectangle(0, 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(int(renderTexture.Texture.Texture.Width)-int(dst.X), 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, int(renderTexture.Texture.Texture.Width)-int(dst.Y), int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
 
 				for _, layer := range CurrentFile.Layers {
 					if !layer.Hidden {
@@ -185,11 +192,30 @@ func PreviewUIDrawTile(x, y int) {
 						}
 					}
 				}
+
+				ratio := float32(CurrentFile.TileWidth) / float32(CurrentFile.TileHeight)
+
 				// Convert tile number to coords
 				tilePos := IntVec2{
 					X: (previewAnimationFrame * CurrentFile.TileWidth) % CurrentFile.CanvasWidth,
 					Y: ((previewAnimationFrame * CurrentFile.TileHeight) / (CurrentFile.CanvasWidth)) * CurrentFile.TileHeight,
 				}
+
+				// Preview ratio
+				dst := rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width)*ratio, float32(renderTexture.Texture.Texture.Height))
+				if ratio >= 1 {
+					// Width bigger
+					dst = rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)/ratio)
+				}
+				// Preview position/offset
+				dst.X = (float32(renderTexture.Texture.Texture.Width) - dst.Width) / 2
+				dst.Y = (float32(renderTexture.Texture.Texture.Height) - dst.Height) / 2
+
+				// Borders/shutters
+				rl.DrawRectangle(0, 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(int(renderTexture.Texture.Texture.Width)-int(dst.X), 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, int(renderTexture.Texture.Texture.Width)-int(dst.Y), int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
 
 				for i, layer := range CurrentFile.Layers {
 					if i == len(CurrentFile.Layers)-1 {
@@ -198,13 +224,12 @@ func PreviewUIDrawTile(x, y int) {
 					if !layer.Hidden {
 						rl.DrawTexturePro(
 							layer.Canvas.Texture,
-							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
 							rl.NewRectangle(
 								float32(tilePos.X),
 								-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
 								float32(CurrentFile.TileWidth),
 								-float32(CurrentFile.TileHeight)),
-							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+							dst,
 							rl.NewVector2(0, 0),
 							0,
 							rl.White,
