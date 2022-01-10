@@ -48,6 +48,7 @@ func NewSelectorTool(name string) *SelectorTool {
 func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	// Only get the first position after mouse has just been clicked
 	cl := CurrentFile.GetCurrentLayer()
+
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
@@ -233,7 +234,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
 	}
 
-	if t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
+	if CurrentFile.DoingSelection && t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
 		t.firstPos.Y > CurrentFile.SelectionBounds[1] && t.firstPos.Y < CurrentFile.SelectionBounds[3] {
 		CurrentFile.MoveSelection(x-t.firstPos.X, y-t.firstPos.Y)
 		t.firstPos.X = x
