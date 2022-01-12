@@ -266,6 +266,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 						palette.Name, TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
 							CurrentFile.CurrentPalette = p
 							PaletteUIRebuildPalette()
+							PaletteUIHideCurrentColorIndicator()
 						}, nil))
 			}
 			paletteSubMenu.FlowChildren()

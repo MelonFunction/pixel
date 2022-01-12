@@ -12,12 +12,82 @@ var (
 
 	// The palette item being dragged
 	movingColor *Moveable
+
+	// Currently selected color
+	currentColorEntity *Entity
+	// Triangle denoting the currently selected color
+	// This will hide when the color is changed in the color picker or the
+	// color is deleted
+	currentColorIndicatorEntity *Entity
 )
 
 // PaletteUIRemoveColor removes an color from the palette
 func PaletteUIRemoveColor(child *Entity) {
 	paletteEntity.RemoveChild(child)
 	paletteEntity.FlowChildren()
+}
+
+// PaletteUIUpdateCurrentColorIndicator moves the currentColorIndicatorEntity
+// to the position of the currently selected color
+func PaletteUIUpdateCurrentColorIndicator() {
+	// Create
+	if currentColorIndicatorEntity == nil {
+		if currentColorEntity == nil {
+			return
+		}
+		cm, ok := currentColorEntity.GetMoveable()
+		if !ok {
+			return
+		}
+		currentColorIndicatorEntity = NewRenderTexture(cm.Bounds, nil, nil)
+
+		if r, ok := currentColorIndicatorEntity.GetResizeable(); ok {
+			r.OnResize = func(entity *Entity) {
+				PaletteUIUpdateCurrentColorIndicator()
+			}
+		}
+	}
+
+	// Move and recolor
+	if currentColorEntity != nil {
+		cm, ok := currentColorEntity.GetMoveable()
+		if !ok {
+			return
+		}
+		im, ok := currentColorIndicatorEntity.GetMoveable()
+		if !ok {
+			return
+		}
+
+		currentColorIndicatorEntity.Show()
+
+		if t, ok := currentColorIndicatorEntity.GetDrawable(); ok {
+			cc := CurrentFile.LeftColor
+			if tex, ok := t.DrawableType.(*DrawableRenderTexture); ok {
+				rl.BeginTextureMode(tex.Texture)
+				rl.ClearBackground(rl.Transparent)
+				rl.DrawTriangle(
+					rl.NewVector2(0, 0),
+					rl.NewVector2(0, 0+cm.Bounds.Height/2),
+					rl.NewVector2(0+cm.Bounds.Width/2, 0),
+					rl.NewColor(cc.R+128, cc.G+128, cc.B+128, 255),
+				)
+				rl.EndTextureMode()
+			}
+		}
+
+		im.Bounds = cm.Bounds
+	}
+
+	// Show on top
+	currentColorIndicatorEntity.Scene.MoveEntityToEnd(currentColorIndicatorEntity)
+}
+
+// PaletteUIHideCurrentColorIndicator hides the currentColorIndicatorEntity
+func PaletteUIHideCurrentColorIndicator() {
+	if currentColorIndicatorEntity != nil {
+		currentColorIndicatorEntity.Hide()
+	}
 }
 
 // PaletteUIRebuildPalette rebuilds the current palette
@@ -34,13 +104,17 @@ func PaletteUIRebuildPalette() {
 		}
 
 		for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
-			PaletteUIAddColor(color, i)
+			c := PaletteUIAddColor(color, i)
+			if i == 0 {
+				currentColorEntity = c
+			}
 		}
 	}
+	PaletteUIUpdateCurrentColorIndicator()
 }
 
 // PaletteUIAddColor adds a color to the palette
-func PaletteUIAddColor(color rl.Color, index int) {
+func PaletteUIAddColor(color rl.Color, index int) *Entity {
 	var w float32
 	var h float32
 	if res, err := scene.QueryID(paletteEntity.ID); err == nil {
@@ -58,6 +132,7 @@ func PaletteUIAddColor(color rl.Color, index int) {
 			case rl.MouseLeftButton:
 				CurrentColorSetLeftColor(color)
 				SetUIColors(color)
+				currentColorEntity = entity
 
 				children, err := paletteEntity.GetChildren()
 				if err != nil {
@@ -110,16 +185,19 @@ func PaletteUIAddColor(color rl.Color, index int) {
 					SaveSettings()
 				}
 				paletteEntity.FlowChildren()
+				PaletteUIUpdateCurrentColorIndicator()
 			case rl.MouseRightButton:
 				SetUIColors(color)
 				CurrentColorSetRightColor(color)
 			case rl.MouseMiddleButton:
-				PaletteUIRemoveColor(e)
-				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
-					Settings.PaletteData[CurrentFile.CurrentPalette].data[:index],
-					Settings.PaletteData[CurrentFile.CurrentPalette].data[index+1:]...,
-				)
-				SaveSettings()
+				// TODO Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
+
+				// PaletteUIRemoveColor(e)
+				// Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
+				// 	Settings.PaletteData[CurrentFile.CurrentPalette].data[:index],
+				// 	Settings.PaletteData[CurrentFile.CurrentPalette].data[index+1:]...,
+				// )
+				// SaveSettings()
 			}
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
@@ -154,6 +232,8 @@ func PaletteUIAddColor(color rl.Color, index int) {
 
 	paletteEntity.PushChild(e)
 	paletteEntity.FlowChildren()
+
+	return e
 }
 
 // NewPaletteUI returns a new PaletteUI
@@ -161,7 +241,10 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	paletteEntity = NewScrollableList(rl.NewRectangle(0, 0, bounds.Width, bounds.Height-UIButtonHeight/2), []*Entity{}, FlowDirectionHorizontal)
 
 	for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
-		PaletteUIAddColor(color, i)
+		c := PaletteUIAddColor(color, i)
+		if i == 0 {
+			currentColorEntity = c
+		}
 	}
 
 	paletteName = NewInput(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight/2),
@@ -193,6 +276,8 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 		paletteName,
 		paletteEntity,
 	}, FlowDirectionVertical)
+
+	PaletteUIUpdateCurrentColorIndicator()
 
 	return paletteContainer
 }

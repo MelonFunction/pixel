@@ -259,6 +259,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
+			PaletteUIHideCurrentColorIndicator()
 			if moveable, ok := rgbArea.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				my := rl.GetMouseY()
@@ -312,6 +313,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
 			// button down
+			PaletteUIHideCurrentColorIndicator()
 			if moveable, ok := colorSlider.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				mx -= int(moveable.Bounds.X)
