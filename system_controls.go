@@ -404,6 +404,11 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			case "flipVertical":
 				CurrentFile.FlipVertical()
 
+			case "paletteNext":
+				PaletteUINextColor()
+			case "palettePrevious":
+				PaletteUIPreviousColor()
+
 			case "layerUp":
 				CurrentFile.CurrentLayer++
 				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {

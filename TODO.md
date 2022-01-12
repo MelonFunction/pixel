@@ -16,7 +16,7 @@ Testing
   - lol
 
 Previews (including layers)
-  - non-square canvas shouldn't squish
+  //- maintain aspect ratios
   - allow movement/zoom
   
 Layers
@@ -26,6 +26,10 @@ Layers
     //- Move up
     //- Move down
     //- Hide/show
+
+Palettes
+  - Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
+  //- Highlight left/right color after click (un-highlight if color adjusted with controls)
 
 Menubar
   Palettes

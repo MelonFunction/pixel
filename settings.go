@@ -97,6 +97,9 @@ var (
 		"flipHorizontal": {{rl.KeyZ}},
 		"flipVertical":   {{rl.KeyV}},
 
+		"paletteNext":     {{rl.KeyRightBracket}},
+		"palettePrevious": {{rl.KeyLeftBracket}},
+
 		"layerUp":   {{rl.KeyLeftShift, rl.KeyUp}},
 		"layerDown": {{rl.KeyLeftShift, rl.KeyDown}},
 
