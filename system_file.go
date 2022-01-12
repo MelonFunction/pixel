@@ -174,6 +174,28 @@ func NewUIFileSystem() *UIFileSystem {
 	}
 
 	// Left panel
+	leftPanel := NewBox(rl.NewRectangle(0, 0, rgbWidth, float32(rl.GetScreenHeight())),
+		[]*Entity{}, FlowDirectionNone)
+	leftPanel.Snap([]SnapData{
+		{editors, SideTop, SideBottom},
+	})
+	if drawable, ok := leftPanel.GetDrawable(); ok {
+		// drawable.DrawBorder = true
+		drawable.DrawBackground = true
+	}
+	if res, ok := leftPanel.GetResizeable(); ok {
+		res.OnResize = func(entity *Entity) {
+			if moveable, ok := entity.GetMoveable(); ok {
+				moveable.Bounds.Height = float32(rl.GetScreenHeight())
+			}
+		}
+	}
+	if interactable, ok := leftPanel.GetInteractable(); ok {
+		interactable.OnMouseDown = func(entity *Entity, button rl.MouseButton, isHeld bool) {
+
+		}
+	}
+
 	preview := NewPreviewUI(rl.NewRectangle(
 		0,
 		0,
