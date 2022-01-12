@@ -284,6 +284,37 @@ func (s *UIFileSystem) Draw() {
 				-CurrentFile.CanvasHeight/2+y,
 				rl.White)
 		}
+	} else {
+		// Draw canvas outline
+		rl.DrawLine(
+			-CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2,
+			CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2,
+			rl.White,
+		)
+		rl.DrawLine(
+			-CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2,
+			-CurrentFile.CanvasWidth/2,
+			CurrentFile.CanvasHeight/2,
+			rl.White,
+		)
+		rl.DrawLine(
+			-CurrentFile.CanvasWidth/2,
+			CurrentFile.CanvasHeight/2,
+			CurrentFile.CanvasWidth/2,
+			CurrentFile.CanvasHeight/2,
+			rl.White,
+		)
+		rl.DrawLine(
+			CurrentFile.CanvasWidth/2,
+			-CurrentFile.CanvasHeight/2,
+			CurrentFile.CanvasWidth/2,
+			CurrentFile.CanvasHeight/2,
+			rl.White,
+		)
+
 	}
 
 	// Show outline for canvas resize preview
