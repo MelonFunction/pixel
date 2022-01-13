@@ -95,7 +95,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		t.mouseReleased = false
 	}
 
-	t.lastPos = GetClampedCoordinates(x, y)
+	t.lastPos = IntVec2{x, y}
 	firstPosClone := t.firstPos
 
 	// Bounds resizing
@@ -205,7 +205,6 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 			t.oldImg.FlipVertical()
 		}
 
-		// TODO flip selection if inverted
 		if newWidth > 0 && newHeight > 0 {
 			t.oldImg.ResizeNN(newWidth, newHeight)
 		}
