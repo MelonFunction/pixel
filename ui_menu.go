@@ -16,13 +16,9 @@ var (
 // NewMenuUI returns a new entity
 func NewMenuUI(bounds rl.Rectangle) *Entity {
 	// Top level dropdown buttons
-	var fileButton, paletteButton *Entity
-	// fileButton buttons
-	var newButton, saveButton, saveAsButton, openButton, resizeButton *Entity
-	// paletteButton buttons
-	var newPaletteButton, deletePaletteButton, duplicatePaletteButton, canvasToPaletteButton, spacerPaletteButton *Entity
+	var fileButton, editButton, paletteButton *Entity
 	// submenus
-	var fileSubMenu, paletteSubMenu *Entity
+	var fileSubMenu, editSubMenu, paletteSubMenu *Entity
 
 	// button is top level menu button, dropdown is the child elements,
 	showDropdown := func(button *Entity, dropdown *Entity) {
@@ -79,6 +75,13 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 			showDropdown(entity, fileSubMenu)
 		}, nil)
 
+	measured = rl.MeasureTextEx(*Font, " edit ", UIFontSize, 1)
+	editButton = NewButtonText(
+		rl.NewRectangle(100, 100, measured.X+10, UIFontSize*2),
+		" edit ", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
+			showDropdown(entity, editSubMenu)
+		}, nil)
+
 	measured = rl.MeasureTextEx(*Font, " palette ", UIFontSize, 1)
 	paletteButton = NewButtonText(
 		rl.NewRectangle(100, 100, measured.X+10, UIFontSize*2),
@@ -89,159 +92,154 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	// Add to the bar
 	menuButtons = NewBox(bounds, []*Entity{
 		fileButton,
+		editButton,
 		paletteButton,
 	}, FlowDirectionHorizontal)
-
 	menuButtons.FlowChildren()
 
-	//
-	// fileButton contents
-	//
-
-	measured = rl.MeasureTextEx(*Font, "save as ", UIFontSize, 1)
-
-	newButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"new", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			UINew()
-		}, nil)
-
-	saveButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"save", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			if len(CurrentFile.FileDir) > 0 {
-				CurrentFile.SaveAs(CurrentFile.FileDir)
-			} else {
-				UISaveAs()
-			}
-		}, nil)
-
-	saveAsButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"save as", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			UISaveAs()
-		}, nil)
-
-	openButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"open", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			UIOpen()
-		}, nil)
-
-	resizeButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"resize", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			ResizeUIShowDialog()
-		}, nil)
-
 	// File menu
+	measured = rl.MeasureTextEx(*Font, "save as ", UIFontSize, 1)
 	bounds.Y += UIFontSize * 2
 	bounds.Height = float32(rl.GetScreenHeight())
 	bounds.Width = measured.X + 10
 	fileSubMenu = NewBox(bounds, []*Entity{
-		newButton,
-		saveButton,
-		saveAsButton,
-		openButton,
-		resizeButton,
+		NewButtonText( // New
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"new", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				UINew()
+			}, nil),
+		NewButtonText( // Save
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"save", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				if len(CurrentFile.FileDir) > 0 {
+					CurrentFile.SaveAs(CurrentFile.FileDir)
+				} else {
+					UISaveAs()
+				}
+			}, nil),
+		NewButtonText( // Save As
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"save as", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				UISaveAs()
+			}, nil),
+		NewButtonText( // Open
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"open", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				UIOpen()
+			}, nil),
+		NewButtonText( // Resize
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"resize", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				ResizeUIShowDialog()
+			}, nil),
 	}, FlowDirectionVertical)
 	fileSubMenu.FlowChildren()
 	fileSubMenu.Hide()
 
-	//
-	// paletteButton contents
-	//
-	measured = rl.MeasureTextEx(*Font, "delete (hold shift) ", UIFontSize, 1)
-
-	newPaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"new", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			Settings.PaletteData = append(Settings.PaletteData, Palette{
-				Name: "new",
-			})
-			currentPalette := len(Settings.PaletteData) - 1
-			CurrentFile.CurrentPalette = currentPalette
-			SaveSettings()
-
-			PaletteUIRebuildPalette()
-			paletteSubMenu.Hide()
-		}, nil)
-
-	deletePaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"delete (hold shift)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			if (rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift)) && CurrentFile.CurrentPalette != 0 {
-				Settings.PaletteData = append(Settings.PaletteData[:CurrentFile.CurrentPalette], Settings.PaletteData[CurrentFile.CurrentPalette+1:]...)
-				CurrentFile.CurrentPalette = 0
-				SaveSettings()
-
-				PaletteUIRebuildPalette()
-				paletteSubMenu.Hide()
-			}
-		}, nil)
-
-	duplicatePaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"duplicate", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			Settings.PaletteData = append(Settings.PaletteData, Settings.PaletteData[CurrentFile.CurrentPalette])
-			currentPalette := len(Settings.PaletteData) - 1
-			CurrentFile.CurrentPalette = currentPalette
-			Settings.PaletteData[currentPalette].Name += "(1)"
-			SaveSettings()
-
-			PaletteUIRebuildPalette()
-			paletteSubMenu.Hide()
-		}, nil)
-
-	canvasToPaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"create from image", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
-			colors := make(map[rl.Color]struct{})
-			colorsSlice := make([]rl.Color, 0)
-			cl := CurrentFile.GetCurrentLayer().PixelData
-			for x := 0; x < CurrentFile.CanvasWidth; x++ {
-				for y := 0; y < CurrentFile.CanvasHeight; y++ {
-					color := cl[IntVec2{x, y}]
-					if _, ok := colors[color]; !ok {
-						colorsSlice = append(colorsSlice, color)
-						colors[color] = struct{}{}
-					}
-				}
-			}
-
-			Settings.PaletteData = append(Settings.PaletteData, Palette{
-				Name: "new",
-				data: colorsSlice,
-			})
-			currentPalette := len(Settings.PaletteData) - 1
-			CurrentFile.CurrentPalette = currentPalette
-			SaveSettings()
-
-			PaletteUIRebuildPalette()
-			paletteSubMenu.Hide()
-		}, nil)
-
-	spacerPaletteButton = NewButtonText(
-		rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
-		"---- Load ----", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
-		}, nil)
-
-	// Palette menu
-	fileButtonMoveable, ok := fileButton.GetMoveable()
+	// Edit menu
+	measured = rl.MeasureTextEx(*Font, "flip (horizontal) ", UIFontSize, 1)
+	fileButtonMoveable, ok := editButton.GetMoveable()
 	if !ok {
 		log.Panic("fileButton error")
 	}
 	bounds.X += fileButtonMoveable.Bounds.Width
 	bounds.Width = measured.X + 10
+	editSubMenu = NewBox(bounds, []*Entity{
+		NewButtonText( // Flip (horizontal)
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"flip (horizontal)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.FlipHorizontal()
+			}, nil),
+		NewButtonText( // Flip (vertical)
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"flip (vertical)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.FlipVertical()
+			}, nil),
+	}, FlowDirectionVertical)
+	editSubMenu.FlowChildren()
+	editSubMenu.Hide()
+
+	// Palette menu
+	measured = rl.MeasureTextEx(*Font, "delete (hold shift) ", UIFontSize, 1)
+	editButtonMoveable, ok := editButton.GetMoveable()
+	if !ok {
+		log.Panic("editButton error")
+	}
+	bounds.X += editButtonMoveable.Bounds.Width
+	bounds.Width = measured.X + 10
 	paletteSubMenu = NewScrollableList(bounds, []*Entity{
-		newPaletteButton,
-		deletePaletteButton,
-		duplicatePaletteButton,
-		canvasToPaletteButton,
-		spacerPaletteButton,
+		NewButtonText( // New
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"new", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				Settings.PaletteData = append(Settings.PaletteData, Palette{
+					Name: "new",
+				})
+				currentPalette := len(Settings.PaletteData) - 1
+				CurrentFile.CurrentPalette = currentPalette
+				SaveSettings()
+
+				PaletteUIRebuildPalette()
+				paletteSubMenu.Hide()
+			}, nil),
+		NewButtonText( // Delete
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"delete (hold shift)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				if (rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift)) && CurrentFile.CurrentPalette != 0 {
+					Settings.PaletteData = append(Settings.PaletteData[:CurrentFile.CurrentPalette], Settings.PaletteData[CurrentFile.CurrentPalette+1:]...)
+					CurrentFile.CurrentPalette = 0
+					SaveSettings()
+
+					PaletteUIRebuildPalette()
+					paletteSubMenu.Hide()
+				}
+			}, nil),
+		NewButtonText( // Duplicate
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"duplicate", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				Settings.PaletteData = append(Settings.PaletteData, Settings.PaletteData[CurrentFile.CurrentPalette])
+				currentPalette := len(Settings.PaletteData) - 1
+				CurrentFile.CurrentPalette = currentPalette
+				Settings.PaletteData[currentPalette].Name += "(1)"
+				SaveSettings()
+
+				PaletteUIRebuildPalette()
+				paletteSubMenu.Hide()
+			}, nil),
+		NewButtonText( // Create From Image
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"create from image", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				colors := make(map[rl.Color]struct{})
+				colorsSlice := make([]rl.Color, 0)
+				cl := CurrentFile.GetCurrentLayer().PixelData
+				for x := 0; x < CurrentFile.CanvasWidth; x++ {
+					for y := 0; y < CurrentFile.CanvasHeight; y++ {
+						color := cl[IntVec2{x, y}]
+						if _, ok := colors[color]; !ok {
+							colorsSlice = append(colorsSlice, color)
+							colors[color] = struct{}{}
+						}
+					}
+				}
+
+				Settings.PaletteData = append(Settings.PaletteData, Palette{
+					Name: "new",
+					data: colorsSlice,
+				})
+				currentPalette := len(Settings.PaletteData) - 1
+				CurrentFile.CurrentPalette = currentPalette
+				SaveSettings()
+
+				PaletteUIRebuildPalette()
+				paletteSubMenu.Hide()
+			}, nil),
+		NewButtonText( // Load Items Spacer
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"---- Load ----", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {
+			}, nil),
 	}, FlowDirectionVertical)
 	paletteSubMenu.FlowChildren()
 	paletteSubMenu.Hide()
+
 	if drawable, ok := paletteSubMenu.GetDrawable(); ok {
 		var originalChildrenLen int
 		if children, err := paletteSubMenu.GetChildren(); err == nil {
