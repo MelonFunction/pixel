@@ -377,13 +377,11 @@ func (f *File) Copy() {
 
 // Paste the selection
 func (f *File) Paste() {
-	// f.CommitSelection()
 
 	// Appends history
 	f.SelectionMoving = false
 	f.IsSelectionPasted = true
 	f.DoingSelection = true
-	f.MoveSelection(0, 0)
 
 	f.Selection = make(map[IntVec2]rl.Color)
 	for v, c := range CopiedSelection {
@@ -396,6 +394,9 @@ func (f *File) Paste() {
 	for i, v := range CopiedSelectionBounds {
 		f.SelectionBounds[i] = v
 	}
+
+	// Use this to copy selection to buffer
+	f.MoveSelection(0, 0)
 
 	// TODO better way to switch tool
 	if interactable, ok := toolSelector.GetInteractable(); ok {
