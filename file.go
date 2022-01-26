@@ -195,6 +195,10 @@ type File struct {
 	// If grid should be drawn
 	DrawGrid bool
 
+	// Used by system_file.go
+	FileCameraTarget rl.Vector2 // temp storage for calculations
+	FileCamera       rl.Camera2D
+
 	// Is selection happening currently
 	DoingSelection bool
 	// All of the affected pixels
@@ -257,6 +261,12 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		HasDoneMouseUpRight: true,
 
 		DrawGrid: true,
+
+		FileCamera: rl.Camera2D{Zoom: 8.0,
+			Offset: rl.NewVector2(
+				float32(rl.GetScreenWidth())/2,
+				float32(rl.GetScreenHeight())/2,
+			)},
 
 		Selection: make(map[IntVec2]rl.Color),
 
@@ -367,13 +377,13 @@ func (f *File) Copy() {
 
 // Paste the selection
 func (f *File) Paste() {
-	f.CommitSelection()
+	// f.CommitSelection()
 
 	// Appends history
 	f.SelectionMoving = false
 	f.IsSelectionPasted = true
-	f.MoveSelection(0, 0)
 	f.DoingSelection = true
+	f.MoveSelection(0, 0)
 
 	f.Selection = make(map[IntVec2]rl.Color)
 	for v, c := range CopiedSelection {
@@ -391,6 +401,52 @@ func (f *File) Paste() {
 	if interactable, ok := toolSelector.GetInteractable(); ok {
 		interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
 	}
+}
+
+// MoveSelection moves the selection in the specified direction by one pixel
+// dx and dy is how much the selection has moved
+func (f *File) MoveSelection(dx, dy int) {
+	cl := f.GetCurrentLayer()
+
+	if len(f.Selection) > 0 {
+		if !f.SelectionMoving {
+			f.SelectionMoving = true
+
+			f.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
+
+			for loc := range f.Selection {
+				// Alter history
+				latestHistoryInterface := f.History[len(f.History)-1]
+				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+				if ok {
+					ps := latestHistory.PixelState[loc]
+					if !f.IsSelectionPasted {
+						ps.Current = rl.Transparent
+						ps.Prev = cl.PixelData[loc]
+						latestHistory.PixelState[loc] = ps
+					}
+				}
+
+				if !f.IsSelectionPasted {
+					cl.PixelData[loc] = rl.Transparent
+				}
+			}
+		}
+
+		// Move selection
+		CurrentFile.SelectionBounds[0] += dx
+		CurrentFile.SelectionBounds[1] += dy
+		CurrentFile.SelectionBounds[2] += dx
+		CurrentFile.SelectionBounds[3] += dy
+		newSelection := make(map[IntVec2]rl.Color)
+		for loc, color := range f.Selection {
+			newSelection[IntVec2{loc.X + dx, loc.Y + dy}] = color
+		}
+		f.Selection = newSelection
+
+	}
+
+	cl.Redraw()
 }
 
 // CommitSelection "stamps" the floating selection in place
@@ -446,52 +502,6 @@ func (f *File) CommitSelection() {
 	// Reset the selection
 	f.Selection = make(map[IntVec2]rl.Color)
 	f.SelectionPixels = make([]rl.Color, 0, 0)
-}
-
-// MoveSelection moves the selection in the specified direction by one pixel
-// dx and dy is how much the selection has moved
-func (f *File) MoveSelection(dx, dy int) {
-	cl := f.GetCurrentLayer()
-
-	if len(f.Selection) > 0 {
-		if !f.SelectionMoving {
-			f.SelectionMoving = true
-
-			f.AppendHistory(HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer})
-
-			for loc := range f.Selection {
-				// Alter history
-				latestHistoryInterface := f.History[len(f.History)-1]
-				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
-				if ok {
-					ps := latestHistory.PixelState[loc]
-					if !f.IsSelectionPasted {
-						ps.Current = rl.Transparent
-						ps.Prev = cl.PixelData[loc]
-						latestHistory.PixelState[loc] = ps
-					}
-				}
-
-				if !f.IsSelectionPasted {
-					cl.PixelData[loc] = rl.Transparent
-				}
-			}
-		}
-
-		// Move selection
-		CurrentFile.SelectionBounds[0] += dx
-		CurrentFile.SelectionBounds[1] += dy
-		CurrentFile.SelectionBounds[2] += dx
-		CurrentFile.SelectionBounds[3] += dy
-		newSelection := make(map[IntVec2]rl.Color)
-		for loc, color := range f.Selection {
-			newSelection[IntVec2{loc.X + dx, loc.Y + dy}] = color
-		}
-		f.Selection = newSelection
-
-	}
-
-	cl.Redraw()
 }
 
 // DeleteAnimation deletes an animation
@@ -553,7 +563,9 @@ func (f *File) SetAnimationFrames(index, firstSprite, lastSprite int) {
 // The argument is the frames per second
 func (f *File) SetCurrentAnimationTiming(timing float32) {
 	anim := f.GetCurrentAnimation()
-	anim.Timing = timing
+	if anim != nil {
+		anim.Timing = timing
+	}
 }
 
 // SetAnimationName sets the current animation's name

@@ -10,9 +10,6 @@ import (
 type UIFileSystem struct {
 	BasicSystem
 
-	Camera rl.Camera2D
-	target rl.Vector2
-
 	// Used for relational mouse movement
 	mouseX, mouseY, mouseLastX, mouseLastY int
 
@@ -25,7 +22,6 @@ type UIFileSystem struct {
 // NewUIFileSystem returns a new UIFileSystem
 func NewUIFileSystem() *UIFileSystem {
 	s := &UIFileSystem{
-		Camera:                  rl.Camera2D{Zoom: 8.0},
 		hasDoneFirstFrameResize: false,
 	}
 
@@ -256,7 +252,7 @@ func (s *UIFileSystem) Draw() {
 	rl.EndTextureMode()
 
 	// Draw layers
-	rl.BeginMode2D(s.Camera)
+	rl.BeginMode2D(CurrentFile.FileCamera)
 	for _, layer := range CurrentFile.Layers {
 		if !layer.Hidden {
 			rl.DrawTextureRec(layer.Canvas.Texture,
@@ -367,9 +363,9 @@ func (s *UIFileSystem) Draw() {
 
 	rl.BeginMode2D(rl.Camera2D{Zoom: 1.0})
 	if rl.IsMouseButtonDown(rl.MouseRightButton) {
-		CurrentFile.RightTool.DrawUI(s.Camera)
+		CurrentFile.RightTool.DrawUI(CurrentFile.FileCamera)
 	} else {
-		CurrentFile.LeftTool.DrawUI(s.Camera)
+		CurrentFile.LeftTool.DrawUI(CurrentFile.FileCamera)
 	}
 	rl.EndMode2D()
 }
@@ -419,8 +415,8 @@ func recursiveResize(entity *Entity) {
 
 // Resize is called when a resize event happens
 func (s *UIFileSystem) Resize() {
-	s.Camera.Offset.X = float32(rl.GetScreenWidth()) / 2
-	s.Camera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	CurrentFile.FileCamera.Offset.X = float32(rl.GetScreenWidth()) / 2
+	CurrentFile.FileCamera.Offset.Y = float32(rl.GetScreenHeight()) / 2
 
 	s.hasDoneFirstFrameResize = true
 
@@ -447,22 +443,22 @@ func (s *UIFileSystem) Update(dt float32) {
 		scrollAmount := rl.GetMouseWheelMove()
 		if scrollAmount != 0 {
 			// TODO scroll scalar in config (0.1)
-			s.target.X += ((float32(s.mouseX) - float32(rl.GetScreenWidth())/2) / (s.Camera.Zoom * 10)) * float32(scrollAmount)
-			s.target.Y += ((float32(s.mouseY) - float32(rl.GetScreenHeight())/2) / (s.Camera.Zoom * 10)) * float32(scrollAmount)
-			s.Camera.Target = s.target
-			s.Camera.Zoom += float32(scrollAmount) * 0.1 * s.Camera.Zoom
+			CurrentFile.FileCameraTarget.X += ((float32(s.mouseX) - float32(rl.GetScreenWidth())/2) / (CurrentFile.FileCamera.Zoom * 10)) * float32(scrollAmount)
+			CurrentFile.FileCameraTarget.Y += ((float32(s.mouseY) - float32(rl.GetScreenHeight())/2) / (CurrentFile.FileCamera.Zoom * 10)) * float32(scrollAmount)
+			CurrentFile.FileCamera.Target = CurrentFile.FileCameraTarget
+			CurrentFile.FileCamera.Zoom += float32(scrollAmount) * 0.1 * CurrentFile.FileCamera.Zoom
 		}
 	}
 
 	if rl.IsMouseButtonDown(rl.MouseMiddleButton) {
-		s.target.X += float32(s.mouseLastX-s.mouseX) / s.Camera.Zoom
-		s.target.Y += float32(s.mouseLastY-s.mouseY) / s.Camera.Zoom
+		CurrentFile.FileCameraTarget.X += float32(s.mouseLastX-s.mouseX) / CurrentFile.FileCamera.Zoom
+		CurrentFile.FileCameraTarget.Y += float32(s.mouseLastY-s.mouseY) / CurrentFile.FileCamera.Zoom
 	}
 	s.mouseLastX = s.mouseX
 	s.mouseLastY = s.mouseY
-	s.Camera.Target = s.target
+	CurrentFile.FileCamera.Target = CurrentFile.FileCameraTarget
 
-	s.cursor = rl.GetScreenToWorld2D(rl.GetMousePosition(), s.Camera)
+	s.cursor = rl.GetScreenToWorld2D(rl.GetMousePosition(), CurrentFile.FileCamera)
 	s.cursor = s.cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
 
 	PreviewUIDrawTile(int(s.cursor.X), int(s.cursor.Y))
