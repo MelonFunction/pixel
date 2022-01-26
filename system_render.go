@@ -130,11 +130,11 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			// TODO alter child offset positions here?
 			switch scrollable.ScrollDirection {
 			case ScrollDirectionVertical:
-				s.camera.Target.Y -= float32(scrollable.ScrollOffset) * 16
-				childOffset.Y = float32(scrollable.ScrollOffset) * 16
+				s.camera.Target.Y -= float32(scrollable.ScrollOffset)
+				childOffset.Y = float32(scrollable.ScrollOffset)
 			case ScrollDirectionHorizontal:
-				s.camera.Target.X -= float32(scrollable.ScrollOffset) * 16
-				childOffset.X = float32(scrollable.ScrollOffset) * 16
+				s.camera.Target.X -= float32(scrollable.ScrollOffset)
+				childOffset.X = float32(scrollable.ScrollOffset)
 			}
 		}
 

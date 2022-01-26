@@ -776,7 +776,7 @@ func NewBox(bounds rl.Rectangle, children []*Entity, flowDirection LayoutTag) *E
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
-		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: nil, OnMouseDown: nil, OnKeyPress: nil}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true}).
 		AddComponent(drawable, &Drawable{
 			DrawableType: &DrawableParent{
 				IsPassthrough: true,
@@ -797,6 +797,7 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection La
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, flowDirection, false}).
 		AddComponent(resizeable, &Resizeable{}).
 		AddComponent(hoverable, &Hoverable{Selected: false}).
+		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true}).
 		AddComponent(scrollable, &Scrollable{}).
 		AddComponent(drawable, &Drawable{
 			DrawableType: &DrawableParent{

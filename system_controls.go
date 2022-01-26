@@ -36,6 +36,8 @@ type UIControlSystem struct {
 	mouseButtonDown     bool
 	keysDown            map[rl.Key]bool // current keys down, used for combinations
 	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
+
+	ScrollScalar int
 }
 
 // NewUIControlSystem creates and returns a new NewUIControlSystem reference
@@ -131,6 +133,7 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		Keymap:              keymap,
 		keysDown:            make(map[rl.Key]bool),
 		keysAwaitingRelease: make(map[rl.Key]bool),
+		ScrollScalar:        16, // TODO get from config
 	}
 }
 
@@ -184,34 +187,36 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 
 	if moveable.Bounds.Contains(rl.GetMousePosition().Subtract(moveable.Offset)) {
 		hoverable.Hovered = true
+
+		// Scroll logic
+		scrollAmount := rl.GetMouseWheelMove()
+		if scrollAmount != 0 {
+			if scrollable != nil {
+				UIHasControl = true
+				scrollable.ScrollOffset += scrollAmount * s.ScrollScalar
+				if scrollable.ScrollOffset > 0 {
+					scrollable.ScrollOffset = 0
+				}
+			}
+		}
+
+		// Scroll event
+		// This will prevent children events from firing, so ensure that only
+		// the lowest level element has a scroll event
+		if interactable != nil {
+			if interactable.OnScroll != nil && scrollAmount != 0 {
+				interactable.OnScroll(scrollAmount)
+				return entity
+			}
+		}
+
+		// Process children
 		switch t := drawable.DrawableType.(type) {
 		case *DrawableParent:
 			for _, child := range t.Children {
 				if r := s.process(child, true); r != nil {
 					return r
 				}
-			}
-		}
-
-		// Scroll logic
-		scrollAmount := rl.GetMouseWheelMove()
-		if scrollable != nil {
-			if scrollAmount != 0 {
-				UIHasControl = true
-				scrollable.ScrollOffset += scrollAmount
-				if scrollable.ScrollOffset > 0 {
-					scrollable.ScrollOffset = 0
-				}
-
-				return entity
-			}
-		}
-
-		// Scroll event
-		if interactable != nil {
-			if interactable.OnScroll != nil && scrollAmount != 0 {
-				interactable.OnScroll(scrollAmount)
-				return entity
 			}
 		}
 
@@ -227,6 +232,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 				}
 			}
 		}
+
 	}
 
 	return nil
@@ -478,7 +484,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			s.keyRepeatTimer = 0
 			s.keyMoveable = false
 
-			moveAmount := int(fileSystem.Camera.Zoom)
+			moveAmount := int(CurrentFile.FileCamera.Zoom)
 			x := rl.GetMouseX()
 			y := rl.GetMouseY()
 
