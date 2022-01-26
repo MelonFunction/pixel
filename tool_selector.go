@@ -52,9 +52,8 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 	if t.firstDown == false {
 		t.firstDown = true
 		t.firstDownTime = time.Now()
-		t.firstPos = GetClampedCoordinates(x, y)
+		t.firstPos = IntVec2{x, y}
 
-		// TODO can't grab handles after resize
 		// Resize selection
 		x0, y0 := CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[1]
 		x1, y1 := CurrentFile.SelectionBounds[2], CurrentFile.SelectionBounds[3]
@@ -232,6 +231,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		t.lastPos.Y, firstPosClone.Y = firstPosClone.Y, t.lastPos.Y
 	}
 
+	// Move the selection
 	if CurrentFile.DoingSelection && t.firstPos.X > CurrentFile.SelectionBounds[0] && t.firstPos.X < CurrentFile.SelectionBounds[2] &&
 		t.firstPos.Y > CurrentFile.SelectionBounds[1] && t.firstPos.Y < CurrentFile.SelectionBounds[3] {
 		CurrentFile.MoveSelection(x-t.firstPos.X, y-t.firstPos.Y)
@@ -243,8 +243,8 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		return
 	}
 
+	// Cancel selection if a click without a drag happens
 	if t.firstPos.X == t.lastPos.X && t.firstPos.Y == t.lastPos.Y {
-		// Cancel selection if a click without a drag happens
 		if time.Now().Sub(t.firstDownTime) < time.Millisecond*100 {
 			// Commit whatever was moving to wherever it ended up
 			CurrentFile.CommitSelection()
