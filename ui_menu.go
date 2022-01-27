@@ -155,6 +155,11 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 			"flip (vertical)", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
 				CurrentFile.FlipVertical()
 			}, nil),
+		NewButtonText( // Outline
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"outline", TextAlignLeft, false, func(entity *Entity, button rl.MouseButton) {
+				CurrentFile.Outline()
+			}, nil),
 	}, FlowDirectionVertical)
 	editSubMenu.FlowChildren()
 	editSubMenu.Hide()

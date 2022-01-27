@@ -746,6 +746,73 @@ func (f *File) DrawPixelDataToCanvas() {
 	rl.EndTextureMode()
 }
 
+// Outline draws the left color around any non-transparent pixels (and is
+// restricted to the selection)
+func (f *File) Outline() {
+	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
+
+	sx, sy := 0, 0
+	mx, my := f.CanvasWidth, f.CanvasHeight
+	if f.DoingSelection {
+		sx = f.SelectionBounds[0]
+		sy = f.SelectionBounds[1]
+		mx = f.SelectionBounds[2] + 1
+		my = f.SelectionBounds[3] + 1
+	}
+	CurrentFile.AppendHistory(latestHistory)
+
+	pixelLocations := make([]IntVec2, 0, 0)
+	// Swap the pixels over
+	cl := f.GetCurrentLayer()
+	for y := sy; y < my; y++ {
+		for x := sx; x < mx; x++ {
+			// TODO check each layer here
+
+			currentPos := IntVec2{x, y}
+			leftPos := IntVec2{x - 1, y}
+			rightPos := IntVec2{x + 1, y}
+			abovePos := IntVec2{x, y - 1}
+			belowPos := IntVec2{x, y + 1}
+			if cl.PixelData[currentPos] != rl.Transparent {
+				if cl.PixelData[leftPos] == rl.Transparent {
+					pixelLocations = append(pixelLocations, leftPos)
+				}
+				if cl.PixelData[rightPos] == rl.Transparent {
+					pixelLocations = append(pixelLocations, rightPos)
+				}
+				if cl.PixelData[abovePos] == rl.Transparent {
+					pixelLocations = append(pixelLocations, abovePos)
+				}
+				if cl.PixelData[belowPos] == rl.Transparent {
+					pixelLocations = append(pixelLocations, belowPos)
+				}
+			}
+		}
+	}
+
+	for _, loc := range pixelLocations {
+		l := latestHistory.PixelState[loc]
+		l.Prev = rl.Transparent // Only replacing transparent pixels
+		l.Current = f.LeftColor
+		latestHistory.PixelState[loc] = l
+
+		if f.DoingSelection {
+			f.Selection[loc] = f.LeftColor
+		}
+
+		cl.PixelData[loc] = f.LeftColor
+	}
+
+	if f.DoingSelection {
+		f.SelectionPixels = make([]rl.Color, 0)
+		for _, pixel := range f.Selection {
+			f.SelectionPixels = append(f.SelectionPixels, pixel)
+		}
+	}
+
+	cl.Redraw()
+}
+
 // FlipHorizontal flips the layer horizontally, or flips the selection if anything
 // is selected
 func (f *File) FlipHorizontal() {
