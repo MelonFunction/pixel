@@ -748,42 +748,54 @@ func (f *File) DrawPixelDataToCanvas() {
 
 // Outline draws the left color around any non-transparent pixels (and is
 // restricted to the selection)
+// Will only outline pixels on the current layer. Make sure to merge layers if
+// sprite is composed of multiple parts
+// TODO redo-ing after undo after outline deletes origselection area
 func (f *File) Outline() {
-	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
-
 	sx, sy := 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
+
+	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
 	if f.DoingSelection {
+		// latestHistory is essentially ignored and whatever is in the selection
+		// is accounted for by f.MoveSelection
 		sx = f.SelectionBounds[0]
 		sy = f.SelectionBounds[1]
 		mx = f.SelectionBounds[2] + 1
 		my = f.SelectionBounds[3] + 1
+	} else {
+		// New history
+		CurrentFile.AppendHistory(latestHistory)
 	}
-	CurrentFile.AppendHistory(latestHistory)
 
-	pixelLocations := make([]IntVec2, 0, 0)
-	// Swap the pixels over
 	cl := f.GetCurrentLayer()
+	pixelLocations := make([]IntVec2, 0, 0)
+
 	for y := sy; y < my; y++ {
 		for x := sx; x < mx; x++ {
-			// TODO check each layer here
-
 			currentPos := IntVec2{x, y}
 			leftPos := IntVec2{x - 1, y}
 			rightPos := IntVec2{x + 1, y}
 			abovePos := IntVec2{x, y - 1}
 			belowPos := IntVec2{x, y + 1}
-			if cl.PixelData[currentPos] != rl.Transparent {
-				if cl.PixelData[leftPos] == rl.Transparent {
+
+			// Change where the pixels are sampled from if there is a selection
+			pixelSource := cl.PixelData
+			if f.DoingSelection {
+				pixelSource = f.Selection
+			}
+
+			if pixelSource[currentPos] != rl.Transparent {
+				if pixelSource[leftPos] == rl.Transparent {
 					pixelLocations = append(pixelLocations, leftPos)
 				}
-				if cl.PixelData[rightPos] == rl.Transparent {
+				if pixelSource[rightPos] == rl.Transparent {
 					pixelLocations = append(pixelLocations, rightPos)
 				}
-				if cl.PixelData[abovePos] == rl.Transparent {
+				if pixelSource[abovePos] == rl.Transparent {
 					pixelLocations = append(pixelLocations, abovePos)
 				}
-				if cl.PixelData[belowPos] == rl.Transparent {
+				if pixelSource[belowPos] == rl.Transparent {
 					pixelLocations = append(pixelLocations, belowPos)
 				}
 			}
@@ -798,16 +810,14 @@ func (f *File) Outline() {
 
 		if f.DoingSelection {
 			f.Selection[loc] = f.LeftColor
+		} else {
+			cl.PixelData[loc] = f.LeftColor
 		}
-
-		cl.PixelData[loc] = f.LeftColor
 	}
 
-	if f.DoingSelection {
-		f.SelectionPixels = make([]rl.Color, 0)
-		for _, pixel := range f.Selection {
-			f.SelectionPixels = append(f.SelectionPixels, pixel)
-		}
+	if f.DoingSelection && !f.SelectionMoving {
+		// Allow CommitSelection to detect a change
+		f.MoveSelection(0, 0)
 	}
 
 	cl.Redraw()
@@ -833,7 +843,7 @@ func (f *File) FlipHorizontal() {
 
 	// Swap the pixels over
 	cl := f.GetCurrentLayer()
-	wasSelectionMoving := f.SelectionMoving
+
 	for y := sy; y < my; y++ {
 		for x := sx; x < mx/2; x++ {
 			lpos := IntVec2{x, y}
@@ -863,7 +873,7 @@ func (f *File) FlipHorizontal() {
 		}
 	}
 
-	if f.DoingSelection && wasSelectionMoving == false {
+	if f.DoingSelection && !f.SelectionMoving {
 		// Allow CommitSelection to detect a change
 		f.MoveSelection(0, 0)
 	}
@@ -891,7 +901,6 @@ func (f *File) FlipVertical() {
 
 	// Swap the pixels over
 	cl := f.GetCurrentLayer()
-	wasSelectionMoving := f.SelectionMoving
 	for x := sx; x < mx; x++ {
 		for y := sy; y < my/2; y++ {
 			lpos := IntVec2{x, y}
@@ -921,7 +930,7 @@ func (f *File) FlipVertical() {
 		}
 	}
 
-	if f.DoingSelection && wasSelectionMoving == false {
+	if f.DoingSelection && !f.SelectionMoving {
 		// Allow CommitSelection to detect a change
 		f.MoveSelection(0, 0)
 	}
