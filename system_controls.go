@@ -336,7 +336,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 
 			shouldReturn := true
 
-			// Can work with entities which are capturing the input
+			// These events modify selection
 			switch key {
 			case "cancel":
 				if UIInteractableCapturedInput != nil {
@@ -403,6 +403,32 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			case "selector":
 				if interactable, ok := toolSelector.GetInteractable(); ok {
 					interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
+				}
+			case "selectAll":
+				if interactable, ok := toolSelector.GetInteractable(); ok {
+					interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
+					CurrentFile.CommitSelection()
+
+					CurrentFile.SelectionBounds[0] = 0
+					CurrentFile.SelectionBounds[1] = 0
+					CurrentFile.SelectionBounds[2] = CurrentFile.CanvasWidth
+					CurrentFile.SelectionBounds[3] = CurrentFile.CanvasHeight
+					CurrentFile.OrigSelectionBounds[0] = CurrentFile.SelectionBounds[0]
+					CurrentFile.OrigSelectionBounds[1] = CurrentFile.SelectionBounds[1]
+					CurrentFile.OrigSelectionBounds[2] = CurrentFile.SelectionBounds[2]
+					CurrentFile.OrigSelectionBounds[3] = CurrentFile.SelectionBounds[3]
+
+					// Selection is being displayed on screen
+					CurrentFile.DoingSelection = true
+					CurrentFile.MoveSelection(0, 0)
+					cl := CurrentFile.GetCurrentLayer()
+					for py := 0; py <= CurrentFile.CanvasWidth; py++ {
+						for px := 0; px <= CurrentFile.CanvasHeight; px++ {
+							pixel := cl.PixelData[IntVec2{px, py}]
+							CurrentFile.Selection[IntVec2{px, py}] = pixel
+							CurrentFile.SelectionPixels = append(CurrentFile.SelectionPixels, pixel)
+						}
+					}
 				}
 
 			case "flipHorizontal":
