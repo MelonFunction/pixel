@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // vars
@@ -68,7 +68,7 @@ func PaletteUIUpdateCurrentColorIndicator() {
 			cc := CurrentFile.LeftColor
 			if tex, ok := t.DrawableType.(*DrawableRenderTexture); ok {
 				rl.BeginTextureMode(tex.Texture)
-				rl.ClearBackground(rl.Transparent)
+				rl.ClearBackground(rl.Blank)
 				rl.DrawTriangle(
 					rl.NewVector2(0, 0),
 					rl.NewVector2(0, 0+cm.Bounds.Height/2),
@@ -142,7 +142,7 @@ func PaletteUIRebuildPalette() {
 
 		PaletteUIPrevColorEntity = nil
 		for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
-			c := PaletteUIAddColor(color, i)
+			c := PaletteUIAddColor(color, int32(i))
 			if i == 0 {
 				PaletteUICurrentColorEntity = c
 			} else if i == 1 {
@@ -154,7 +154,7 @@ func PaletteUIRebuildPalette() {
 }
 
 // PaletteUIAddColor adds a color to the palette
-func PaletteUIAddColor(color rl.Color, index int) *Entity {
+func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 	var w float32
 	var h float32
 	if res, err := scene.QueryID(PaletteUIPaletteEntity.ID); err == nil {
@@ -165,7 +165,7 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 
 	var e *Entity
 	e = NewRenderTexture(rl.NewRectangle(0, 0, w, h),
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// Up
 			switch button {
 			case rl.MouseLeftButton:
@@ -245,7 +245,7 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 				CurrentColorSetRightColor(color)
 			}
 		},
-		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		func(entity *Entity, button MouseButton, isHeld bool) {
 			// Down
 			if isHeld {
 				switch button {
@@ -288,8 +288,8 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	paletteName = NewInput(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight/2),
 		Settings.PaletteData[CurrentFile.CurrentPalette].Name,
 		TextAlignCenter,
-		false, func(entity *Entity, button rl.MouseButton) {}, nil,
-		func(entity *Entity, key rl.Key) {
+		false, func(entity *Entity, button MouseButton) {}, nil,
+		func(entity *Entity, key Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 					if key == rl.KeyEnter {
@@ -319,7 +319,7 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	PaletteUIUpdateCurrentColorIndicator()
 
 	if interactable, ok := PaletteUIPaletteEntity.GetInteractable(); ok {
-		interactable.OnScroll = func(direction int) {
+		interactable.OnScroll = func(direction int32) {
 			PaletteUIUpdateCurrentColorIndicator()
 		}
 	}

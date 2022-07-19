@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // SettingsData is the settings object which is read from settings.json
@@ -17,7 +17,7 @@ type SettingsData struct {
 }
 
 // KeymapData stores the action name as the key and a 2d slice of the keys
-type KeymapData map[string][][]rl.Key
+type KeymapData map[string][][]Key
 
 // Keymap stores the command+actions in Map and the the ordered keys in Keys
 // This is usable by system_controls.go
@@ -36,7 +36,7 @@ func NewKeymap(data KeymapData) Keymap {
 
 	for name, outer := range data {
 
-		var longestInner []rl.Key
+		var longestInner []Key
 		for _, inner := range outer {
 			if len(inner) > len(longestInner) {
 				longestInner = inner

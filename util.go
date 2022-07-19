@@ -10,16 +10,22 @@ import (
 	"path/filepath"
 	"strconv"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // IntVec2 is used mostly as a composite key for pixel data maps
 type IntVec2 struct {
-	X, Y int
+	X, Y int32
 }
 
+// MouseButton type
+type MouseButton int32
+
+// Key type
+type Key int32
+
 // Line draws pixels across a line (rl.DrawLine doesn't draw properly)
-func Line(x0, y0, x1, y1 int, drawFunc func(x, y int)) {
+func Line(x0, y0, x1, y1 int32, drawFunc func(x, y int32)) {
 	dx := x1 - x0
 	if dx < 0 {
 		dx = -dx
@@ -28,7 +34,7 @@ func Line(x0, y0, x1, y1 int, drawFunc func(x, y int)) {
 	if dy < 0 {
 		dy = -dy
 	}
-	var sx, sy int
+	var sx, sy int32
 	if x0 < x1 {
 		sx = 1
 	} else {
@@ -60,7 +66,7 @@ func Line(x0, y0, x1, y1 int, drawFunc func(x, y int)) {
 
 // AddAndClampUint8 adds two ints and caps them at uint8 max
 func AddAndClampUint8(a, b uint8) uint8 {
-	if int(a)+int(b) > 255 {
+	if int32(a)+int32(b) > 255 {
 		return 255
 	}
 	return a + b
@@ -176,7 +182,7 @@ func GetFile(resPath string) string {
 }
 
 // GetClampedCoordinates limits the x and y to the width/height of the canvas
-func GetClampedCoordinates(x, y int) IntVec2 {
+func GetClampedCoordinates(x, y int32) IntVec2 {
 	if x < 0 {
 		x = 0
 	} else if x >= CurrentFile.CanvasWidth-1 {
@@ -193,23 +199,23 @@ func GetClampedCoordinates(x, y int) IntVec2 {
 }
 
 // GetTilePosition returns the top left x and y coordinates
-func GetTilePosition(x, y int) IntVec2 {
+func GetTilePosition(x, y int32) IntVec2 {
 	return IntVec2{
 		X: x / CurrentFile.TileWidth * CurrentFile.TileWidth,
 		Y: y / CurrentFile.TileHeight * CurrentFile.TileHeight,
 	}
 }
 
-// MaxInt returns the bigger int of the two args
-func MaxInt(a, b int) int {
+// MaxInt32 returns the bigger int32 of the two args
+func MaxInt32(a, b int32) int32 {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-// MinInt returns the smaller int of the two args
-func MinInt(a, b int) int {
+// MinInt32 returns the smaller int32 of the two args
+func MinInt32(a, b int32) int32 {
 	if a < b {
 		return a
 	}

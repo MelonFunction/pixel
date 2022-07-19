@@ -1,6 +1,6 @@
 package main
 
-import rl "github.com/lachee/raylib-goplus/raylib"
+import rl "github.com/gen2brain/raylib-go/raylib"
 
 var (
 	editorsButtons *Entity
@@ -25,10 +25,10 @@ func EditorsUIRebuild() {
 func EditorsUIAddButton(file *File) {
 	isCurrent := file == CurrentFile
 
-	fo := rl.MeasureTextEx(*Font, file.Filename, UIFontSize, 1)
+	fo := rl.MeasureTextEx(Font, file.Filename, UIFontSize, 1)
 	button := NewButtonText(
 		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
-		file.Filename, TextAlignCenter, isCurrent, func(entity *Entity, button rl.MouseButton) {
+		file.Filename, TextAlignCenter, isCurrent, func(entity *Entity, button MouseButton) {
 
 			if res, err := scene.QueryID(currentButton.ID); err == nil {
 				hoverable := res.Components[currentButton.Scene.ComponentsMap["hoverable"]].(*Hoverable)

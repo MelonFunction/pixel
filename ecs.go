@@ -363,7 +363,7 @@ func (s *Scene) QueryID(id uint32) (*QueryResult, error) {
 		}
 		return q, nil
 	}
-	return nil, fmt.Errorf("Entity with ID %d not found", int(id))
+	return nil, fmt.Errorf("Entity with ID %d not found", int32(id))
 }
 
 // MoveEntityToEnd removes and reappends the entity

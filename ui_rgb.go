@@ -1,7 +1,7 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -18,10 +18,10 @@ var (
 
 	// The color tables and their reverse lookup table
 	opacityColors    = make(map[int]rl.Color)
-	opacityColorsRev = make(map[rl.Color]int)
+	opacityColorsRev = make(map[rl.Color]int32)
 	areaColors       = make(map[IntVec2]rl.Color)
 	sliderColors     = make(map[int]rl.Color)
-	sliderColorsRev  = make(map[rl.Color]int)
+	sliderColorsRev  = make(map[rl.Color]int32)
 
 	// Used by slider to set tool color when slider is moved
 	lastColorLocation IntVec2
@@ -69,8 +69,8 @@ func makeColorArea() {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
 			w := texture.Texture.Width
-			fraction := int(w / 6)
-			for px := 0; px < int(texture.Texture.Width); px++ {
+			fraction := int32(w / 6)
+			for px := int32(0); px < int32(texture.Texture.Width); px++ {
 				// 100, 110, 010, 011, 001, 101, 100
 				color := rl.NewColor(0, 0, 0, 255)
 
@@ -105,9 +105,9 @@ func makeColorArea() {
 					color.R = 255
 				}
 
-				for py := 0; py < int(texture.Texture.Height); py++ {
+				for py := int32(0); py < int32(texture.Texture.Height); py++ {
 					rl.DrawPixel(px, py, color)
-					sliderColors[px] = color
+					sliderColors[int(px)] = color
 					sliderColorsRev[color] = px
 				}
 			}
@@ -123,7 +123,7 @@ func makeSelector() *Entity {
 		if ok {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
-			rl.ClearBackground(rl.Transparent)
+			rl.ClearBackground(rl.Blank)
 			w := float32(texture.Texture.Width)
 			h := float32(texture.Texture.Height)
 			var t float32 = 3.0 // line thickness
@@ -150,9 +150,9 @@ func makeBlendArea(origColor rl.Color) {
 			w := texture.Texture.Width
 			h := texture.Texture.Height
 
-			for py := 0; py < int(h); py++ {
+			for py := int32(0); py < int32(h); py++ {
 
-				for px := 0; px < int(w); px++ {
+				for px := int32(0); px < int32(w); px++ {
 					color := rl.NewColor(0, 0, 0, 255)
 
 					// Lerp from white to origColor
@@ -184,8 +184,8 @@ func makeOpacitySliderArea(color rl.Color) {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
 			w := texture.Texture.Width
-			fraction := int(w)
-			for px := 0; px < int(texture.Texture.Width); px++ {
+			fraction := int32(w)
+			for px := int32(0); px < int32(texture.Texture.Width); px++ {
 				drawColor := color
 
 				p := (float32(px%fraction) / (float32(fraction) - 1))
@@ -196,9 +196,9 @@ func makeOpacitySliderArea(color rl.Color) {
 				drawColor.G = uint8(float32(drawColor.G) * p)
 				drawColor.B = uint8(float32(drawColor.B) * p)
 
-				for py := 0; py < int(texture.Texture.Height); py++ {
+				for py := int32(0); py < int32(texture.Texture.Height); py++ {
 					rl.DrawPixel(px, py, drawColor)
-					opacityColors[px] = color
+					opacityColors[int(px)] = color
 					opacityColorsRev[color] = px
 				}
 			}
@@ -208,7 +208,7 @@ func makeOpacitySliderArea(color rl.Color) {
 }
 
 // MoveAreaSelector moves the area selector
-func MoveAreaSelector(mx, my int) {
+func MoveAreaSelector(mx, my int32) {
 	if moveable, ok := rgbArea.GetMoveable(); ok {
 		if mx < 0 {
 			mx = 0
@@ -216,11 +216,11 @@ func MoveAreaSelector(mx, my int) {
 		if my < 0 {
 			my = 0
 		}
-		if mx > int(moveable.Bounds.Width)-1 {
-			mx = int(moveable.Bounds.Width) - 1
+		if mx > int32(moveable.Bounds.Width)-1 {
+			mx = int32(moveable.Bounds.Width) - 1
 		}
-		if my > int(moveable.Bounds.Height)-1 {
-			my = int(moveable.Bounds.Height) - 1
+		if my > int32(moveable.Bounds.Height)-1 {
+			my = int32(moveable.Bounds.Height) - 1
 		}
 
 		// Move the areaSelector
@@ -239,15 +239,15 @@ func MoveAreaSelector(mx, my int) {
 }
 
 // MoveColorSelector moves the color selector
-func MoveColorSelector(mx int) {
+func MoveColorSelector(mx int32) {
 	if moveable, ok := colorSlider.GetMoveable(); ok {
-		my := int(moveable.Bounds.Height) / 2
+		my := int32(moveable.Bounds.Height) / 2
 
 		if mx < 0 {
 			mx = 0
 		}
-		if mx > int(moveable.Bounds.Width)-1 {
-			mx = int(moveable.Bounds.Width) - 1
+		if mx > int32(moveable.Bounds.Width)-1 {
+			mx = int32(moveable.Bounds.Width) - 1
 		}
 
 		// Move the colorSelector
@@ -256,7 +256,7 @@ func MoveColorSelector(mx int) {
 			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 		}
 
-		color, ok := sliderColors[mx]
+		color, ok := sliderColors[int(mx)]
 		if ok {
 			makeBlendArea(color)
 			makeOpacitySliderArea(color)
@@ -274,17 +274,17 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	areaBounds := bounds
 	areaBounds.Height = areaBounds.Width
 	rgbArea = NewRenderTexture(areaBounds,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 		},
-		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		func(entity *Entity, button MouseButton, isHeld bool) {
 			// button down
 			PaletteUIHideCurrentColorIndicator()
 			if moveable, ok := rgbArea.GetMoveable(); ok {
 				mx := rl.GetMouseX()
 				my := rl.GetMouseY()
-				mx -= int(moveable.Bounds.X)
-				my -= int(moveable.Bounds.Y)
+				mx -= int32(moveable.Bounds.X)
+				my -= int32(moveable.Bounds.Y)
 
 				if mx < 0 {
 					mx = 0
@@ -292,11 +292,11 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				if my < 0 {
 					my = 0
 				}
-				if mx > int(moveable.Bounds.Width)-1 {
-					mx = int(moveable.Bounds.Width) - 1
+				if mx > int32(moveable.Bounds.Width)-1 {
+					mx = int32(moveable.Bounds.Width) - 1
 				}
-				if my > int(moveable.Bounds.Height)-1 {
-					my = int(moveable.Bounds.Height) - 1
+				if my > int32(moveable.Bounds.Height)-1 {
+					my = int32(moveable.Bounds.Height) - 1
 				}
 
 				// Move the areaSelector
@@ -328,22 +328,22 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	sliderBounds := bounds
 	sliderBounds.Height = UIButtonHeight / 2
 	colorSlider = NewRenderTexture(sliderBounds,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 		},
-		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		func(entity *Entity, button MouseButton, isHeld bool) {
 			// button down
 			PaletteUIHideCurrentColorIndicator()
 			if moveable, ok := colorSlider.GetMoveable(); ok {
 				mx := rl.GetMouseX()
-				mx -= int(moveable.Bounds.X)
-				my := int(moveable.Bounds.Height) / 2
+				mx -= int32(moveable.Bounds.X)
+				my := int32(moveable.Bounds.Height) / 2
 
 				if mx < 0 {
 					mx = 0
 				}
-				if mx > int(moveable.Bounds.Width)-1 {
-					mx = int(moveable.Bounds.Width) - 1
+				if mx > int32(moveable.Bounds.Width)-1 {
+					mx = int32(moveable.Bounds.Width) - 1
 				}
 
 				// Move the colorSelector
@@ -352,7 +352,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 				}
 
-				color, ok := sliderColors[mx]
+				color, ok := sliderColors[int(mx)]
 				if ok {
 					makeBlendArea(color)
 					makeOpacitySliderArea(color)
@@ -375,21 +375,21 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 	// The slider for opacity
 	opacitySlider = NewRenderTexture(sliderBounds,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 		},
-		func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		func(entity *Entity, button MouseButton, isHeld bool) {
 			// button down
 			if moveable, ok := opacitySlider.GetMoveable(); ok {
 				mx := rl.GetMouseX()
-				mx -= int(moveable.Bounds.X)
-				my := int(moveable.Bounds.Height) / 2
+				mx -= int32(moveable.Bounds.X)
+				my := int32(moveable.Bounds.Height) / 2
 
 				if mx < 0 {
 					mx = 0
 				}
-				if mx > int(moveable.Bounds.Width)-1 {
-					mx = int(moveable.Bounds.Width) - 1
+				if mx > int32(moveable.Bounds.Width)-1 {
+					mx = int32(moveable.Bounds.Width) - 1
 				}
 
 				// Move the opacitySelector
@@ -398,7 +398,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
 				}
 
-				if color, ok := opacityColors[mx]; ok {
+				if color, ok := opacityColors[int(mx)]; ok {
 					switch button {
 					case rl.MouseLeftButton:
 						CurrentColorSetLeftColor(color)
@@ -416,8 +416,8 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 	makeColorArea()
 
 	hexColor = CurrentFile.LeftColor
-	hexInput = NewInput(sliderBounds, "#00000000", TextAlignCenter, false, func(entity *Entity, button rl.MouseButton) {}, nil,
-		func(entity *Entity, key rl.Key) {
+	hexInput = NewInput(sliderBounds, "#00000000", TextAlignCenter, false, func(entity *Entity, button MouseButton) {}, nil,
+		func(entity *Entity, key Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 

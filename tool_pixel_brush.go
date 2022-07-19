@@ -1,11 +1,11 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // BrushShape defines what shape the brush is
-type BrushShape int
+type BrushShape int32
 
 // Brush Shapes
 const (
@@ -20,7 +20,7 @@ type PixelBrushTool struct {
 	name                   string
 	eraser                 bool
 	shouldConnectToLastPos bool
-	size                   int // brush size
+	size                   int32 // brush size
 	shape                  BrushShape
 	// Don't draw over the same pixel multiple times, prevents opacity stacking
 	drawnPixels map[IntVec2]bool
@@ -58,7 +58,7 @@ func (t *PixelBrushTool) exists(e IntVec2) bool {
 }
 
 // GetSize returns the tool size
-func (t *PixelBrushTool) GetSize() int {
+func (t *PixelBrushTool) GetSize() int32 {
 	if t.eraser {
 		return CurrentFile.EraserSize
 	}
@@ -66,7 +66,7 @@ func (t *PixelBrushTool) GetSize() int {
 }
 
 // SetSize sets the tool size
-func (t *PixelBrushTool) SetSize(size int) {
+func (t *PixelBrushTool) SetSize(size int32) {
 	if size > 0 {
 		t.size = size
 
@@ -79,7 +79,7 @@ func (t *PixelBrushTool) SetSize(size int) {
 }
 
 // genFillShape  d is the diamater/width
-func (t *PixelBrushTool) genFillShape(d int, shape BrushShape) map[IntVec2]bool {
+func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]bool {
 	r := make(map[IntVec2]bool)
 
 	switch shape {
@@ -89,9 +89,9 @@ func (t *PixelBrushTool) genFillShape(d int, shape BrushShape) map[IntVec2]bool 
 		if d < 0 {
 			return nil
 		}
-		x, y := 0, 0
+		var x, y int32 = 0, 0
 		// Bresenham algorithm
-		x1, y1, err := -d, 0, 2-2*d
+		var x1, y1, err int32 = -d, 0, 2 - 2*d
 		for {
 			r[IntVec2{x - x1, y + y1}] = true
 			r[IntVec2{x - y1, y - x1}] = true
@@ -111,7 +111,7 @@ func (t *PixelBrushTool) genFillShape(d int, shape BrushShape) map[IntVec2]bool 
 			}
 		}
 	case BrushShapeSquare:
-		var min, max int
+		var min, max int32
 		if d%2 == 0 {
 			min = -d / 2
 			max = d/2 - 1
@@ -133,7 +133,7 @@ func (t *PixelBrushTool) genFillShape(d int, shape BrushShape) map[IntVec2]bool 
 }
 
 // drawPixel draws the brush stroke
-func (t *PixelBrushTool) drawPixel(x, y int, color rl.Color, fileDraw bool) {
+func (t *PixelBrushTool) drawPixel(x, y int32, color rl.Color, fileDraw bool) {
 	sh := t.genFillShape(t.size, BrushShapeSquare)
 	for pos := range sh {
 		sx, sy := x+pos.X, y+pos.Y
@@ -152,7 +152,7 @@ func (t *PixelBrushTool) isLineModifierDown() bool {
 	for _, keys := range Settings.KeymapData["drawLine"] {
 		allDown := true
 		for _, key := range keys {
-			if !rl.IsKeyDown(key) {
+			if !rl.IsKeyDown(int32(key)) {
 				allDown = false
 			}
 		}
@@ -165,9 +165,9 @@ func (t *PixelBrushTool) isLineModifierDown() bool {
 }
 
 // MouseDown is for mouse down events
-func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
+func (t *PixelBrushTool) MouseDown(x, y int32, button MouseButton) {
 	// Assume we are in eraser mode by setting transparent as default
-	t.currentColor = rl.Transparent
+	t.currentColor = rl.Blank
 	if !t.eraser {
 		switch button {
 		case rl.MouseLeftButton:
@@ -178,7 +178,7 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 	}
 
 	if t.shouldConnectToLastPos || t.isLineModifierDown() {
-		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
+		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int32) {
 			t.drawPixel(x, y, t.currentColor, true)
 		})
 	} else {
@@ -190,18 +190,18 @@ func (t *PixelBrushTool) MouseDown(x, y int, button rl.MouseButton) {
 }
 
 // MouseUp is for mouse up events
-func (t *PixelBrushTool) MouseUp(x, y int, button rl.MouseButton) {
+func (t *PixelBrushTool) MouseUp(x, y int32, button MouseButton) {
 	t.shouldConnectToLastPos = false
 	t.drawnPixels = make(map[IntVec2]bool)
 	CurrentFile.GetCurrentLayer().Redraw()
 }
 
 // DrawPreview is for drawing the preview
-func (t *PixelBrushTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
+func (t *PixelBrushTool) DrawPreview(x, y int32) {
+	rl.ClearBackground(rl.Blank)
 
 	if t.isLineModifierDown() {
-		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int) {
+		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int32) {
 			t.drawPixel(x, y, rl.NewColor(255, 255, 255, 192), false)
 		})
 	}

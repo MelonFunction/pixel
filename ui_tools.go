@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -36,16 +36,16 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 	case toolEraser:
 		fallthrough
 	case toolPencil:
-		var size int
+		var size int32
 		if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
 			size = lt.GetSize()
 		}
 		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3.5, UIButtonHeight), fmt.Sprintf("%d", size), TextAlignCenter, false,
-			func(entity *Entity, button rl.MouseButton) {
+			func(entity *Entity, button MouseButton) {
 				// button up
 			},
 			nil,
-			func(entity *Entity, key rl.Key) {
+			func(entity *Entity, key Key) {
 				// key pressed
 				if drawable, ok := entity.GetDrawable(); ok {
 					if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
@@ -66,14 +66,14 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 							if i, err := strconv.ParseInt(drawableText.Label, 10, 64); err == nil {
 								// Set tools from label
 								if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
-									lt.SetSize(int(i))
+									lt.SetSize(int32(i))
 
 									// Set label text
 									drawableText.Label = fmt.Sprintf("%d", lt.GetSize())
 								}
 								if rt, ok := CurrentFile.RightTool.(*PixelBrushTool); ok {
 
-									rt.SetSize(int(i))
+									rt.SetSize(int32(i))
 								}
 
 							}
@@ -83,7 +83,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 				}
 			})
 		if interactable, ok := brushWidthInput.GetInteractable(); ok {
-			interactable.OnScroll = func(direction int) {
+			interactable.OnScroll = func(direction int32) {
 				if drawable, ok := brushWidthInput.GetDrawable(); ok {
 					if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 						if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
@@ -110,7 +110,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 
 	// TODO allow right click to be replaced with selector if alt is pressed
 	toolPencil = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/pencil.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/pencil.png"), false, func(entity *Entity, button MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -120,7 +120,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolEraser = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/eraser.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/eraser.png"), false, func(entity *Entity, button MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -130,7 +130,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolFill = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/fill.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/fill.png"), false, func(entity *Entity, button MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -140,7 +140,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolPicker = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/picker.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/picker.png"), false, func(entity *Entity, button MouseButton) {
 			// Commit the selection, stop showing selection preview etc
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
@@ -150,7 +150,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolSelector = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/selector.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/selector.png"), false, func(entity *Entity, button MouseButton) {
 			CurrentFile.LeftTool = NewSelectorTool("Selector")
 			CurrentFile.RightTool = NewSelectorTool("Selector")
 			ToolsUISetCurrentToolSelected(entity)

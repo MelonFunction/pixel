@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	// IsSelectionPasted defines if the layer data should be moved or not
 	IsSelectionPasted bool
 	// CopiedSelectionBounds is the bounds of the copied selection
-	CopiedSelectionBounds [4]int
+	CopiedSelectionBounds [4]int32
 
 	// ShowDebug enables debug overlays when true
 	ShowDebug = false
@@ -31,7 +31,7 @@ func main() {
 
 	SetupFiles()
 
-	rl.SetTraceLogLevel(rl.LogError)
+	rl.SetTraceLog(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(1920*0.75, 1080*0.75, "Pixel")
 	rl.SetWindowPosition(3840-1920*0.75-96, 128)

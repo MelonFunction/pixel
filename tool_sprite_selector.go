@@ -1,7 +1,7 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // SpriteSelectorTool selects tiles
@@ -11,12 +11,12 @@ type SpriteSelectorTool struct {
 	firstPos  IntVec2 // the first tile selected
 	lastPos   IntVec2 // the last tile selected
 
-	firstSprite, lastSprite int // sprite sheet position of the selected sprites
-	onMouseUp               func(firstSprite, lastSprite int)
+	firstSprite, lastSprite int32 // sprite sheet position of the selected sprites
+	onMouseUp               func(firstSprite, lastSprite int32)
 }
 
 // NewSpriteSelectorTool returns the fill tool. Requires a name.
-func NewSpriteSelectorTool(name string, onMouseUp func(firstSprite, lastSprite int)) *SpriteSelectorTool {
+func NewSpriteSelectorTool(name string, onMouseUp func(firstSprite, lastSprite int32)) *SpriteSelectorTool {
 	return &SpriteSelectorTool{
 		name:      name,
 		onMouseUp: onMouseUp,
@@ -24,7 +24,7 @@ func NewSpriteSelectorTool(name string, onMouseUp func(firstSprite, lastSprite i
 }
 
 // MouseDown is for mouse down events
-func (t *SpriteSelectorTool) MouseDown(x, y int, button rl.MouseButton) {
+func (t *SpriteSelectorTool) MouseDown(x, y int32, button MouseButton) {
 	clampedPos := GetClampedCoordinates(x, y)
 	tilePos := GetTilePosition(clampedPos.X, clampedPos.Y)
 	sheetPos := tilePos.X/CurrentFile.TileWidth + (tilePos.Y/CurrentFile.TileHeight)*(CurrentFile.CanvasWidth/CurrentFile.TileWidth)
@@ -46,7 +46,7 @@ func (t *SpriteSelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 }
 
 // MouseUp is for mouse up events
-func (t *SpriteSelectorTool) MouseUp(x, y int, button rl.MouseButton) {
+func (t *SpriteSelectorTool) MouseUp(x, y int32, button MouseButton) {
 	switch button {
 	case rl.MouseLeftButton:
 	case rl.MouseRightButton:
@@ -59,8 +59,8 @@ func (t *SpriteSelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 }
 
 // DrawPreview is for drawing the preview
-func (t *SpriteSelectorTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
+func (t *SpriteSelectorTool) DrawPreview(x, y int32) {
+	rl.ClearBackground(rl.Blank)
 
 	if t.firstDown {
 		rl.DrawRectangle(t.firstPos.X, t.firstPos.Y, CurrentFile.TileWidth/2, CurrentFile.TileHeight, rl.Orange)

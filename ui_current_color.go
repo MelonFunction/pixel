@@ -3,7 +3,7 @@ package main
 import (
 	"math"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	currentColorNegativeTexture rl.Texture2D
 )
 
-type colorEditing int
+type colorEditing int32
 
 const (
 	editingR colorEditing = iota
@@ -92,7 +92,7 @@ func SetUIColors(color rl.Color) {
 		}
 	}
 
-	var found int
+	var found int32
 	var ok bool
 	incr := -1       // -1, 1, -2, 2, -3, 3 etc
 	maxAttempts := 6 // TODO make global var for this, basically the step amount in the gradient values
@@ -191,7 +191,7 @@ func SetUIColors(color rl.Color) {
 	if ay > 0 {
 		ay--
 	}
-	MoveAreaSelector(int(ax), int(ay))
+	MoveAreaSelector(int32(ax), int32(ay))
 }
 
 // CurrentColorSetLeftColor sets the left color and updates the UI components
@@ -205,7 +205,7 @@ func CurrentColorSetLeftColor(color rl.Color) {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
 			rl.ClearBackground(color)
-			if int(color.R)+int(color.G)+int(color.B) < 128 || color.A < 128 {
+			if int32(color.R)+int32(color.G)+int32(color.B) < 128 || color.A < 128 {
 				rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
 			}
 			rl.EndTextureMode()
@@ -226,7 +226,7 @@ func CurrentColorSetRightColor(color rl.Color) {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
 			rl.ClearBackground(color)
-			if int(color.R)+int(color.G)+int(color.B) < 128 || color.A < 128 {
+			if int32(color.R)+int32(color.G)+int32(color.B) < 128 || color.A < 128 {
 				rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
 			}
 			rl.EndTextureMode()
@@ -283,7 +283,7 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	CurrentColorSetLeftColor(CurrentFile.LeftColor)
 
 	currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), GetFile("./res/icons/swap.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			left := CurrentFile.LeftColor
 			right := CurrentFile.RightColor
@@ -295,7 +295,7 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorBox.PushChild(currentColorSwap)
 
 	currentColorAdd = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), GetFile("./res/icons/plus.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift) {
 				// remove color
@@ -319,11 +319,11 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 				// add color
 				switch button {
 				case rl.MouseLeftButton:
-					PaletteUIAddColor(CurrentFile.LeftColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+					PaletteUIAddColor(CurrentFile.LeftColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
 					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.LeftColor)
 					SaveSettings()
 				case rl.MouseRightButton:
-					PaletteUIAddColor(CurrentFile.RightColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+					PaletteUIAddColor(CurrentFile.RightColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
 					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.RightColor)
 					SaveSettings()
 				}

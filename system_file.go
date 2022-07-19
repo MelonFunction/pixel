@@ -1,7 +1,7 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // UIFileSystem handles non-ui drawing, including drawing the layer canvases
@@ -11,7 +11,7 @@ type UIFileSystem struct {
 	BasicSystem
 
 	// Used for relational mouse movement
-	mouseX, mouseY, mouseLastX, mouseLastY int
+	mouseX, mouseY, mouseLastX, mouseLastY int32
 
 	// workaround for resizing after AddSystem call has been made
 	hasDoneFirstFrameResize bool
@@ -92,7 +92,7 @@ func NewUIFileSystem() *UIFileSystem {
 		}
 	}
 	if interactable, ok := rightPanel.GetInteractable(); ok {
-		interactable.OnMouseDown = func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		interactable.OnMouseDown = func(entity *Entity, button MouseButton, isHeld bool) {
 
 		}
 	}
@@ -161,7 +161,7 @@ func NewUIFileSystem() *UIFileSystem {
 					if ldraw, ok := layerList.GetDrawable(); ok {
 						if lparentDrawable, ok := ldraw.DrawableType.(*DrawableParent); ok {
 							// Make a new texture for rendering the items to
-							lparentDrawable.Texture = rl.LoadRenderTexture(int(lmov.Bounds.Width), int(lmov.Bounds.Height))
+							lparentDrawable.Texture = rl.LoadRenderTexture(int32(lmov.Bounds.Width), int32(lmov.Bounds.Height))
 						}
 					}
 				}
@@ -187,7 +187,7 @@ func NewUIFileSystem() *UIFileSystem {
 		}
 	}
 	if interactable, ok := leftPanel.GetInteractable(); ok {
-		interactable.OnMouseDown = func(entity *Entity, button rl.MouseButton, isHeld bool) {
+		interactable.OnMouseDown = func(entity *Entity, button MouseButton, isHeld bool) {
 
 		}
 	}
@@ -223,7 +223,7 @@ func NewUIFileSystem() *UIFileSystem {
 					if ldraw, ok := animationsList.GetDrawable(); ok {
 						if lparentDrawable, ok := ldraw.DrawableType.(*DrawableParent); ok {
 							// Make a new texture for rendering the items to
-							lparentDrawable.Texture = rl.LoadRenderTexture(int(lmov.Bounds.Width), int(lmov.Bounds.Height))
+							lparentDrawable.Texture = rl.LoadRenderTexture(int32(lmov.Bounds.Width), int32(lmov.Bounds.Height))
 						}
 					}
 				}
@@ -243,10 +243,10 @@ func (s *UIFileSystem) Draw() {
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
 	if rl.IsMouseButtonDown(rl.MouseRightButton) {
-		CurrentFile.RightTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+		CurrentFile.RightTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
 
 	} else {
-		CurrentFile.LeftTool.DrawPreview(int(s.cursor.X), int(s.cursor.Y))
+		CurrentFile.LeftTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
 	}
 
 	rl.EndTextureMode()
@@ -264,7 +264,7 @@ func (s *UIFileSystem) Draw() {
 
 	// Grid drawing
 	if CurrentFile.DrawGrid {
-		for x := 0; x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
+		for x := int32(0); x <= CurrentFile.CanvasWidth; x += CurrentFile.TileWidth {
 			rl.DrawLine(
 				-CurrentFile.CanvasWidth/2+x,
 				-CurrentFile.CanvasHeight/2,
@@ -272,7 +272,7 @@ func (s *UIFileSystem) Draw() {
 				CurrentFile.CanvasHeight/2,
 				rl.White)
 		}
-		for y := 0; y <= CurrentFile.CanvasHeight; y += CurrentFile.TileHeight {
+		for y := int32(0); y <= CurrentFile.CanvasHeight; y += CurrentFile.TileHeight {
 			rl.DrawLine(
 				-CurrentFile.CanvasWidth/2,
 				-CurrentFile.CanvasHeight/2+y,
@@ -459,9 +459,12 @@ func (s *UIFileSystem) Update(dt float32) {
 	CurrentFile.FileCamera.Target = CurrentFile.FileCameraTarget
 
 	s.cursor = rl.GetScreenToWorld2D(rl.GetMousePosition(), CurrentFile.FileCamera)
-	s.cursor = s.cursor.Add(rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2))
+	s.cursor = rl.Vector2Add(
+		s.cursor,
+		rl.NewVector2(float32(layer.Canvas.Texture.Width)/2, float32(layer.Canvas.Texture.Height)/2),
+	)
 
-	PreviewUIDrawTile(int(s.cursor.X), int(s.cursor.Y))
+	PreviewUIDrawTile(int32(s.cursor.X), int32(s.cursor.Y))
 
 	FileHasControl = false
 	if !UIHasControl {
@@ -483,12 +486,12 @@ func (s *UIFileSystem) Update(dt float32) {
 			CurrentFile.HasDoneMouseUpLeft = false
 
 			// Repeated action
-			CurrentFile.LeftTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseLeftButton)
+			CurrentFile.LeftTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
 		} else {
 			// Always fires once
 			if CurrentFile.HasDoneMouseUpLeft == false {
 				CurrentFile.HasDoneMouseUpLeft = true
-				CurrentFile.LeftTool.MouseUp(int(s.cursor.X), int(s.cursor.Y), rl.MouseLeftButton)
+				CurrentFile.LeftTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
 			}
 		}
 
@@ -506,11 +509,11 @@ func (s *UIFileSystem) Update(dt float32) {
 				}
 			}
 			CurrentFile.HasDoneMouseUpRight = false
-			CurrentFile.RightTool.MouseDown(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)
+			CurrentFile.RightTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
 		} else {
 			if CurrentFile.HasDoneMouseUpRight == false {
 				CurrentFile.HasDoneMouseUpRight = true
-				CurrentFile.RightTool.MouseUp(int(s.cursor.X), int(s.cursor.Y), rl.MouseRightButton)
+				CurrentFile.RightTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
 			}
 		}
 	}

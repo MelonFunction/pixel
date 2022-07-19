@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // TODO resize
@@ -16,17 +16,18 @@ type SelectorTool struct {
 	mouseReleased     bool
 	resizeSide        ResizeDirection
 	// Should resize the original selection only
-	oldWidth           int32
-	oldHeight          int32
-	oldImg             *rl.Image
+	oldWidth  int32
+	oldHeight int32
+	// selection copied into another image for modification
+	imgCopy            *rl.Image
 	oldSelection       []rl.Color
 	oldSelectionCopied bool
 	// Cancels the selection if a click happens without drag
 	firstDownTime time.Time
 	name          string
 
-	selectionFadeColor                     int
-	selectionFadeColorIncrease             int // increase by amount
+	selectionFadeColor                     int32
+	selectionFadeColorIncrease             int32 // increase by amount
 	selectionFadeColorIncreasing           bool
 	selectionFadeColorIncreaseTimeLast     time.Time
 	selectionFadeColorIncreaseTimeInterval time.Duration // fps independence
@@ -45,7 +46,7 @@ func NewSelectorTool(name string) *SelectorTool {
 }
 
 // MouseDown is for mouse down events
-func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
+func (t *SelectorTool) MouseDown(x, y int32, button MouseButton) {
 	// Only get the first position after mouse has just been clicked
 	cl := CurrentFile.GetCurrentLayer()
 
@@ -116,7 +117,16 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		}
 
 		// Make a new image using the old data since ResizeNN is a pointer
-		t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
+		t.imgCopy = rl.LoadImageFromTexture(cl.Canvas.Texture)
+		rl.ImageCrop(
+			t.imgCopy,
+			rl.NewRectangle(
+				float32(CurrentFile.SelectionBounds[0]),
+				float32(CurrentFile.SelectionBounds[1]),
+				float32(t.oldWidth),
+				float32(t.oldHeight),
+			),
+		)
 
 		// Resize selection bounds
 		// Selection bounds shifting logic so that the selection is flipped
@@ -188,38 +198,24 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 		newWidth := CurrentFile.SelectionBounds[2] - CurrentFile.SelectionBounds[0] + 1
 		newHeight := CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1
 
-		// Reset the selection
-		// TODO it creates a lot of objects, not very efficient
-		CurrentFile.Selection = make(map[IntVec2]rl.Color)
-
 		// Handle selection flips
 		if newWidth <= 0 {
 			newWidth *= -1
 			newWidth += 2
-			t.oldImg.FlipHorizontal()
+			rl.ImageFlipHorizontal(t.imgCopy)
 		}
 		if newHeight <= 0 {
 			newHeight *= -1
 			newHeight += 2
-			t.oldImg.FlipVertical()
+			rl.ImageFlipVertical(t.imgCopy)
 		}
 
 		if newWidth > 0 && newHeight > 0 {
-			t.oldImg.ResizeNN(newWidth, newHeight)
+			rl.ImageResizeNN(t.imgCopy, newWidth, newHeight)
 		}
 
-		// Dump pixels back into the selection
-		imgPixels := t.oldImg.GetPixels()
-		CurrentFile.SelectionPixels = imgPixels
-		var count int
-		for y := MinInt(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y <= MaxInt(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y++ {
-			for x := MinInt(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x <= MaxInt(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x++ {
-				if count < len(imgPixels) {
-					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
-					count++
-				}
-			}
-		}
+		// Reset the selection
+		CurrentFile.Selection = make(map[IntVec2]rl.Color)
 
 		return
 	}
@@ -279,7 +275,7 @@ func (t *SelectorTool) MouseDown(x, y int, button rl.MouseButton) {
 }
 
 // MouseUp is for mouse up events
-func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
+func (t *SelectorTool) MouseUp(x, y int32, button MouseButton) {
 	t.firstDown = false
 	t.mouseReleased = true
 	t.oldSelectionCopied = false
@@ -299,8 +295,8 @@ func (t *SelectorTool) MouseUp(x, y int, button rl.MouseButton) {
 }
 
 // DrawPreview is for drawing the preview
-func (t *SelectorTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
+func (t *SelectorTool) DrawPreview(x, y int32) {
+	rl.ClearBackground(rl.Blank)
 
 	if CurrentFile.DoingSelection {
 		// Draw the selected pixels

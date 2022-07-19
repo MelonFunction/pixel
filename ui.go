@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // UI is the interface for UI elements (they handle their own components + states)
@@ -35,14 +35,14 @@ var (
 	// UIIsDraggingEntity is true when something is being dragged
 	UIIsDraggingEntity = false
 	// Font is the font used
-	Font *rl.Font
+	Font rl.Font
 	// UIFontSize is the size of the font
 	UIFontSize float32 = 14
 	// UIButtonHeight is the size of the buttons
 	UIButtonHeight float32 = 48.0
 
 	uiCamera               = rl.Camera2D{Zoom: 1}
-	mouseX, mouseY         int
+	mouseX, mouseY         int32
 	mouseLastX, mouseLastY = -1, -1
 
 	// Ecs stuffs
@@ -55,7 +55,7 @@ var (
 
 const (
 	// MouseButtonNone is for when no mouse button event is needed, but up event hasn't happened
-	MouseButtonNone = rl.MouseButton(3)
+	MouseButtonNone = MouseButton(3)
 )
 
 // Moveable gives a component a position and dimensions
@@ -81,7 +81,7 @@ func (entity *Entity) GetMoveable() (t *Moveable, ok bool) {
 }
 
 // Side is the side of the component to snap to
-type Side int
+type Side int32
 
 const (
 	// SideLeft is the left side
@@ -137,7 +137,7 @@ func (entity *Entity) GetResizeable() (t *Resizeable, ok bool) {
 // The callbacks are optional
 type Interactable struct {
 	// ButtonDown keeps track of if a button is down
-	ButtonDown rl.MouseButton
+	ButtonDown MouseButton
 
 	// ButtonDownAt is the time when the button was pressed
 	// Used to allow drag events after a certain amount of time has elapsed
@@ -150,17 +150,17 @@ type Interactable struct {
 	// OnMouseDown fires every frame the mouse button is down on the element
 	// isHeld can be used to work out if a drag event should happen, or if only
 	// one down event should be executed etc
-	OnMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool)
+	OnMouseDown func(entity *Entity, button MouseButton, isHeld bool)
 	// OnMouseUp fires once when the mouse is released (doesn't fire if mouse
 	// is released while not within the bounds! Draggable should be used for
 	// this kind of event instead)
-	OnMouseUp func(entity *Entity, button rl.MouseButton)
+	OnMouseUp func(entity *Entity, button MouseButton)
 
 	// OnScroll is for mouse wheel actions
-	OnScroll func(direction int)
+	OnScroll func(direction int32)
 
 	// OnKeyPress is called when a key is released
-	OnKeyPress func(entity *Entity, key rl.Key)
+	OnKeyPress func(entity *Entity, key Key)
 
 	// OnBlur is called when focus is lost on the entity
 	OnBlur func(entity *Entity)
@@ -178,7 +178,7 @@ func (entity *Entity) GetInteractable() (t *Interactable, ok bool) {
 }
 
 // ScrollDirection states the scroll direction of the component
-type ScrollDirection int
+type ScrollDirection int32
 
 const (
 	// ScrollDirectionVertical is for vertical scrolling
@@ -188,7 +188,7 @@ const (
 )
 
 // LayoutTag states which direction the children elements should flow in
-type LayoutTag int
+type LayoutTag int32
 
 const (
 	// FlowDirectionNone doesn't reflow elements
@@ -208,7 +208,7 @@ type Scrollable struct {
 	// ScrollDirection states which way the content should scroll
 	ScrollDirection ScrollDirection
 	// ScrollOffset is how much the content should be offset
-	ScrollOffset int
+	ScrollOffset int32
 
 	// TODO stuff for rendering scrollbars differently
 }
@@ -276,7 +276,7 @@ func (entity *Entity) GetDrawable() (t *Drawable, ok bool) {
 }
 
 // TextAlign defines how label should be aligned in bounds
-type TextAlign int
+type TextAlign int32
 
 // TextAlign
 const (
@@ -356,10 +356,10 @@ func InitUI(keymap Keymap) {
 			switch t := d.DrawableType.(type) {
 			case *DrawableParent:
 				if !t.IsPassthrough {
-					t.Texture.Unload()
+					rl.UnloadRenderTexture(t.Texture)
 				}
 			case *DrawableTexture:
-				t.Texture.Unload()
+				rl.UnloadTexture(t.Texture)
 			}
 		}
 	})
@@ -385,7 +385,7 @@ func InitUI(keymap Keymap) {
 // DestroyUI calls the destructor on every entity/component
 func DestroyUI() {
 	scene.Destroy()
-	Font.Unload()
+	rl.UnloadFont(Font)
 }
 
 // UpdateUI updates the systems (excluding the RenderSystem)
@@ -685,8 +685,8 @@ func NewBlock(
 // NewRenderTexture creates a render texture
 func NewRenderTexture(
 	bounds rl.Rectangle,
-	onMouseUp func(entity *Entity, button rl.MouseButton),
-	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+	onMouseUp func(entity *Entity, button MouseButton),
+	onMouseDown func(entity *Entity, button MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
@@ -694,7 +694,7 @@ func NewRenderTexture(
 		AddComponent(hoverable, &Hoverable{Selected: false}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{
-			DrawableType:   &DrawableRenderTexture{rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height))},
+			DrawableType:   &DrawableRenderTexture{rl.LoadRenderTexture(int32(bounds.Width), int32(bounds.Height))},
 			DrawBorder:     true,
 			DrawBackground: true,
 		})
@@ -707,8 +707,8 @@ func NewButtonTexture(
 	bounds rl.Rectangle,
 	texturePath string,
 	selected bool,
-	onMouseUp func(entity *Entity, button rl.MouseButton),
-	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+	onMouseUp func(entity *Entity, button MouseButton),
+	onMouseDown func(entity *Entity, button MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
@@ -729,8 +729,8 @@ func NewButtonText(bounds rl.Rectangle,
 	label string,
 	align TextAlign,
 	selected bool,
-	onMouseUp func(entity *Entity, button rl.MouseButton),
-	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
+	onMouseUp func(entity *Entity, button MouseButton),
+	onMouseDown func(entity *Entity, button MouseButton, isHeld bool),
 ) *Entity {
 	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
@@ -752,9 +752,9 @@ func NewInput(
 	label string,
 	align TextAlign,
 	selected bool,
-	onMouseUp func(entity *Entity, button rl.MouseButton),
-	onMouseDown func(entity *Entity, button rl.MouseButton, isHeld bool),
-	onKeyPress func(entity *Entity, key rl.Key),
+	onMouseUp func(entity *Entity, button MouseButton),
+	onMouseDown func(entity *Entity, button MouseButton, isHeld bool),
+	onKeyPress func(entity *Entity, key Key),
 ) *Entity {
 	e := scene.NewEntity(0).
 		AddComponent(moveable, &Moveable{bounds, bounds, rl.Vector2{}, FlowDirectionHorizontal, false}).
@@ -812,7 +812,7 @@ func NewScrollableList(bounds rl.Rectangle, children []*Entity, flowDirection La
 		AddComponent(drawable, &Drawable{
 			DrawableType: &DrawableParent{
 				IsPassthrough: false,
-				Texture:       rl.LoadRenderTexture(int(bounds.Width), int(bounds.Height)),
+				Texture:       rl.LoadRenderTexture(int32(bounds.Width), int32(bounds.Height)),
 			},
 			DrawBorder:     false,
 			DrawBackground: false,

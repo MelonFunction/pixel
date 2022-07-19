@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 func TestBlendWithOpacity(t *testing.T) {

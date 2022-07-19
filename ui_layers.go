@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -16,9 +16,9 @@ var (
 
 // LayersUISetCurrentLayer can be used to activate a callback on a layer button
 // Intended to be used by the ControlSystem
-func LayersUISetCurrentLayer(index int) {
+func LayersUISetCurrentLayer(index int32) {
 	currentLayerHoverable.Selected = false
-	entity, ok := layerInteractables[index]
+	entity, ok := layerInteractables[int(index)]
 	if ok {
 		if res, err := scene.QueryID(entity.ID); err == nil {
 			hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
@@ -40,7 +40,7 @@ func LayersUIMakeList(bounds rl.Rectangle) {
 			// ignore hidden layer
 			continue
 		}
-		layerList.PushChild(LayersUIMakeLayerBox(i, layer))
+		layerList.PushChild(LayersUIMakeLayerBox(int32(i), layer))
 	}
 	layerList.FlowChildren()
 }
@@ -61,7 +61,7 @@ func LayersUIRebuildList() {
 }
 
 // LayersUIMakeLayerBox makes a box containing controls and the name for a layer
-func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
+func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	var bounds rl.Rectangle
 	if res, err := scene.QueryID(layerListContainer.ID); err == nil {
 		moveable := res.Components[layerListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -69,7 +69,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 	}
 
 	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/eye_open.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 
 			if res, err := scene.QueryID(entity.ID); err == nil {
@@ -86,7 +86,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			}
 		}, nil)
 	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if err := CurrentFile.MoveLayerUp(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
@@ -96,7 +96,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			}
 		}, nil)
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if err := CurrentFile.MoveLayerDown(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
@@ -106,7 +106,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			}
 		}, nil)
 	mergeDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/merge_down.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if err := CurrentFile.MergeLayerDown(y); err == nil {
 				if CurrentFile.CurrentLayer == y {
@@ -118,7 +118,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			}
 		}, nil)
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if err := CurrentFile.DeleteLayer(y, true); err == nil {
 				LayersUIRebuildList()
@@ -147,7 +147,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 
 	isCurrent := CurrentFile.CurrentLayer == y
 	label := NewInput(rl.NewRectangle(0, 0, bounds.Width-UIButtonHeight*2.5, UIButtonHeight), layer.Name, TextAlignCenter, isCurrent,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			if hoverable, ok := entity.GetHoverable(); ok {
 				if currentLayerHoverable != nil {
@@ -160,7 +160,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			}
 		},
 		nil,
-		func(entity *Entity, key rl.Key) {
+		func(entity *Entity, key Key) {
 			// key pressed
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
@@ -192,7 +192,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 			currentLayerHoverable = hoverable
 		}
 
-		layerInteractables[y] = label
+		layerInteractables[int(y)] = label
 	}
 
 	box := NewBox(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight), []*Entity{
@@ -207,7 +207,7 @@ func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 func NewLayersUI(bounds rl.Rectangle) *Entity {
 	// New layer button
 	newLayerButton := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight), GetFile("./res/icons/plus.png"), false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 			CurrentFile.AddNewLayer()
 			max := len(CurrentFile.Layers)
@@ -217,7 +217,7 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 				currentLayerHoverable.Selected = false
 			}
 
-			layerList.PushChild(LayersUIMakeLayerBox(max-2, last))
+			layerList.PushChild(LayersUIMakeLayerBox(int32(max-2), last))
 			LayersUIRebuildList()
 		}, nil)
 

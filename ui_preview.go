@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
@@ -15,10 +15,10 @@ var (
 
 	previewArea              *Entity
 	currentPreviewMode       previewMode
-	previewZoom              int     // how much preview is zoomed
+	previewZoom              int32   // how much preview is zoomed
 	previewAnimationTimer    float32 // keeps track of time between anim frames
 	previewAnimationIsPaused bool    // true if animation is paused
-	previewAnimationFrame    int     // current frame of animation, accessed by ui_animations
+	previewAnimationFrame    int32   // current frame of animation, accessed by ui_animations
 
 	previewCurrentButton          *Entity
 	previewCurrentSheetButton     *Entity
@@ -28,7 +28,7 @@ var (
 	previewCurrentAnimationTiming *Entity // input which displays the current animation's timing
 )
 
-type previewMode int
+type previewMode int32
 
 // Preview modes
 const (
@@ -49,7 +49,7 @@ func PreviewUISetTiming(timing float32) {
 }
 
 // PreviewUIDrawTile draws the tile in the preview
-func PreviewUIDrawTile(x, y int) {
+func PreviewUIDrawTile(x, y int32) {
 	drawable, ok := previewArea.GetDrawable()
 	if ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
@@ -73,10 +73,10 @@ func PreviewUIDrawTile(x, y int) {
 				dst.Y = (float32(renderTexture.Texture.Texture.Height) - dst.Height) / 2
 
 				// Borders/shutters
-				rl.DrawRectangle(0, 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
-				rl.DrawRectangle(int(renderTexture.Texture.Texture.Width)-int(dst.X), 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
-				rl.DrawRectangle(0, 0, int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
-				rl.DrawRectangle(0, int(renderTexture.Texture.Texture.Width)-int(dst.Y), int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int32(dst.X), int32(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(int32(renderTexture.Texture.Texture.Width)-int32(dst.X), 0, int32(dst.X), int32(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, int32(renderTexture.Texture.Texture.Width)-int32(dst.Y), int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 
 				for _, layer := range CurrentFile.Layers {
 					if !layer.Hidden {
@@ -156,7 +156,7 @@ func PreviewUIDrawTile(x, y int) {
 
 				// Draw 2 rectangles so that the pixel is always highlighted
 				// regardless of the color
-				cursorSize := int(renderTexture.Texture.Texture.Width) / CurrentFile.TileWidth
+				cursorSize := int32(renderTexture.Texture.Texture.Width) / CurrentFile.TileWidth
 				rl.DrawRectangleLinesEx(rl.NewRectangle(
 					float32(renderTexture.Texture.Texture.Width)/2+2,
 					float32(renderTexture.Texture.Texture.Height)/2+2,
@@ -212,10 +212,10 @@ func PreviewUIDrawTile(x, y int) {
 				dst.Y = (float32(renderTexture.Texture.Texture.Height) - dst.Height) / 2
 
 				// Borders/shutters
-				rl.DrawRectangle(0, 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
-				rl.DrawRectangle(int(renderTexture.Texture.Texture.Width)-int(dst.X), 0, int(dst.X), int(renderTexture.Texture.Texture.Height), rl.DarkGray)
-				rl.DrawRectangle(0, 0, int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
-				rl.DrawRectangle(0, int(renderTexture.Texture.Texture.Width)-int(dst.Y), int(renderTexture.Texture.Texture.Width), int(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int32(dst.X), int32(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(int32(renderTexture.Texture.Texture.Width)-int32(dst.X), 0, int32(dst.X), int32(renderTexture.Texture.Texture.Height), rl.DarkGray)
+				rl.DrawRectangle(0, 0, int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
+				rl.DrawRectangle(0, int32(renderTexture.Texture.Texture.Width)-int32(dst.Y), int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 
 				for i, layer := range CurrentFile.Layers {
 					if i == len(CurrentFile.Layers)-1 {
@@ -283,28 +283,28 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 
 	// Buttons
 	previewCurrentSheetButton = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/current_sheet.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/current_sheet.png"), false, func(entity *Entity, button MouseButton) {
 			currentPreviewMode = previewCurrentSheet
 			unselectCurrentButton()
 			previewCurrentButton = previewCurrentSheetButton
 			selectCurrentButton()
 		}, nil)
 	previewCurrentTileButton = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/current_tile.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/current_tile.png"), false, func(entity *Entity, button MouseButton) {
 			currentPreviewMode = previewCurrentTile
 			unselectCurrentButton()
 			previewCurrentButton = previewCurrentTileButton
 			selectCurrentButton()
 		}, nil)
 	previewCurrentPixelButton = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/current_pixel.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/current_pixel.png"), false, func(entity *Entity, button MouseButton) {
 			currentPreviewMode = previewCurrentPixel
 			unselectCurrentButton()
 			previewCurrentButton = previewCurrentPixelButton
 			selectCurrentButton()
 		}, nil)
 	previewCurrentAnimationButton = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
-		GetFile("./res/icons/current_animation.png"), false, func(entity *Entity, button rl.MouseButton) {
+		GetFile("./res/icons/current_animation.png"), false, func(entity *Entity, button MouseButton) {
 			currentPreviewMode = previewCurrentAnimation
 			unselectCurrentButton()
 			previewCurrentButton = previewCurrentAnimationButton
@@ -321,11 +321,11 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 		}, nil)
 
 	previewCurrentAnimationTiming = NewInput(rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight/2), "10", TextAlignCenter, false,
-		func(entity *Entity, button rl.MouseButton) {
+		func(entity *Entity, button MouseButton) {
 			// button up
 		},
 		nil,
-		func(entity *Entity, key rl.Key) {
+		func(entity *Entity, key Key) {
 			// key pressed
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
@@ -355,7 +355,7 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 		})
 
 	if interactable, ok := previewCurrentAnimationTiming.GetInteractable(); ok {
-		interactable.OnScroll = func(direction int) {
+		interactable.OnScroll = func(direction int32) {
 			if drawable, ok := previewCurrentAnimationTiming.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 					fl, err := strconv.ParseFloat(drawableText.Label, 32)
@@ -375,11 +375,11 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 		rl.NewRectangle(0, 0, UIButtonHeight*1.5, UIButtonHeight),
 		[]*Entity{
 			NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2),
-				GetFile("./res/icons/play_pause.png"), false, func(entity *Entity, button rl.MouseButton) {
+				GetFile("./res/icons/play_pause.png"), false, func(entity *Entity, button MouseButton) {
 					previewAnimationIsPaused = !previewAnimationIsPaused
 				}, nil),
 			NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2),
-				GetFile("./res/icons/arrow_left.png"), false, func(entity *Entity, button rl.MouseButton) {
+				GetFile("./res/icons/arrow_left.png"), false, func(entity *Entity, button MouseButton) {
 					anim := CurrentFile.GetCurrentAnimation()
 					if anim == nil {
 						return
@@ -390,7 +390,7 @@ func NewPreviewUI(bounds rl.Rectangle) *Entity {
 					}
 				}, nil),
 			NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2),
-				GetFile("./res/icons/arrow_right.png"), false, func(entity *Entity, button rl.MouseButton) {
+				GetFile("./res/icons/arrow_right.png"), false, func(entity *Entity, button MouseButton) {
 					anim := CurrentFile.GetCurrentAnimation()
 					if anim == nil {
 						return

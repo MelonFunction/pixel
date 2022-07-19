@@ -1,7 +1,7 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // PickerTool Pickers an area of the same colored pixels
@@ -17,11 +17,11 @@ func NewPickerTool(name string) *PickerTool {
 }
 
 // MouseDown is for mouse down events
-func (t *PickerTool) MouseDown(x, y int, button rl.MouseButton) {
+func (t *PickerTool) MouseDown(x, y int32, button MouseButton) {
 }
 
 // MouseUp is for mouse up events
-func (t *PickerTool) MouseUp(x, y int, button rl.MouseButton) {
+func (t *PickerTool) MouseUp(x, y int32, button MouseButton) {
 	color, ok := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	if ok {
 		switch button {
@@ -37,8 +37,8 @@ func (t *PickerTool) MouseUp(x, y int, button rl.MouseButton) {
 }
 
 // DrawPreview is for drawing the preview
-func (t *PickerTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
+func (t *PickerTool) DrawPreview(x, y int32) {
+	rl.ClearBackground(rl.Blank)
 	// Preview pixel location with a suitable color
 	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	avg := (c.R + c.G + c.B) / 3

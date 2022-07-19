@@ -1,7 +1,7 @@
 package main
 
 import (
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // FillTool fills an area of the same colored pixels
@@ -19,12 +19,12 @@ func NewFillTool(name string) *FillTool {
 }
 
 // MouseDown is for mouse down events
-func (t *FillTool) MouseDown(x, y int, button rl.MouseButton) {
+func (t *FillTool) MouseDown(x, y int32, button MouseButton) {
 }
 
 // MouseUp is for mouse up events
-func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
-	color := rl.Transparent
+func (t *FillTool) MouseUp(x, y int32, button MouseButton) {
+	color := rl.Blank
 	switch button {
 	case rl.MouseLeftButton:
 		color = CurrentFile.LeftColor
@@ -35,8 +35,8 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 	pd := CurrentFile.GetCurrentLayer().PixelData
 	clickedColor := pd[IntVec2{x, y}]
 
-	var recFill func(rx, ry int)
-	recFill = func(rx, ry int) {
+	var recFill func(rx, ry int32)
+	recFill = func(rx, ry int32) {
 		if pd[IntVec2{rx, ry}] == clickedColor && color != clickedColor {
 			// Set color
 			oldColor := pd[IntVec2{rx, ry}]
@@ -73,8 +73,8 @@ func (t *FillTool) MouseUp(x, y int, button rl.MouseButton) {
 }
 
 // DrawPreview is for drawing the preview
-func (t *FillTool) DrawPreview(x, y int) {
-	rl.ClearBackground(rl.Transparent)
+func (t *FillTool) DrawPreview(x, y int32) {
+	rl.ClearBackground(rl.Blank)
 	// Preview pixel location with a suitable color
 	c := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	avg := (c.R + c.G + c.B) / 3

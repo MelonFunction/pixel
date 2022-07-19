@@ -5,13 +5,13 @@ import (
 	"math"
 	"time"
 
+	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/gotk3/gotk3/gtk"
-	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
 // Static vars for file
 var (
-	keysExemptFromRelease = []rl.Key{
+	keysExemptFromRelease = []Key{
 		rl.KeyLeftControl,
 		rl.KeyLeftShift,
 		rl.KeyLeftAlt,
@@ -32,12 +32,12 @@ type UIControlSystem struct {
 	KeyRepeat           time.Duration
 	Keymap              Keymap
 	keyMoveable         bool
-	lastKey             []rl.Key
+	lastKey             []Key
 	mouseButtonDown     bool
-	keysDown            map[rl.Key]bool // current keys down, used for combinations
-	keysAwaitingRelease map[rl.Key]bool // keys which need to be released before they can be used again
+	keysDown            map[Key]bool // current keys down, used for combinations
+	keysAwaitingRelease map[Key]bool // keys which need to be released before they can be used again
 
-	ScrollScalar int
+	ScrollScalar int32
 }
 
 // NewUIControlSystem creates and returns a new NewUIControlSystem reference
@@ -131,13 +131,13 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	return &UIControlSystem{
 		KeyRepeat:           time.Second / 5,
 		Keymap:              keymap,
-		keysDown:            make(map[rl.Key]bool),
-		keysAwaitingRelease: make(map[rl.Key]bool),
+		keysDown:            make(map[Key]bool),
+		keysAwaitingRelease: make(map[Key]bool),
 		ScrollScalar:        16, // TODO get from config
 	}
 }
 
-func (s *UIControlSystem) getButtonDown() rl.MouseButton {
+func (s *UIControlSystem) getButtonDown() MouseButton {
 	button := MouseButtonNone
 	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
 		button = rl.MouseLeftButton
@@ -185,7 +185,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		return nil
 	}
 
-	if moveable.Bounds.Contains(rl.GetMousePosition().Subtract(moveable.Offset)) {
+	if rl.CheckCollisionPointRec(rl.Vector2Subtract(rl.GetMousePosition(), moveable.Offset), moveable.Bounds) {
 		hoverable.Hovered = true
 
 		// Scroll logic
@@ -283,17 +283,17 @@ func UISaveAs() {
 func (s *UIControlSystem) HandleKeyboardEvents() {
 	// Handle keyboard events
 	for key := range s.keysAwaitingRelease {
-		if !rl.IsKeyDown(key) {
+		if !rl.IsKeyDown(int32(key)) {
 			delete(s.keysAwaitingRelease, key)
 		}
 	}
 
-	checkDown := func(keySlices [][]rl.Key) bool {
+	checkDown := func(keySlices [][]Key) bool {
 		for _, keySlice := range keySlices {
 			// Reset for each combination for the binding
 			allDown := true
 			for _, key := range keySlice {
-				isDown := rl.IsKeyDown(key)
+				isDown := rl.IsKeyDown(int32(key))
 				s.keysDown[key] = isDown
 				needsRelease, ok := s.keysAwaitingRelease[key]
 				if !isDown || (ok && needsRelease) {
@@ -306,7 +306,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 		}
 		return false
 	}
-	setAwaitingRelease := func(keySlices [][]rl.Key) bool {
+	setAwaitingRelease := func(keySlices [][]Key) bool {
 		for _, keySlice := range keySlices {
 			for _, key := range keySlice {
 				found := false
@@ -357,7 +357,7 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 				// Input paste
 				if UIInteractableCapturedInput != nil && UIInteractableCapturedInput.OnKeyPress != nil {
 					for _, char := range rl.GetClipboardText() {
-						UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, rl.Key(char))
+						UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, Key(char))
 					}
 				}
 			default:
@@ -422,8 +422,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 					CurrentFile.DoingSelection = true
 					CurrentFile.MoveSelection(0, 0)
 					cl := CurrentFile.GetCurrentLayer()
-					for py := 0; py <= CurrentFile.CanvasWidth; py++ {
-						for px := 0; px <= CurrentFile.CanvasHeight; px++ {
+					for py := int32(0); py <= CurrentFile.CanvasWidth; py++ {
+						for px := int32(0); px <= CurrentFile.CanvasHeight; px++ {
 							pixel := cl.PixelData[IntVec2{px, py}]
 							CurrentFile.Selection[IntVec2{px, py}] = pixel
 							CurrentFile.SelectionPixels = append(CurrentFile.SelectionPixels, pixel)
@@ -443,8 +443,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 
 			case "layerUp":
 				CurrentFile.CurrentLayer++
-				if CurrentFile.CurrentLayer > len(CurrentFile.Layers)-2 {
-					CurrentFile.CurrentLayer = len(CurrentFile.Layers) - 2
+				if CurrentFile.CurrentLayer > int32(len(CurrentFile.Layers)-2) {
+					CurrentFile.CurrentLayer = int32(len(CurrentFile.Layers) - 2)
 				}
 				LayersUISetCurrentLayer(CurrentFile.CurrentLayer)
 			case "layerDown":
@@ -489,10 +489,10 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 	// Stack keys up so that if left is held, then right is held, then right
 	// is released, the cursor would continue going left instead of staying
 	// still
-	checkDownAddStack := func(keySlices [][]rl.Key) {
+	checkDownAddStack := func(keySlices [][]Key) {
 		for _, keySlice := range keySlices {
 			for _, key := range keySlice {
-				if rl.IsKeyPressed(key) {
+				if rl.IsKeyPressed(int32(key)) {
 					s.keyMoveable = true
 					s.lastKey = append(s.lastKey, key)
 				}
@@ -504,17 +504,17 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 	checkDownAddStack(s.Keymap.Data["toolDown"])
 	checkDownAddStack(s.Keymap.Data["toolUp"])
 
-	if len(s.lastKey) > 0 && rl.IsKeyDown(s.lastKey[len(s.lastKey)-1]) {
+	if len(s.lastKey) > 0 && rl.IsKeyDown(int32(s.lastKey[len(s.lastKey)-1])) {
 		last := s.lastKey[len(s.lastKey)-1]
 		if s.keyMoveable {
 			s.keyRepeatTimer = 0
 			s.keyMoveable = false
 
-			moveAmount := int(CurrentFile.FileCamera.Zoom)
+			moveAmount := int32(CurrentFile.FileCamera.Zoom)
 			x := rl.GetMouseX()
 			y := rl.GetMouseY()
 
-			matches := func(match rl.Key, keySlices [][]rl.Key) bool {
+			matches := func(match Key, keySlices [][]Key) bool {
 				for _, keySlice := range keySlices {
 					for _, key := range keySlice {
 						if key == match {
@@ -530,25 +530,25 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(1, 0)
 				} else {
-					rl.SetMousePosition(x+moveAmount, y)
+					rl.SetMousePosition(int(x+moveAmount), int(y))
 				}
 			case matches(last, s.Keymap.Data["toolLeft"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(-1, 0)
 				} else {
-					rl.SetMousePosition(x-moveAmount, y)
+					rl.SetMousePosition(int(x-moveAmount), int(y))
 				}
 			case matches(last, s.Keymap.Data["toolDown"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(0, 1)
 				} else {
-					rl.SetMousePosition(x, y+moveAmount)
+					rl.SetMousePosition(int(x), int(y+moveAmount))
 				}
 			case matches(last, s.Keymap.Data["toolUp"]):
 				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(0, -1)
 				} else {
-					rl.SetMousePosition(x, y-moveAmount)
+					rl.SetMousePosition(int(x), int(y-moveAmount))
 				}
 			}
 		}
@@ -652,7 +652,7 @@ func (s *UIControlSystem) Update(dt float32) {
 		}
 
 		if uint32(lastKey) != math.MaxUint32 {
-			UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, lastKey)
+			UIInteractableCapturedInput.OnKeyPress(UIEntityCapturedInput, Key(lastKey))
 			// Some callbacks might call RemoveCapturedInput() so double check
 			// that we still have an entity focused
 			if UIInteractableCapturedInput == nil {

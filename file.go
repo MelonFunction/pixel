@@ -12,20 +12,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	rl "github.com/lachee/raylib-goplus/raylib"
+	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // Tool is the interface for Tool elements
 type Tool interface {
 	// Used by every tool
-	MouseDown(x, y int, button rl.MouseButton) // Called each frame the mouse is down
-	MouseUp(x, y int, button rl.MouseButton)   // Called once, when the mouse button is released
+	MouseDown(x, y int32, button MouseButton) // Called each frame the mouse is down
+	MouseUp(x, y int32, button MouseButton)   // Called once, when the mouse button is released
 
 	String() string
 
 	// Takes the current mouse position. Called every frame the tool is
 	// selected. Draw calls are drawn on the preview layer.
-	DrawPreview(x, y int)
+	DrawPreview(x, y int32)
 
 	// DrawUI is used to draw the UI for the current tool.
 	// This doesn't draw to the preview layer.
@@ -33,7 +33,7 @@ type Tool interface {
 }
 
 // HistoryLayerAction specifies the action which has been called upon the layer
-type HistoryLayerAction int
+type HistoryLayerAction int32
 
 // What HistoryLayer action has happened
 const (
@@ -51,7 +51,7 @@ type CompoundHistory struct {
 // HistoryLayer is for layer operations
 type HistoryLayer struct {
 	HistoryLayerAction
-	LayerIndex int
+	LayerIndex int32
 }
 
 // PixelStateData stores what the state was previously and currently
@@ -63,7 +63,7 @@ type PixelStateData struct {
 // HistoryPixel is for pixel operations
 type HistoryPixel struct {
 	PixelState map[IntVec2]PixelStateData
-	LayerIndex int
+	LayerIndex int32
 }
 
 // HistoryResize is for resize operations
@@ -71,12 +71,12 @@ type HistoryResize struct {
 	// PrevLayerState is a slice consisting of all layer's PixelData
 	PrevLayerState, CurrentLayerState []map[IntVec2]rl.Color
 	// Used for calling Layer.Resize. ResizeDirection doesn't matter
-	PrevWidth, PrevHeight       int
-	CurrentWidth, CurrentHeight int
+	PrevWidth, PrevHeight       int32
+	CurrentWidth, CurrentHeight int32
 }
 
 // DrawPixel draws a pixel. It records actions into history.
-func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
+func (f *File) DrawPixel(x, y int32, color rl.Color, saveToHistory bool) {
 	// Set the pixel data in the current layer
 	layer := f.GetCurrentLayer()
 	if saveToHistory {
@@ -84,10 +84,10 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 			// Add old color to history
 			oldColor, ok := layer.PixelData[IntVec2{x, y}]
 			if !ok {
-				oldColor = rl.Transparent
+				oldColor = rl.Blank
 			}
 
-			if color != rl.Transparent {
+			if color != rl.Blank {
 				color = BlendWithOpacity(oldColor, color)
 			}
 
@@ -110,7 +110,7 @@ func (f *File) DrawPixel(x, y int, color rl.Color, saveToHistory bool) {
 			layer.PixelData[IntVec2{x, y}] = color
 
 			rl.BeginTextureMode(layer.Canvas)
-			if color == rl.Transparent {
+			if color == rl.Blank {
 				rl.DrawPixel(x, y, rl.Black)
 			} else {
 				rl.DrawPixel(x, y, color)
@@ -125,8 +125,8 @@ func (f *File) ClearBackground(color rl.Color) {
 	rl.ClearBackground(color)
 
 	layer := f.GetCurrentLayer()
-	for x := 0; x < f.CanvasWidth; x++ {
-		for y := 0; y < f.CanvasHeight; y++ {
+	for x := int32(0); x < f.CanvasWidth; x++ {
+		for y := int32(0); y < f.CanvasHeight; y++ {
 			layer.PixelData[IntVec2{x, y}] = color
 		}
 	}
@@ -135,7 +135,7 @@ func (f *File) ClearBackground(color rl.Color) {
 // FileSer contains only the fields that need to be serialized
 type FileSer struct {
 	DrawGrid                                         bool
-	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
+	CanvasWidth, CanvasHeight, TileWidth, TileHeight int32
 
 	Layers     []*LayerSer
 	Animations []*AnimationSer
@@ -146,20 +146,20 @@ type LayerSer struct {
 	Hidden        bool
 	Name          string
 	PixelData     map[IntVec2]rl.Color
-	Width, Height int
+	Width, Height int32
 }
 
 // AnimationSer contains only the fields that need to be serialized
 type AnimationSer struct {
 	Name                 string
-	FrameStart, FrameEnd int
+	FrameStart, FrameEnd int32
 	Timing               float32
 }
 
 // Animation contains data about an animation
 type Animation struct {
 	Name                 string
-	FrameStart, FrameEnd int
+	FrameStart, FrameEnd int32
 	Timing               float32 // time between frames
 }
 
@@ -172,18 +172,18 @@ type File struct {
 	Filename string
 
 	Layers       []*Layer // The last one is for tool previews
-	CurrentLayer int
+	CurrentLayer int32
 
 	Animations       []*Animation
-	CurrentAnimation int
+	CurrentAnimation int32
 
 	History           []interface{}
-	HistoryMaxActions int
-	historyOffset     int      // How many undos have been made
+	HistoryMaxActions int32
+	historyOffset     int32    // How many undos have been made
 	deletedLayers     []*Layer // stack of layers, AddNewLayer destroys history chain
 
-	BrushSize  int
-	EraserSize int
+	BrushSize  int32
+	EraserSize int32
 	LeftTool   Tool
 	RightTool  Tool
 	LeftColor  rl.Color
@@ -211,26 +211,26 @@ type File struct {
 	// SelectionResizing is true when the selection is being resized
 	SelectionResizing bool
 	// Bounds can be moved if dragged within this area
-	SelectionBounds [4]int
+	SelectionBounds [4]int32
 	// To check if the selection was moved
-	OrigSelectionBounds [4]int
+	OrigSelectionBounds [4]int32
 	// True if paste event has just happened
 	IsSelectionPasted bool
 
-	CurrentPalette int
+	CurrentPalette int32
 
 	// Canvas and tile dimensions
-	CanvasWidth, CanvasHeight, TileWidth, TileHeight int
+	CanvasWidth, CanvasHeight, TileWidth, TileHeight int32
 
 	// for previewing what would happen if a resize occured
 	DoingResize                                                                                          bool
-	CanvasWidthResizePreview, CanvasHeightResizePreview, TileWidthResizePreview, TileHeightResizePreview int
+	CanvasWidthResizePreview, CanvasHeightResizePreview, TileWidthResizePreview, TileHeightResizePreview int32
 	// direction of resize event
 	CanvasDirectionResizePreview ResizeDirection
 }
 
 // NewFile returns a pointer to a new File
-func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
+func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 
 	pathDir, err := os.Getwd()
 	if err != nil {
@@ -241,8 +241,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 		PathDir:  pathDir,
 		Filename: "filename",
 		Layers: []*Layer{
-			NewLayer(canvasWidth, canvasHeight, "background", rl.Transparent, true),
-			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Transparent, true),
+			NewLayer(canvasWidth, canvasHeight, "background", rl.Blank, true),
+			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Blank, true),
 		},
 
 		Animations: make([]*Animation, 0),
@@ -288,7 +288,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int) *File {
 }
 
 // ResizeDirection is used to specify which edge the resize operation applies to
-type ResizeDirection int
+type ResizeDirection int32
 
 // Resize directions
 const (
@@ -305,7 +305,7 @@ const (
 )
 
 // ResizeCanvas resizes the canvas from a specified edge
-func (f *File) ResizeCanvas(width, height int, direction ResizeDirection) {
+func (f *File) ResizeCanvas(width, height int32, direction ResizeDirection) {
 	prevLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 	currentLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 
@@ -323,7 +323,7 @@ func (f *File) ResizeCanvas(width, height int, direction ResizeDirection) {
 }
 
 // ResizeTileSize resizes the tile size
-func (f *File) ResizeTileSize(width, height int) {
+func (f *File) ResizeTileSize(width, height int32) {
 	f.TileWidth = width
 	f.TileHeight = height
 }
@@ -366,7 +366,7 @@ func (f *File) Copy() {
 	for v, c := range cl.PixelData {
 		CopiedSelection[v] = c
 	}
-	CopiedSelectionBounds = [4]int{
+	CopiedSelectionBounds = [4]int32{
 		0,
 		0,
 		f.CanvasWidth - 1,
@@ -406,7 +406,7 @@ func (f *File) Paste() {
 
 // MoveSelection moves the selection in the specified direction by one pixel
 // dx and dy is how much the selection has moved
-func (f *File) MoveSelection(dx, dy int) {
+func (f *File) MoveSelection(dx, dy int32) {
 	cl := f.GetCurrentLayer()
 
 	if len(f.Selection) > 0 {
@@ -422,14 +422,14 @@ func (f *File) MoveSelection(dx, dy int) {
 				if ok {
 					ps := latestHistory.PixelState[loc]
 					if !f.IsSelectionPasted {
-						ps.Current = rl.Transparent
+						ps.Current = rl.Blank
 						ps.Prev = cl.PixelData[loc]
 						latestHistory.PixelState[loc] = ps
 					}
 				}
 
 				if !f.IsSelectionPasted {
-					cl.PixelData[loc] = rl.Transparent
+					cl.PixelData[loc] = rl.Blank
 				}
 			}
 		}
@@ -506,20 +506,20 @@ func (f *File) CommitSelection() {
 }
 
 // DeleteAnimation deletes an animation
-func (f *File) DeleteAnimation(index int) error {
-	if index-1 >= len(f.Animations) {
+func (f *File) DeleteAnimation(index int32) error {
+	if index-1 >= int32(len(f.Animations)) {
 		return fmt.Errorf("Animation not in range")
 	}
 
 	f.Animations = append(f.Animations[:index], f.Animations[index+1:]...)
 	// set animation to last
-	f.CurrentAnimation = len(f.Animations) - 1
+	f.CurrentAnimation = int32(len(f.Animations) - 1)
 
 	return nil
 }
 
 // SetCurrentAnimation sets the current animation
-func (f *File) SetCurrentAnimation(index int) {
+func (f *File) SetCurrentAnimation(index int32) {
 	f.CurrentAnimation = index
 }
 
@@ -532,8 +532,8 @@ func (f *File) GetCurrentAnimation() *Animation {
 }
 
 // GetAnimation gets the animation at the specified index
-func (f *File) GetAnimation(index int) (*Animation, error) {
-	if index-1 >= len(f.Animations) {
+func (f *File) GetAnimation(index int32) (*Animation, error) {
+	if index-1 >= int32(len(f.Animations)) {
 		return nil, fmt.Errorf("Animation not in range")
 	}
 	return f.Animations[index], nil
@@ -550,7 +550,7 @@ func (f *File) AddNewAnimation() {
 }
 
 // SetAnimationFrames sets the current animation's frames
-func (f *File) SetAnimationFrames(index, firstSprite, lastSprite int) {
+func (f *File) SetAnimationFrames(index, firstSprite, lastSprite int32) {
 	anim, err := f.GetAnimation(index)
 	if err != nil {
 		log.Println(err)
@@ -570,7 +570,7 @@ func (f *File) SetCurrentAnimationTiming(timing float32) {
 }
 
 // SetAnimationName sets the current animation's name
-func (f *File) SetAnimationName(index int, name string) {
+func (f *File) SetAnimationName(index int32, name string) {
 	anim, err := f.GetAnimation(index)
 	if err != nil {
 		log.Println(err)
@@ -580,7 +580,7 @@ func (f *File) SetAnimationName(index int, name string) {
 }
 
 // SetCurrentLayer sets the current layer
-func (f *File) SetCurrentLayer(index int) {
+func (f *File) SetCurrentLayer(index int32) {
 	f.CurrentLayer = index
 }
 
@@ -592,7 +592,7 @@ func (f *File) GetCurrentLayer() *Layer {
 // DeleteLayer deletes the layer.
 // Won't delete anything if only one visible layer exists
 // Sets the current layer to the top-most layer
-func (f *File) DeleteLayer(index int, appendHistory bool) error {
+func (f *File) DeleteLayer(index int32, appendHistory bool) error {
 	if len(f.Layers) > 2 {
 		f.deletedLayers = append(f.deletedLayers, f.Layers[index])
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -601,8 +601,8 @@ func (f *File) DeleteLayer(index int, appendHistory bool) error {
 			f.AppendHistory(HistoryLayer{HistoryLayerActionDelete, index})
 		}
 
-		if f.CurrentLayer > len(f.Layers)-2 {
-			f.SetCurrentLayer(len(f.Layers) - 2)
+		if f.CurrentLayer > int32(len(f.Layers)-2) {
+			f.SetCurrentLayer(int32(len(f.Layers) - 2))
 		}
 
 		return nil
@@ -613,7 +613,7 @@ func (f *File) DeleteLayer(index int, appendHistory bool) error {
 
 // RestoreLayer restores the last layer from f.deletedLayers to the position of
 // index in f.Layers
-func (f *File) RestoreLayer(index int) error {
+func (f *File) RestoreLayer(index int32) error {
 	if len(f.deletedLayers) == 0 {
 		return fmt.Errorf("No layers to restore")
 	}
@@ -631,7 +631,7 @@ func (f *File) RestoreLayer(index int) error {
 }
 
 // MergeLayerDown merges the layer with the one below
-func (f *File) MergeLayerDown(index int) error {
+func (f *File) MergeLayerDown(index int32) error {
 	if len(f.Layers) <= 2 {
 		return fmt.Errorf("Couldn't merge layer down: Not enough layers")
 	}
@@ -653,7 +653,7 @@ func (f *File) MergeLayerDown(index int) error {
 		// Save back into the map
 		historyPixel.PixelState[loc] = hist
 
-		if color != rl.Transparent && color != to.PixelData[loc] {
+		if color != rl.Blank && color != to.PixelData[loc] {
 		}
 	}
 	to.Redraw()
@@ -675,16 +675,16 @@ func (f *File) MergeLayerDown(index int) error {
 
 // AddNewLayer inserts a new layer
 func (f *File) AddNewLayer() {
-	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Transparent, true)
+	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Blank, true)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
-	f.SetCurrentLayer(len(f.Layers) - 2) // -2 bc temp layer is excluded
+	f.SetCurrentLayer(int32(len(f.Layers) - 2)) // -2 bc temp layer is excluded
 
 	f.AppendHistory(HistoryLayer{HistoryLayerActionCreate, f.CurrentLayer})
 }
 
 // MoveLayerUp moves the layer up
-func (f *File) MoveLayerUp(index int, appendHistory bool) error {
-	if index < len(f.Layers)-2 {
+func (f *File) MoveLayerUp(index int32, appendHistory bool) error {
+	if index < int32(len(f.Layers)-2) {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
 		f.Layers = append(f.Layers[:index], append([]*Layer{f.Layers[index], toMove}, f.Layers[index+1:]...)...)
@@ -699,7 +699,7 @@ func (f *File) MoveLayerUp(index int, appendHistory bool) error {
 }
 
 // MoveLayerDown moves the layer down
-func (f *File) MoveLayerDown(index int, appendHistory bool) error {
+func (f *File) MoveLayerDown(index int32, appendHistory bool) error {
 	if index > 0 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -723,11 +723,11 @@ func (f *File) MoveLayerDown(index int, appendHistory bool) error {
 // historyOffset
 func (f *File) AppendHistory(action interface{}) {
 	// Clear everything past the offset if a change has been made after undoing
-	f.History = f.History[0 : len(f.History)-f.historyOffset]
+	f.History = f.History[0 : int32(len(f.History))-f.historyOffset]
 	f.historyOffset = 0
 
-	if len(f.History) >= f.HistoryMaxActions {
-		f.History = append(f.History[len(f.History)-f.HistoryMaxActions+1:f.HistoryMaxActions], action)
+	if int32(len(f.History)) >= f.HistoryMaxActions {
+		f.History = append(f.History[int32(len(f.History))-f.HistoryMaxActions+1:f.HistoryMaxActions], action)
 	} else {
 		f.History = append(f.History, action)
 	}
@@ -739,7 +739,7 @@ func (f *File) AppendHistory(action interface{}) {
 func (f *File) DrawPixelDataToCanvas() {
 	layer := f.GetCurrentLayer()
 	rl.BeginTextureMode(layer.Canvas)
-	rl.ClearBackground(rl.Transparent)
+	rl.ClearBackground(rl.Blank)
 	for v, color := range layer.PixelData {
 		rl.DrawPixel(v.X, v.Y, color)
 	}
@@ -752,7 +752,7 @@ func (f *File) DrawPixelDataToCanvas() {
 // sprite is composed of multiple parts
 // TODO redo-ing after undo after outline deletes origselection area
 func (f *File) Outline() {
-	sx, sy := 0, 0
+	var sx, sy int32 = 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
 
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
@@ -785,17 +785,17 @@ func (f *File) Outline() {
 				pixelSource = f.Selection
 			}
 
-			if pixelSource[currentPos] != rl.Transparent {
-				if pixelSource[leftPos] == rl.Transparent {
+			if pixelSource[currentPos] != rl.Blank {
+				if pixelSource[leftPos] == rl.Blank {
 					pixelLocations = append(pixelLocations, leftPos)
 				}
-				if pixelSource[rightPos] == rl.Transparent {
+				if pixelSource[rightPos] == rl.Blank {
 					pixelLocations = append(pixelLocations, rightPos)
 				}
-				if pixelSource[abovePos] == rl.Transparent {
+				if pixelSource[abovePos] == rl.Blank {
 					pixelLocations = append(pixelLocations, abovePos)
 				}
-				if pixelSource[belowPos] == rl.Transparent {
+				if pixelSource[belowPos] == rl.Blank {
 					pixelLocations = append(pixelLocations, belowPos)
 				}
 			}
@@ -804,7 +804,7 @@ func (f *File) Outline() {
 
 	for _, loc := range pixelLocations {
 		l := latestHistory.PixelState[loc]
-		l.Prev = rl.Transparent // Only replacing transparent pixels
+		l.Prev = rl.Blank // Only replacing transparent pixels
 		l.Current = f.LeftColor
 		latestHistory.PixelState[loc] = l
 
@@ -828,7 +828,7 @@ func (f *File) Outline() {
 func (f *File) FlipHorizontal() {
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
 
-	sx, sy := 0, 0
+	var sx, sy int32 = 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
 
 	if f.DoingSelection {
@@ -886,7 +886,7 @@ func (f *File) FlipHorizontal() {
 func (f *File) FlipVertical() {
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
 
-	sx, sy := 0, 0
+	var sx, sy int32 = 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
 
 	if f.DoingSelection {
@@ -940,9 +940,9 @@ func (f *File) FlipVertical() {
 
 // Undo undoes an action
 func (f *File) Undo() {
-	if f.historyOffset < len(f.History) {
+	if f.historyOffset < int32(len(f.History)) {
 		f.historyOffset++
-		index := len(f.History) - f.historyOffset
+		index := int32(len(f.History)) - f.historyOffset
 		history := f.History[index]
 
 		var process func(historyItem interface{})
@@ -998,7 +998,7 @@ func (f *File) Undo() {
 // Redo redoes an action
 func (f *File) Redo() {
 	if f.historyOffset > 0 {
-		index := len(f.History) - f.historyOffset
+		index := int32(len(f.History)) - f.historyOffset
 		f.historyOffset--
 		history := f.History[index]
 
@@ -1050,7 +1050,7 @@ func (f *File) Redo() {
 // Destroy unloads each layer's canvas
 func (f *File) Destroy() {
 	for _, layer := range f.Layers {
-		layer.Canvas.Unload()
+		rl.UnloadRenderTexture(layer.Canvas)
 	}
 
 	for i, file := range Files {
@@ -1073,14 +1073,14 @@ func (f *File) SaveAs(path string) {
 	switch ext {
 	case ".png":
 		// Create a colored image of the given width and height.
-		img := image.NewNRGBA(image.Rect(0, 0, f.CanvasWidth, f.CanvasHeight))
+		img := image.NewNRGBA(image.Rect(0, 0, int(f.CanvasWidth), int(f.CanvasHeight)))
 
 		for _, layer := range f.Layers[:len(f.Layers)-1] {
 			if !layer.Hidden {
 				for pos, data := range layer.PixelData {
 					// TODO layer blend modes
 					if data.A != 0 {
-						img.Set(pos.X, pos.Y, color.NRGBA{
+						img.Set(int(pos.X), int(pos.Y), color.NRGBA{
 							R: data.R,
 							G: data.G,
 							B: data.B,
@@ -1224,15 +1224,15 @@ func Open(openPath string) *File {
 				log.Fatal(err)
 			}
 
-			f.CanvasWidth = img.Bounds().Max.X
-			f.CanvasHeight = img.Bounds().Max.Y
+			f.CanvasWidth = int32(img.Bounds().Max.X)
+			f.CanvasHeight = int32(img.Bounds().Max.Y)
 
-			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Transparent, false)
+			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Blank, false)
 
 			rl.BeginTextureMode(editedLayer.Canvas)
-			for x := 0; x < f.CanvasWidth; x++ {
-				for y := 0; y < f.CanvasHeight; y++ {
-					color := img.At(x, y)
+			for x := int32(0); x < f.CanvasWidth; x++ {
+				for y := int32(0); y < f.CanvasHeight; y++ {
+					color := img.At(int(x), int(y))
 					r, g, b, a := color.RGBA()
 					rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
 					editedLayer.PixelData[IntVec2{x, y}] = rlColor
@@ -1243,7 +1243,7 @@ func Open(openPath string) *File {
 
 			f.Layers = []*Layer{
 				editedLayer,
-				NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Transparent, true),
+				NewLayer(f.CanvasWidth, f.CanvasHeight, "hidden", rl.Blank, true),
 			}
 
 			spl := strings.Split(openPath, "/")
