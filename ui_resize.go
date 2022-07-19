@@ -50,7 +50,7 @@ func ResizeUIMakeInput(linkedValueCallback func() *int, tabNext *Entity) *Entity
 					}
 
 					switch {
-					case key >= 48 && key <= 57:
+					case key >= 48 && key <= 57: // a to z
 						drawableParent.Label += string(rune(key))
 						alterValue()
 					case key == rl.KeyBackspace && len(drawableParent.Label) > 0:

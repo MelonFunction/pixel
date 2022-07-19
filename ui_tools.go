@@ -55,11 +55,9 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 							drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 						} else if len(drawableText.Label) < 12 {
 							switch {
-							// 0 to 9
-							case key >= 48 && key <= 57:
+							case key >= 48 && key <= 57: // 0 to 9
 								fallthrough
-							// a to z
-							case key >= 97 && key <= 97+26:
+							case key >= 97 && key <= 97+26: // a to z
 								fallthrough
 							case key >= rl.KeyA && key <= rl.KeyZ:
 								drawableText.Label += string(rune(key))

@@ -18,8 +18,8 @@
     - Color picker
     - Selection (rectangle selection only currently)
     - Flip selection (or the entire canvas if there isn't a selection)
-    - Move and resize selection
-    - Outline the selection (or the entire canvas there isn't a selections)
+    - Move and resize the selection
+    - Outline the selection (or the entire canvas there isn't a selection)
 - Color picker
     - Updates indicator position when a palette color is selected
     - Alpha slider
@@ -36,7 +36,7 @@
 - Layers
     - Hide
     - Move up or down
-    - Merge with layer below
+    - Merge with the layer below
 - Resize canvas and tile size easily
 
 ## Installation

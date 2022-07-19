@@ -4,20 +4,20 @@
 🟢 Done
 
 Refactor
-  🔴 system_file, system_render, system_controls don't have clear goals since system_file also renders.
+  🔴 "system_file", "system_render", "system_controls" don't have clear goals since system_file also renders.
     This should be moved to system_render. 
     
 UI
   🔴 Resize element
-  🔴 Double click to change text in label, single click to activate it
+  🔴 Double click to change the text in a label, single click to activate it
 
 System
   🔴 * on unsaved files
   🔴 Prevent quit when there is an unsaved file
-  🔴 Opening image with transparency causes colored artifacts
-    🔴 Also transperency is wrong. Probs blending function
+  🔴 Opening an image with transparency causes colored artifacts
+    🔴 Also transparency is wrong. Probs blending function
   🔴 Dropping a file on the window should open it
-  🟢 Serialize state data into file (like .ase etc)
+  🟢 Serialize state data into a file (like .ase etc)
     🟢 Animations
     🟢 Layers
 
@@ -38,7 +38,7 @@ Layers
     🟢 Hide/show
 
 Palettes
-  🟢 Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
+  🟢 Hold shift to change the "add color to palette (+) button" to "remove the color from palette (-) button"
   🟢 Highlight left/right color after click (un-highlight if color adjusted with controls)
 
 Menubar
@@ -47,13 +47,13 @@ Menubar
     🟢 Save palette
     🟢 Load palette
     🟢 Rename palette
-    🟢 Create palette from colors in image
+    🟢 Create a palette from colors in an image
 
 Tools
   🔴 Shade Brush
 
   Pixel Brush
-    🟢 Hold button to draw line
+    🟢 Hold the button to draw a line
  
   Selector
     🟢 Resize should flip selection
@@ -66,12 +66,12 @@ Tools
     🟢 Copy/paste while moving
     🟢 Resize
     🟢 Flip
-      🟢 rl.KeyH for Horizontal
-      🟢 rl.KeyV for Vertical
+      🟢 "rl.KeyH" for Horizontal
+      🟢 "rl.KeyV" for Vertical
 
 Features
   Animation Tab
-    🟢 Create animation button
+    🟢 Create an animation button
     🟢 List (like layers)
       🟢 When clicked, allow tiles to be selected
     🔴 Export
@@ -85,4 +85,4 @@ Features
       🟢 Pause/play
     🟢 Show the tile/map editor/placer if the tiles tab is selected
       🟢 Show the current tile being tiled in all directions
-      🔴 Allow editing in preview panel
+      🔴 Allow editing in the preview panel

@@ -40,7 +40,7 @@ func LayersUIMakeList(bounds rl.Rectangle) {
 			// ignore hidden layer
 			continue
 		}
-		layerList.PushChild(LayersUIMakeBox(i, layer))
+		layerList.PushChild(LayersUIMakeLayerBox(i, layer))
 	}
 	layerList.FlowChildren()
 }
@@ -60,8 +60,8 @@ func LayersUIRebuildList() {
 	}
 }
 
-// LayersUIMakeBox makes a box
-func LayersUIMakeBox(y int, layer *Layer) *Entity {
+// LayersUIMakeLayerBox makes a box containing controls and the name for a layer
+func LayersUIMakeLayerBox(y int, layer *Layer) *Entity {
 	var bounds rl.Rectangle
 	if res, err := scene.QueryID(layerListContainer.ID); err == nil {
 		moveable := res.Components[layerListContainer.Scene.ComponentsMap["moveable"]].(*Moveable)
@@ -168,14 +168,14 @@ func LayersUIMakeBox(y int, layer *Layer) *Entity {
 						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 					} else if len(drawableText.Label) < 12 {
 						switch {
-						// 0 to 9
-						case key >= 48 && key <= 57:
+						case key >= 48 && key <= 57: // 0 to 9
 							fallthrough
-						// a to z
-						case key >= 97 && key <= 97+26:
+						case key >= 97 && key <= 97+26: // a to z
 							fallthrough
 						case key >= rl.KeyA && key <= rl.KeyZ:
 							drawableText.Label += string(rune(key))
+						case key == rl.KeyEnter:
+							RemoveCapturedInput()
 						}
 					}
 					CurrentFile.Layers[y].Name = drawableText.Label
@@ -217,7 +217,7 @@ func NewLayersUI(bounds rl.Rectangle) *Entity {
 				currentLayerHoverable.Selected = false
 			}
 
-			layerList.PushChild(LayersUIMakeBox(max-2, last))
+			layerList.PushChild(LayersUIMakeLayerBox(max-2, last))
 			LayersUIRebuildList()
 		}, nil)
 
