@@ -74,6 +74,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 									drawableText.Label = fmt.Sprintf("%d", lt.GetSize())
 								}
 								if rt, ok := CurrentFile.RightTool.(*PixelBrushTool); ok {
+
 									rt.SetSize(int(i))
 								}
 
