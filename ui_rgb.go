@@ -37,6 +37,26 @@ func SetUIHexColor(color rl.Color) {
 	if drawable, ok := hexInput.GetDrawable(); ok {
 		if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
 			drawableText.Label = ColorToHex(color)
+
+			// set label colors
+			colorString := ColorToHex(color)
+			r := colorString[0:2]
+			g := colorString[2:4]
+			b := colorString[4:6]
+			a := colorString[6:8]
+			if len(drawableText.ColoredLabel) != 4 {
+				drawableText.ColoredLabel = make([]TextFormatData, 5)
+				drawableText.ColoredLabel[0].Color = rl.NewColor(255, 32, 32, 255)
+				drawableText.ColoredLabel[1].Color = rl.NewColor(0, 255, 0, 255)
+				drawableText.ColoredLabel[2].Color = rl.NewColor(54, 197, 244, 255)
+				drawableText.ColoredLabel[3].Color = rl.NewColor(255, 255, 255, 255)
+				drawableText.ColoredLabel[4].Color = rl.NewColor(255, 255, 255, 255)
+			}
+			drawableText.ColoredLabel[0].Text = r
+			drawableText.ColoredLabel[1].Text = g
+			drawableText.ColoredLabel[2].Text = b
+			drawableText.ColoredLabel[3].Text = a
+			drawableText.ColoredLabel[4].Text = ""
 		}
 	}
 }
@@ -400,17 +420,16 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		func(entity *Entity, key rl.Key) {
 			if drawable, ok := entity.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+
 					if key == rl.KeyEnter {
 						RemoveCapturedInput()
 					} else if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
 						drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 					} else if len(drawableText.Label) < 8 {
 						switch {
-						// 0 to 9
-						case key >= 48 && key <= 57:
+						case key >= 48 && key <= 57: // 0 to 9
 							fallthrough
-						// a to f
-						case key >= 97 && key <= 102:
+						case key >= 97 && key <= 102: // a to f
 							fallthrough
 						case key >= rl.KeyA && key <= rl.KeyF:
 							drawableText.Label += string(rune(key))
@@ -421,6 +440,40 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					if color, err := HexToColor(drawableText.Label); err == nil {
 						hexColor = color
 					}
+
+					// clear all label positions (if this is in next loop, chars get stranded on backspace)
+					for i := 0; i <= 3; i++ {
+						drawableText.ColoredLabel[i].Text = ""
+					}
+					for i := 0; i < len(drawableText.Label); i += 2 {
+						text := ""
+						if i+2 <= len(drawableText.Label) {
+							text = drawableText.Label[i : i+2]
+							// log.Printf("%d - %d:%d %s\n", i/2, i, i+2, text)
+						} else if i+1 <= len(drawableText.Label) {
+							text = drawableText.Label[i : i+1]
+							// log.Printf("%d - %d:%d %s\n", i/2, i, i+1, text)
+						}
+
+						drawableText.ColoredLabel[i/2].Text = text
+					}
+					// switch len(drawableText.Label) {
+					// case 8:
+					// 	a := drawableText.Label[6:8]
+					// 	drawableText.ColoredLabel[3].Text = a
+					// 	fallthrough
+					// case 6:
+					// 	b := drawableText.Label[4:6]
+					// 	drawableText.ColoredLabel[2].Text = b
+					// 	fallthrough
+					// case 4:
+					// 	g := drawableText.Label[2:4]
+					// 	drawableText.ColoredLabel[1].Text = g
+					// 	fallthrough
+					// case 2:
+					// 	r := drawableText.Label[0:2]
+					// 	drawableText.ColoredLabel[0].Text = r
+					// }
 				}
 			}
 		})
@@ -428,9 +481,23 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		interactable.OnBlur = func(entity *Entity) {
 			SetUIColors(hexColor)
 			CurrentColorSetLeftColor(hexColor)
+			if drawable, ok := hexInput.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					// drawableText.ColoredLabel = nil
+					drawableText.ColoredLabel[4].Text = ""
+				}
+			}
 		}
 		interactable.OnFocus = func(entity *Entity) {
-			SetUIHexColor(hexColor)
+			// just render normal label when editing, logic is too annoying
+
+			if drawable, ok := hexInput.GetDrawable(); ok {
+				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
+					// drawableText.ColoredLabel = nil
+					drawableText.ColoredLabel[4].Text = "_"
+				}
+			}
+
 		}
 	}
 

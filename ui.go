@@ -285,9 +285,19 @@ const (
 	TextAlignCenter
 )
 
+// TextFormatData contains a string and data about how it should be rendered
+type TextFormatData struct {
+	Text  string
+	Color rl.Color
+}
+
 // DrawableText draws text
 type DrawableText struct {
 	Label string
+	// if set, will render instead of Label
+	// set custom colors with tags, <|#ff0000ff text goes here|>
+	// there are no escape chars, so don't put < next to | in the string!
+	ColoredLabel []TextFormatData
 	TextAlign
 }
 
@@ -728,7 +738,7 @@ func NewButtonText(bounds rl.Rectangle,
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown}).
 		AddComponent(drawable, &Drawable{
-			DrawableType:   &DrawableText{label, align},
+			DrawableType:   &DrawableText{label, make([]TextFormatData, 0), align},
 			DrawBorder:     true,
 			DrawBackground: true,
 		})
@@ -752,7 +762,7 @@ func NewInput(
 		AddComponent(hoverable, &Hoverable{Selected: selected}).
 		AddComponent(interactable, &Interactable{ButtonDown: MouseButtonNone, ButtonReleased: true, OnMouseUp: onMouseUp, OnMouseDown: onMouseDown, OnKeyPress: onKeyPress}).
 		AddComponent(drawable, &Drawable{
-			DrawableType:   &DrawableText{label, align},
+			DrawableType:   &DrawableText{label, make([]TextFormatData, 0), align},
 			DrawBorder:     true,
 			DrawBackground: true,
 		})

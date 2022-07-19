@@ -159,26 +159,52 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 			drawBorder(hoverable, moveable)
 		}
 
-		text := t.Label
-		if interactable != nil && UIInteractableCapturedInput == interactable && interactable.OnKeyPress != nil {
-			text += "|"
+		if len(t.ColoredLabel) != 0 {
+			var textDimensions rl.Vector2
+			for _, tfd := range t.ColoredLabel {
+				fo := rl.MeasureTextEx(*Font, tfd.Text, UIFontSize, 1)
+				textDimensions.X += fo.X
+			}
+			var offsetX float32
+			for _, tfd := range t.ColoredLabel {
+				fo := rl.MeasureTextEx(*Font, tfd.Text, UIFontSize, 1)
+				space := rl.MeasureTextEx(*Font, " ", UIFontSize, 1)
+				var x, y float32
+				switch t.TextAlign {
+				case TextAlignLeft:
+					x = moveable.Bounds.X + offsetX + space.X
+					y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+				case TextAlignRight:
+					x = moveable.Bounds.X + offsetX + moveable.Bounds.Width - fo.X/2 - textDimensions.X - space.X
+					y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+				case TextAlignCenter:
+					x = moveable.Bounds.X + offsetX + moveable.Bounds.Width/2 - textDimensions.X/2
+					y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+				}
+				offsetX += fo.X
+				rl.DrawTextEx(*Font, tfd.Text, rl.Vector2{X: x, Y: y}, UIFontSize, 1, tfd.Color)
+			}
+		} else {
+			text := t.Label
+			if interactable != nil && UIInteractableCapturedInput == interactable && interactable.OnKeyPress != nil {
+				text += "|"
+			}
+			fo := rl.MeasureTextEx(*Font, text, UIFontSize, 1)
+			space := rl.MeasureTextEx(*Font, " ", UIFontSize, 1)
+			var x, y float32
+			switch t.TextAlign {
+			case TextAlignLeft:
+				x = moveable.Bounds.X + space.X
+				y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+			case TextAlignRight:
+				x = moveable.Bounds.X + moveable.Bounds.Width - fo.X - space.X
+				y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+			case TextAlignCenter:
+				x = moveable.Bounds.X + moveable.Bounds.Width/2 - fo.X/2
+				y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
+			}
+			rl.DrawTextEx(*Font, text, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
 		}
-
-		fo := rl.MeasureTextEx(*Font, text, UIFontSize, 1)
-		space := rl.MeasureTextEx(*Font, " ", UIFontSize, 1)
-		var x, y float32
-		switch t.TextAlign {
-		case TextAlignLeft:
-			x = moveable.Bounds.X + space.X
-			y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
-		case TextAlignRight:
-			x = moveable.Bounds.X + moveable.Bounds.Width - fo.X - space.X
-			y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
-		case TextAlignCenter:
-			x = moveable.Bounds.X + moveable.Bounds.Width/2 - fo.X/2
-			y = moveable.Bounds.Y + moveable.Bounds.Height/2 - fo.Y/2
-		}
-		rl.DrawTextEx(*Font, text, rl.Vector2{X: x, Y: y}, UIFontSize, 1, rl.White)
 
 	case *DrawableTexture:
 		if drawable.DrawBackground {
