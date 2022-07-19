@@ -1,8 +1,6 @@
 # MelonPixel
 
-🚧 Under heavy development! 🚧
-
-⚠️ There are some serious problems which I'm working on! Check the [todo list](TODO.txt) ⚠️
+🚧 Under heavy development! Check the [todo list!](TODO.txt) 🚧
 
 ## Features
 - Tabbed files
