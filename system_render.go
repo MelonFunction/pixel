@@ -215,6 +215,10 @@ func (s *UIRenderSystem) Draw() {
 		s.draw(result, false, rl.Vector2{})
 	}
 
+	// force some updates here
+	// it's hacky, but it's better than creating another callback to update something after component update/draw loop
+	PaletteUIUpdateCurrentColorIndicator()
+
 	// Debug text
 	if ShowDebug {
 		incr := 20

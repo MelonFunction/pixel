@@ -79,7 +79,9 @@ func PaletteUIUpdateCurrentColorIndicator() {
 			}
 		}
 
-		im.Bounds = cm.Bounds
+		// move indicator on scroll
+		im.Bounds.X = cm.Bounds.X
+		im.Bounds.Y = cm.Bounds.Y + cm.Offset.Y
 	}
 
 	// Show on top
@@ -324,6 +326,12 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 
 	PaletteUIRebuildPalette()
 	PaletteUIUpdateCurrentColorIndicator()
+
+	if interactable, ok := paletteEntity.GetInteractable(); ok {
+		interactable.OnScroll = func(direction int) {
+			PaletteUIUpdateCurrentColorIndicator()
+		}
+	}
 
 	return paletteContainer
 }
