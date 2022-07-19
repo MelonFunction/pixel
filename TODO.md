@@ -38,7 +38,7 @@ Layers
     🟢 Hide/show
 
 Palettes
-  🔴 Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
+  🟢 Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
   🟢 Highlight left/right color after click (un-highlight if color adjusted with controls)
 
 Menubar

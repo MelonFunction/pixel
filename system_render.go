@@ -218,6 +218,7 @@ func (s *UIRenderSystem) Draw() {
 	// force some updates here
 	// it's hacky, but it's better than creating another callback to update something after component update/draw loop
 	PaletteUIUpdateCurrentColorIndicator()
+	CurrentColorToggleAddRemoveGraphic()
 
 	// Debug text
 	if ShowDebug {

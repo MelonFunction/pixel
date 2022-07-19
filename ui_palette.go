@@ -6,17 +6,17 @@ import (
 	rl "github.com/lachee/raylib-goplus/raylib"
 )
 
+// vars
 var (
-	paletteEntity *Entity
-	paletteName   *Entity
+	PaletteUIPaletteEntity *Entity
+	paletteName            *Entity
 
 	// The palette item being dragged
 	movingColor *Moveable
 
-	// Currently selected color
-	currentColorEntity *Entity
-	nextColorEntity    *Entity
-	prevColorEntity    *Entity
+	PaletteUICurrentColorEntity *Entity
+	PaletteUINextColorEntity    *Entity
+	PaletteUIPrevColorEntity    *Entity
 
 	// Triangle denoting the currently selected color
 	// This will hide when the color is changed in the color picker or the
@@ -26,8 +26,8 @@ var (
 
 // PaletteUIRemoveColor removes an color from the palette
 func PaletteUIRemoveColor(child *Entity) {
-	paletteEntity.RemoveChild(child)
-	paletteEntity.FlowChildren()
+	PaletteUIPaletteEntity.RemoveChild(child)
+	PaletteUIPaletteEntity.FlowChildren()
 }
 
 // PaletteUIUpdateCurrentColorIndicator moves the currentColorIndicatorEntity
@@ -35,10 +35,10 @@ func PaletteUIRemoveColor(child *Entity) {
 func PaletteUIUpdateCurrentColorIndicator() {
 	// Create
 	if currentColorIndicatorEntity == nil {
-		if currentColorEntity == nil {
+		if PaletteUICurrentColorEntity == nil {
 			return
 		}
-		cm, ok := currentColorEntity.GetMoveable()
+		cm, ok := PaletteUICurrentColorEntity.GetMoveable()
 		if !ok {
 			return
 		}
@@ -52,8 +52,8 @@ func PaletteUIUpdateCurrentColorIndicator() {
 	}
 
 	// Move and recolor
-	if currentColorEntity != nil {
-		cm, ok := currentColorEntity.GetMoveable()
+	if PaletteUICurrentColorEntity != nil {
+		cm, ok := PaletteUICurrentColorEntity.GetMoveable()
 		if !ok {
 			return
 		}
@@ -93,19 +93,19 @@ func PaletteUIHideCurrentColorIndicator() {
 	if currentColorIndicatorEntity != nil {
 		currentColorIndicatorEntity.Hide()
 
-		if currentColorEntity != nil {
-			nextColorEntity = currentColorEntity
-			prevColorEntity = currentColorEntity
+		if PaletteUICurrentColorEntity != nil {
+			PaletteUINextColorEntity = PaletteUICurrentColorEntity
+			PaletteUIPrevColorEntity = PaletteUICurrentColorEntity
 		}
 	}
 }
 
 // PaletteUINextColor selects the next color
 func PaletteUINextColor() {
-	if nextColorEntity != nil {
-		currentColorEntity = nextColorEntity
-		if i, ok := currentColorEntity.GetInteractable(); ok {
-			i.OnMouseUp(currentColorEntity, rl.MouseLeftButton)
+	if PaletteUINextColorEntity != nil {
+		PaletteUICurrentColorEntity = PaletteUINextColorEntity
+		if i, ok := PaletteUICurrentColorEntity.GetInteractable(); ok {
+			i.OnMouseUp(PaletteUICurrentColorEntity, rl.MouseLeftButton)
 		}
 		PaletteUIUpdateCurrentColorIndicator()
 	}
@@ -113,10 +113,10 @@ func PaletteUINextColor() {
 
 // PaletteUIPreviousColor selects the previous color
 func PaletteUIPreviousColor() {
-	if prevColorEntity != nil {
-		currentColorEntity = prevColorEntity
-		if i, ok := currentColorEntity.GetInteractable(); ok {
-			i.OnMouseUp(currentColorEntity, rl.MouseLeftButton)
+	if PaletteUIPrevColorEntity != nil {
+		PaletteUICurrentColorEntity = PaletteUIPrevColorEntity
+		if i, ok := PaletteUICurrentColorEntity.GetInteractable(); ok {
+			i.OnMouseUp(PaletteUICurrentColorEntity, rl.MouseLeftButton)
 		}
 		PaletteUIUpdateCurrentColorIndicator()
 	}
@@ -124,9 +124,9 @@ func PaletteUIPreviousColor() {
 
 // PaletteUIRebuildPalette rebuilds the current palette
 func PaletteUIRebuildPalette() {
-	prevColorEntity = nil
-	nextColorEntity = nil
-	currentColorEntity = nil
+	PaletteUIPrevColorEntity = nil
+	PaletteUINextColorEntity = nil
+	PaletteUICurrentColorEntity = nil
 	PaletteUIHideCurrentColorIndicator()
 
 	if drawable, ok := paletteName.GetDrawable(); ok {
@@ -134,19 +134,19 @@ func PaletteUIRebuildPalette() {
 			drawableText.Label = Settings.PaletteData[CurrentFile.CurrentPalette].Name
 		}
 
-		if children, err := paletteEntity.GetChildren(); err == nil {
+		if children, err := PaletteUIPaletteEntity.GetChildren(); err == nil {
 			for i := len(children) - 1; i >= 0; i-- {
-				paletteEntity.RemoveChild(children[i])
+				PaletteUIPaletteEntity.RemoveChild(children[i])
 			}
 		}
 
-		prevColorEntity = nil
+		PaletteUIPrevColorEntity = nil
 		for i, color := range Settings.PaletteData[CurrentFile.CurrentPalette].data {
 			c := PaletteUIAddColor(color, i)
 			if i == 0 {
-				currentColorEntity = c
+				PaletteUICurrentColorEntity = c
 			} else if i == 1 {
-				nextColorEntity = c
+				PaletteUINextColorEntity = c
 			}
 		}
 	}
@@ -157,8 +157,8 @@ func PaletteUIRebuildPalette() {
 func PaletteUIAddColor(color rl.Color, index int) *Entity {
 	var w float32
 	var h float32
-	if res, err := scene.QueryID(paletteEntity.ID); err == nil {
-		moveable := res.Components[paletteEntity.Scene.ComponentsMap["moveable"]].(*Moveable)
+	if res, err := scene.QueryID(PaletteUIPaletteEntity.ID); err == nil {
+		moveable := res.Components[PaletteUIPaletteEntity.Scene.ComponentsMap["moveable"]].(*Moveable)
 		w = moveable.Bounds.Width / 5
 		h = moveable.Bounds.Width / 5
 	}
@@ -171,9 +171,9 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 			case rl.MouseLeftButton:
 				CurrentColorSetLeftColor(color)
 				SetUIColors(color)
-				currentColorEntity = entity
+				PaletteUICurrentColorEntity = entity
 
-				children, err := paletteEntity.GetChildren()
+				children, err := PaletteUIPaletteEntity.GetChildren()
 				if err != nil {
 					log.Println(err)
 					return
@@ -192,13 +192,13 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 					if child == entity {
 						childPosition = i
 
-						nextColorEntity = nil
-						prevColorEntity = nil
+						PaletteUINextColorEntity = nil
+						PaletteUIPrevColorEntity = nil
 						if i+1 < len(children) {
-							nextColorEntity = children[i+1]
+							PaletteUINextColorEntity = children[i+1]
 						}
 						if i-1 >= 0 {
-							prevColorEntity = children[i-1]
+							PaletteUIPrevColorEntity = children[i-1]
 						}
 						PaletteUIUpdateCurrentColorIndicator()
 					} else {
@@ -239,19 +239,10 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 							[]rl.Color{movedData}, Settings.PaletteData[CurrentFile.CurrentPalette].data[moveToPosition:]...)...)
 					SaveSettings()
 				}
-				paletteEntity.FlowChildren()
+				PaletteUIPaletteEntity.FlowChildren()
 			case rl.MouseRightButton:
 				SetUIColors(color)
 				CurrentColorSetRightColor(color)
-			case rl.MouseMiddleButton:
-				// TODO Hold shift to change the "add color to palette (+) button" to "remove color from palette (-) button"
-
-				// PaletteUIRemoveColor(e)
-				// Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
-				// 	Settings.PaletteData[CurrentFile.CurrentPalette].data[:index],
-				// 	Settings.PaletteData[CurrentFile.CurrentPalette].data[index+1:]...,
-				// )
-				// SaveSettings()
 			}
 		},
 		func(entity *Entity, button rl.MouseButton, isHeld bool) {
@@ -284,15 +275,15 @@ func PaletteUIAddColor(color rl.Color, index int) *Entity {
 		moveable.Draggable = true
 	}
 
-	paletteEntity.PushChild(e)
-	paletteEntity.FlowChildren()
+	PaletteUIPaletteEntity.PushChild(e)
+	PaletteUIPaletteEntity.FlowChildren()
 
 	return e
 }
 
 // NewPaletteUI returns a new PaletteUI
 func NewPaletteUI(bounds rl.Rectangle) *Entity {
-	paletteEntity = NewScrollableList(rl.NewRectangle(0, 0, bounds.Width, bounds.Height-UIButtonHeight/2), []*Entity{}, FlowDirectionHorizontal)
+	PaletteUIPaletteEntity = NewScrollableList(rl.NewRectangle(0, 0, bounds.Width, bounds.Height-UIButtonHeight/2), []*Entity{}, FlowDirectionHorizontal)
 
 	paletteName = NewInput(rl.NewRectangle(0, 0, bounds.Width, UIButtonHeight/2),
 		Settings.PaletteData[CurrentFile.CurrentPalette].Name,
@@ -321,13 +312,13 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 
 	paletteContainer := NewBox(bounds, []*Entity{
 		paletteName,
-		paletteEntity,
+		PaletteUIPaletteEntity,
 	}, FlowDirectionVertical)
 
 	PaletteUIRebuildPalette()
 	PaletteUIUpdateCurrentColorIndicator()
 
-	if interactable, ok := paletteEntity.GetInteractable(); ok {
+	if interactable, ok := PaletteUIPaletteEntity.GetInteractable(); ok {
 		interactable.OnScroll = func(direction int) {
 			PaletteUIUpdateCurrentColorIndicator()
 		}

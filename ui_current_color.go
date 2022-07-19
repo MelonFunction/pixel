@@ -14,6 +14,9 @@ var (
 	currentColorRight *Entity
 	currentColorSwap  *Entity
 	currentColorAdd   *Entity
+
+	currentColorPlusTexture     rl.Texture2D
+	currentColorNegativeTexture rl.Texture2D
 )
 
 type colorEditing int
@@ -249,10 +252,29 @@ func currentColorUIAddColor(color rl.Color) *Entity {
 	return e
 }
 
+// CurrentColorToggleAddRemoveGraphic changes the texture of the button which adds/removes the currently selected color
+// to the current palette
+func CurrentColorToggleAddRemoveGraphic() {
+	drawable, ok := currentColorAdd.GetDrawable()
+	if ok {
+		dt, ok := drawable.DrawableType.(*DrawableTexture)
+		if ok {
+			if rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift) {
+				dt.Texture = currentColorNegativeTexture
+			} else {
+				dt.Texture = currentColorPlusTexture
+			}
+		}
+	}
+}
+
 // NewCurrentColorUI creates a new Current Color UI component which displays
 // the currently selected colors as well as buttons to swap them and add the
 // color to the palette depending on which mouse button was clicked
 func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
+	currentColorPlusTexture = rl.LoadTexture("./res/icons/plus.png")
+	currentColorNegativeTexture = rl.LoadTexture("./res/icons/negative.png")
+
 	currentColorBox = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
 	currentColorLeft = currentColorUIAddColor(CurrentFile.LeftColor)
@@ -275,15 +297,36 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 	currentColorAdd = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), GetFile("./res/icons/plus.png"), false,
 		func(entity *Entity, button rl.MouseButton) {
 			// button up
-			switch button {
-			case rl.MouseLeftButton:
-				PaletteUIAddColor(CurrentFile.LeftColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
-				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.LeftColor)
-				SaveSettings()
-			case rl.MouseRightButton:
-				PaletteUIAddColor(CurrentFile.RightColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
-				Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.RightColor)
-				SaveSettings()
+			if rl.IsKeyDown(rl.KeyLeftShift) || rl.IsKeyDown(rl.KeyRightShift) {
+				// remove color
+
+				if colors, err := PaletteUIPaletteEntity.GetChildren(); err == nil {
+					for index, color := range colors {
+						if color == PaletteUICurrentColorEntity {
+							PaletteUIRemoveColor(PaletteUICurrentColorEntity)
+							PaletteUIPreviousColor()
+							Settings.PaletteData[CurrentFile.CurrentPalette].data = append(
+								Settings.PaletteData[CurrentFile.CurrentPalette].data[:index],
+								Settings.PaletteData[CurrentFile.CurrentPalette].data[index+1:]...,
+							)
+							SaveSettings()
+							return
+						}
+					}
+
+				}
+			} else {
+				// add color
+				switch button {
+				case rl.MouseLeftButton:
+					PaletteUIAddColor(CurrentFile.LeftColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.LeftColor)
+					SaveSettings()
+				case rl.MouseRightButton:
+					PaletteUIAddColor(CurrentFile.RightColor, len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings))
+					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.RightColor)
+					SaveSettings()
+				}
 			}
 
 		}, nil)
