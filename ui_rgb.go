@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -432,7 +434,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 						case key >= 97 && key <= 102: // a to f
 							fallthrough
 						case key >= rl.KeyA && key <= rl.KeyF:
-							drawableText.Label += string(rune(key))
+							drawableText.Label += strings.ToLower(string(rune(key)))
 						}
 					}
 
@@ -457,23 +459,6 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 						drawableText.ColoredLabel[i/2].Text = text
 					}
-					// switch len(drawableText.Label) {
-					// case 8:
-					// 	a := drawableText.Label[6:8]
-					// 	drawableText.ColoredLabel[3].Text = a
-					// 	fallthrough
-					// case 6:
-					// 	b := drawableText.Label[4:6]
-					// 	drawableText.ColoredLabel[2].Text = b
-					// 	fallthrough
-					// case 4:
-					// 	g := drawableText.Label[2:4]
-					// 	drawableText.ColoredLabel[1].Text = g
-					// 	fallthrough
-					// case 2:
-					// 	r := drawableText.Label[0:2]
-					// 	drawableText.ColoredLabel[0].Text = r
-					// }
 				}
 			}
 		})
