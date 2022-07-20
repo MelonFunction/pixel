@@ -116,11 +116,11 @@ func (t *SelectorTool) MouseDown(x, y int32, button MouseButton) {
 			return
 		}
 
-		// Make a new image using the old data since ResizeNN is a pointer
-		// t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
+		// Make a new image to modify using the old data
 		tex := rl.LoadRenderTexture(t.oldWidth, t.oldHeight)
 		rl.UpdateTexture(tex.Texture, t.oldSelection)
 		t.oldImg = rl.LoadImageFromTexture(tex.Texture)
+		rl.UnloadRenderTexture(tex)
 
 		// Resize selection bounds
 		// Selection bounds shifting logic so that the selection is flipped
@@ -216,8 +216,12 @@ func (t *SelectorTool) MouseDown(x, y int32, button MouseButton) {
 		imgPixels := rl.LoadImageColors(t.oldImg)
 		CurrentFile.SelectionPixels = imgPixels
 		var count int
-		for y := MinInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y <= MaxInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y++ {
-			for x := MinInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x <= MaxInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x++ {
+		minY := MinInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3])
+		maxY := MaxInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3])
+		minX := MinInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2])
+		maxX := MaxInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2])
+		for y := minY; y <= maxY; y++ {
+			for x := minX; x <= maxX; x++ {
 				if count < len(imgPixels) {
 					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
 					count++
