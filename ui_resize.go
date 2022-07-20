@@ -17,6 +17,9 @@ var (
 
 // ResizeUIShowDialog shows the dialog
 func ResizeUIShowDialog() {
+	CurrentFile.CanvasWidthResizePreview = CurrentFile.CanvasWidth
+	CurrentFile.CanvasHeightResizePreview = CurrentFile.CanvasHeight
+
 	resizeButtons.Show()
 	CurrentFile.DoingResize = true
 }
