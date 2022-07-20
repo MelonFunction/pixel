@@ -6,7 +6,6 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// TODO resize
 // TODO rotate
 
 // SelectorTool allows for a selection to be made
@@ -18,6 +17,7 @@ type SelectorTool struct {
 	// Should resize the original selection only
 	oldWidth  int32
 	oldHeight int32
+	oldImg    *rl.Image
 	// selection copied into another image for modification
 	imgCopy            *rl.Image
 	oldSelection       []rl.Color
@@ -117,16 +117,10 @@ func (t *SelectorTool) MouseDown(x, y int32, button MouseButton) {
 		}
 
 		// Make a new image using the old data since ResizeNN is a pointer
-		t.imgCopy = rl.LoadImageFromTexture(cl.Canvas.Texture)
-		rl.ImageCrop(
-			t.imgCopy,
-			rl.NewRectangle(
-				float32(CurrentFile.SelectionBounds[0]),
-				float32(CurrentFile.SelectionBounds[1]),
-				float32(t.oldWidth),
-				float32(t.oldHeight),
-			),
-		)
+		// t.oldImg = rl.LoadImageEx(t.oldSelection, t.oldWidth, t.oldHeight)
+		tex := rl.LoadRenderTexture(t.oldWidth, t.oldHeight)
+		rl.UpdateTexture(tex.Texture, t.oldSelection)
+		t.oldImg = rl.LoadImageFromTexture(tex.Texture)
 
 		// Resize selection bounds
 		// Selection bounds shifting logic so that the selection is flipped
@@ -198,24 +192,38 @@ func (t *SelectorTool) MouseDown(x, y int32, button MouseButton) {
 		newWidth := CurrentFile.SelectionBounds[2] - CurrentFile.SelectionBounds[0] + 1
 		newHeight := CurrentFile.SelectionBounds[3] - CurrentFile.SelectionBounds[1] + 1
 
+		// Reset the selection
+		// TODO it creates a lot of objects, not very efficient
+		CurrentFile.Selection = make(map[IntVec2]rl.Color)
+
 		// Handle selection flips
 		if newWidth <= 0 {
 			newWidth *= -1
 			newWidth += 2
-			rl.ImageFlipHorizontal(t.imgCopy)
+			rl.ImageFlipHorizontal(t.oldImg)
 		}
 		if newHeight <= 0 {
 			newHeight *= -1
 			newHeight += 2
-			rl.ImageFlipVertical(t.imgCopy)
+			rl.ImageFlipVertical(t.oldImg)
 		}
 
 		if newWidth > 0 && newHeight > 0 {
-			rl.ImageResizeNN(t.imgCopy, newWidth, newHeight)
+			rl.ImageResizeNN(t.oldImg, newWidth, newHeight)
 		}
 
-		// Reset the selection
-		CurrentFile.Selection = make(map[IntVec2]rl.Color)
+		// Dump pixels back into the selection
+		imgPixels := rl.LoadImageColors(t.oldImg)
+		CurrentFile.SelectionPixels = imgPixels
+		var count int
+		for y := MinInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y <= MaxInt32(CurrentFile.SelectionBounds[1], CurrentFile.SelectionBounds[3]); y++ {
+			for x := MinInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x <= MaxInt32(CurrentFile.SelectionBounds[0], CurrentFile.SelectionBounds[2]); x++ {
+				if count < len(imgPixels) {
+					CurrentFile.Selection[IntVec2{x, y}] = imgPixels[count]
+					count++
+				}
+			}
+		}
 
 		return
 	}
