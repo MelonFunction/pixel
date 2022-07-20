@@ -344,7 +344,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 					// TODO
 				} else {
 					if CurrentFile.DoingSelection {
-						CurrentFile.CancelSelection()
+						// CurrentFile.CancelSelection()
+						CurrentFile.CommitSelection()
 					}
 				}
 			case "delete":
