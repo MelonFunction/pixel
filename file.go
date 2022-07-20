@@ -755,7 +755,6 @@ func (f *File) DrawPixelDataToCanvas() {
 // restricted to the selection)
 // Will only outline pixels on the current layer. Make sure to merge layers if
 // sprite is composed of multiple parts
-// TODO redo-ing after undo after outline deletes origselection area
 func (f *File) Outline() {
 	var sx, sy int32 = 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
@@ -823,6 +822,7 @@ func (f *File) Outline() {
 	if f.DoingSelection && !f.SelectionMoving {
 		// Allow CommitSelection to detect a change
 		f.MoveSelection(0, 0)
+		f.CommitSelection()
 	}
 
 	cl.Redraw()
