@@ -65,6 +65,7 @@ Tools
     🟢 Paste
     🟢 Copy/paste while moving
     🟢 Resize
+      🔴 Selection -> CurrentFile.FlipHorizontal() -> Resize - doesn't retain the flip
     🟢 Flip
       🟢 "rl.KeyH" for Horizontal
       🟢 "rl.KeyV" for Vertical

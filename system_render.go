@@ -64,7 +64,7 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 				// Same as hover for now
 				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.White)
 			} else {
-				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.Gray)
+				rl.DrawRectangleLinesEx(moveable.Bounds, 2, rl.DarkGray)
 			}
 		}
 	}

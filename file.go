@@ -435,10 +435,15 @@ func (f *File) MoveSelection(dx, dy int32) {
 		}
 
 		// Move selection
-		CurrentFile.SelectionBounds[0] += dx
-		CurrentFile.SelectionBounds[1] += dy
-		CurrentFile.SelectionBounds[2] += dx
-		CurrentFile.SelectionBounds[3] += dy
+		f.SelectionBounds[0] += dx
+		f.SelectionBounds[1] += dy
+		f.SelectionBounds[2] += dx
+		f.SelectionBounds[3] += dy
+		f.OrigSelectionBounds[0] = f.SelectionBounds[0]
+		f.OrigSelectionBounds[1] = f.SelectionBounds[1]
+		f.OrigSelectionBounds[2] = f.SelectionBounds[2]
+		f.OrigSelectionBounds[3] = f.SelectionBounds[3]
+
 		newSelection := make(map[IntVec2]rl.Color)
 		for loc, color := range f.Selection {
 			newSelection[IntVec2{loc.X + dx, loc.Y + dy}] = color

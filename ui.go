@@ -37,9 +37,9 @@ var (
 	// Font is the font used
 	Font rl.Font
 	// UIFontSize is the size of the font
-	UIFontSize float32 = 14
+	UIFontSize float32 = 24
 	// UIButtonHeight is the size of the buttons
-	UIButtonHeight float32 = 48.0
+	UIButtonHeight float32 = 56.0
 
 	uiCamera               = rl.Camera2D{Zoom: 1}
 	mouseX, mouseY         int32
@@ -339,7 +339,7 @@ type DrawableParent struct {
 func InitUI(keymap Keymap) {
 	isInited = true
 
-	Font = rl.LoadFont(GetFile("./res/fonts/prstartk.ttf"))
+	Font = rl.LoadFont(GetFile("./res/fonts/Hack-Bold.ttf"))
 
 	scene = NewScene()
 
