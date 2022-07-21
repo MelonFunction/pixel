@@ -27,9 +27,9 @@ func (t *FillTool) MouseUp(x, y int32, button MouseButton) {
 	color := rl.Blank
 	switch button {
 	case rl.MouseLeftButton:
-		color = CurrentFile.LeftColor
+		color = LeftColor
 	case rl.MouseRightButton:
-		color = CurrentFile.RightColor
+		color = RightColor
 	}
 
 	pd := CurrentFile.GetCurrentLayer().PixelData

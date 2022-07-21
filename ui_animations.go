@@ -42,9 +42,9 @@ func AnimationsUIMakeBox(y int32, animation *Animation) *Entity {
 	frameSelect := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/frame_selector.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			lastTool := CurrentFile.LeftTool
-			CurrentFile.LeftTool = NewSpriteSelectorTool("Sprite Selector L", func(firstSprite, lastSprite int32) {
-				CurrentFile.LeftTool = lastTool
+			lastTool := LeftTool
+			LeftTool = NewSpriteSelectorTool("Sprite Selector L", func(firstSprite, lastSprite int32) {
+				LeftTool = lastTool
 
 				CurrentFile.SetAnimationFrames(y, firstSprite, lastSprite)
 			})

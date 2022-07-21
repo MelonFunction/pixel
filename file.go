@@ -182,12 +182,6 @@ type File struct {
 	historyOffset     int32    // How many undos have been made
 	deletedLayers     []*Layer // stack of layers, AddNewLayer destroys history chain
 
-	BrushSize  int32
-	EraserSize int32
-	LeftTool   Tool
-	RightTool  Tool
-	LeftColor  rl.Color
-	RightColor rl.Color
 	// For preventing multiple event firing
 	HasDoneMouseUpLeft  bool
 	HasDoneMouseUpRight bool
@@ -251,18 +245,12 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		HistoryMaxActions: 500, // TODO get from config
 		deletedLayers:     make([]*Layer, 0, 10),
 
-		BrushSize:  1,
-		EraserSize: 1,
-
-		LeftColor:  rl.White,
-		RightColor: rl.Black,
-
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
 
 		DrawGrid: true,
 
-		FileCamera: rl.Camera2D{Zoom: 8.0,
+		FileCamera: rl.Camera2D{Zoom: 12.0,
 			Offset: rl.NewVector2(
 				float32(rl.GetScreenWidth())/2,
 				float32(rl.GetScreenHeight())/2,
@@ -280,9 +268,6 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
 	}
-
-	f.LeftTool = NewPixelBrushTool("Pixel Brush L", false)
-	f.RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
 	return f
 }
@@ -809,13 +794,13 @@ func (f *File) Outline() {
 	for _, loc := range pixelLocations {
 		l := latestHistory.PixelState[loc]
 		l.Prev = rl.Blank // Only replacing transparent pixels
-		l.Current = f.LeftColor
+		l.Current = LeftColor
 		latestHistory.PixelState[loc] = l
 
 		if f.DoingSelection {
-			f.Selection[loc] = f.LeftColor
+			f.Selection[loc] = LeftColor
 		} else {
-			cl.PixelData[loc] = f.LeftColor
+			cl.PixelData[loc] = LeftColor
 		}
 	}
 

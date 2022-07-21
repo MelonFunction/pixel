@@ -269,7 +269,7 @@ func (s *UIRenderSystem) Draw() {
 		rl.DrawText(fmt.Sprintf("Current layer: %d", CurrentFile.CurrentLayer), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("HistoryOffset: %d", CurrentFile.historyOffset), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("History Len: %d", len(CurrentFile.History)), 0, incrY(), 20, rl.White)
-		rl.DrawText(fmt.Sprintf("Colors: Left: %d, Right: %d", CurrentFile.LeftColor, CurrentFile.RightColor), 0, incrY(), 20, rl.White)
+		rl.DrawText(fmt.Sprintf("Colors: Left: %d, Right: %d", LeftColor, RightColor), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("Selection Len: %d", len(CurrentFile.Selection)), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("DoingSelection: %t", CurrentFile.DoingSelection), 0, incrY(), 20, rl.White)
 		rl.DrawText(fmt.Sprintf("SelectionMoving: %t", CurrentFile.SelectionMoving), 0, incrY(), 20, rl.White)

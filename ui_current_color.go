@@ -200,7 +200,7 @@ func CurrentColorSetLeftColor(color rl.Color) {
 	if drawable, ok := currentColorLeft.GetDrawable(); ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 		if ok {
-			CurrentFile.LeftColor = color
+			LeftColor = color
 
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
@@ -221,7 +221,7 @@ func CurrentColorSetRightColor(color rl.Color) {
 	if drawable, ok := currentColorRight.GetDrawable(); ok {
 		renderTexture, ok := drawable.DrawableType.(*DrawableRenderTexture)
 		if ok {
-			CurrentFile.RightColor = color
+			RightColor = color
 
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
@@ -277,16 +277,16 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 
 	currentColorBox = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
-	currentColorLeft = currentColorUIAddColor(CurrentFile.LeftColor)
-	currentColorRight = currentColorUIAddColor(CurrentFile.RightColor)
-	CurrentColorSetRightColor(CurrentFile.RightColor)
-	CurrentColorSetLeftColor(CurrentFile.LeftColor)
+	currentColorLeft = currentColorUIAddColor(LeftColor)
+	currentColorRight = currentColorUIAddColor(RightColor)
+	CurrentColorSetRightColor(RightColor)
+	CurrentColorSetLeftColor(LeftColor)
 
 	currentColorSwap = NewButtonTexture(rl.NewRectangle(0, 0, bounds.Width/4, bounds.Width/4), GetFile("./res/icons/swap.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			left := CurrentFile.LeftColor
-			right := CurrentFile.RightColor
+			left := LeftColor
+			right := RightColor
 			CurrentColorSetRightColor(left)
 			CurrentColorSetLeftColor(right)
 			SetUIHexColor(left)
@@ -319,12 +319,12 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 				// add color
 				switch button {
 				case rl.MouseLeftButton:
-					PaletteUIAddColor(CurrentFile.LeftColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
-					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.LeftColor)
+					PaletteUIAddColor(LeftColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
+					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, LeftColor)
 					SaveSettings()
 				case rl.MouseRightButton:
-					PaletteUIAddColor(CurrentFile.RightColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
-					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, CurrentFile.RightColor)
+					PaletteUIAddColor(RightColor, int32(len(Settings.PaletteData[CurrentFile.CurrentPalette].Strings)))
+					Settings.PaletteData[CurrentFile.CurrentPalette].data = append(Settings.PaletteData[CurrentFile.CurrentPalette].data, RightColor)
 					SaveSettings()
 				}
 			}

@@ -43,9 +43,9 @@ func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 
 	if CurrentFile != nil {
 		if eraser {
-			t.size = CurrentFile.EraserSize
+			t.size = EraserSize
 		} else {
-			t.size = CurrentFile.BrushSize
+			t.size = BrushSize
 		}
 	}
 
@@ -60,9 +60,9 @@ func (t *PixelBrushTool) exists(e IntVec2) bool {
 // GetSize returns the tool size
 func (t *PixelBrushTool) GetSize() int32 {
 	if t.eraser {
-		return CurrentFile.EraserSize
+		return EraserSize
 	}
-	return CurrentFile.BrushSize
+	return BrushSize
 }
 
 // SetSize sets the tool size
@@ -71,9 +71,9 @@ func (t *PixelBrushTool) SetSize(size int32) {
 		t.size = size
 
 		if t.eraser {
-			CurrentFile.EraserSize = size
+			EraserSize = size
 		} else {
-			CurrentFile.BrushSize = size
+			BrushSize = size
 		}
 	}
 }
@@ -171,9 +171,9 @@ func (t *PixelBrushTool) MouseDown(x, y int32, button MouseButton) {
 	if !t.eraser {
 		switch button {
 		case rl.MouseLeftButton:
-			t.currentColor = CurrentFile.LeftColor
+			t.currentColor = LeftColor
 		case rl.MouseRightButton:
-			t.currentColor = CurrentFile.RightColor
+			t.currentColor = RightColor
 		}
 	}
 

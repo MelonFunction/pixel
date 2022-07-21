@@ -65,7 +65,7 @@ func PaletteUIUpdateCurrentColorIndicator() {
 		currentColorIndicatorEntity.Show()
 
 		if t, ok := currentColorIndicatorEntity.GetDrawable(); ok {
-			cc := CurrentFile.LeftColor
+			cc := LeftColor
 			if tex, ok := t.DrawableType.(*DrawableRenderTexture); ok {
 				rl.BeginTextureMode(tex.Texture)
 				rl.ClearBackground(rl.Blank)

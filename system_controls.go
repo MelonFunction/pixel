@@ -528,25 +528,25 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 			switch {
 			case matches(last, s.Keymap.Data["toolRight"]):
 				// Move selection
-				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+				if _, ok := LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(1, 0)
 				} else {
 					rl.SetMousePosition(int(x+moveAmount), int(y))
 				}
 			case matches(last, s.Keymap.Data["toolLeft"]):
-				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+				if _, ok := LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(-1, 0)
 				} else {
 					rl.SetMousePosition(int(x-moveAmount), int(y))
 				}
 			case matches(last, s.Keymap.Data["toolDown"]):
-				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+				if _, ok := LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(0, 1)
 				} else {
 					rl.SetMousePosition(int(x), int(y+moveAmount))
 				}
 			case matches(last, s.Keymap.Data["toolUp"]):
-				if _, ok := CurrentFile.LeftTool.(*SelectorTool); ok {
+				if _, ok := LeftTool.(*SelectorTool); ok {
 					CurrentFile.MoveSelection(0, -1)
 				} else {
 					rl.SetMousePosition(int(x), int(y-moveAmount))

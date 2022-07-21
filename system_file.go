@@ -107,7 +107,7 @@ func NewUIFileSystem() *UIFileSystem {
 	})
 	if res, ok := rgb.GetResizeable(); ok {
 		res.OnResize = func(entity *Entity) {
-			SetUIColors(CurrentFile.LeftColor)
+			SetUIColors(LeftColor)
 		}
 	}
 
@@ -243,10 +243,10 @@ func (s *UIFileSystem) Draw() {
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
 	if rl.IsMouseButtonDown(rl.MouseRightButton) {
-		CurrentFile.RightTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
+		RightTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
 
 	} else {
-		CurrentFile.LeftTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
+		LeftTool.DrawPreview(int32(s.cursor.X), int32(s.cursor.Y))
 	}
 
 	rl.EndTextureMode()
@@ -363,9 +363,9 @@ func (s *UIFileSystem) Draw() {
 
 	rl.BeginMode2D(rl.Camera2D{Zoom: 1.0})
 	if rl.IsMouseButtonDown(rl.MouseRightButton) {
-		CurrentFile.RightTool.DrawUI(CurrentFile.FileCamera)
+		RightTool.DrawUI(CurrentFile.FileCamera)
 	} else {
-		CurrentFile.LeftTool.DrawUI(CurrentFile.FileCamera)
+		LeftTool.DrawUI(CurrentFile.FileCamera)
 	}
 	rl.EndMode2D()
 }
@@ -474,7 +474,7 @@ func (s *UIFileSystem) Update(dt float32) {
 			// Fires once
 			if CurrentFile.HasDoneMouseUpLeft {
 				// Create new history action
-				switch CurrentFile.LeftTool.(type) {
+				switch LeftTool.(type) {
 				case *PickerTool:
 					// ignore
 				case *SelectorTool:
@@ -486,12 +486,12 @@ func (s *UIFileSystem) Update(dt float32) {
 			CurrentFile.HasDoneMouseUpLeft = false
 
 			// Repeated action
-			CurrentFile.LeftTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
+			LeftTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
 		} else {
 			// Always fires once
 			if CurrentFile.HasDoneMouseUpLeft == false {
 				CurrentFile.HasDoneMouseUpLeft = true
-				CurrentFile.LeftTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
+				LeftTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseLeftButton)
 			}
 		}
 
@@ -499,7 +499,7 @@ func (s *UIFileSystem) Update(dt float32) {
 			FileHasControl = true
 			if CurrentFile.HasDoneMouseUpRight {
 				// Create new history action
-				switch CurrentFile.LeftTool.(type) {
+				switch LeftTool.(type) {
 				case *PickerTool:
 					// ignore
 				case *SelectorTool:
@@ -509,11 +509,11 @@ func (s *UIFileSystem) Update(dt float32) {
 				}
 			}
 			CurrentFile.HasDoneMouseUpRight = false
-			CurrentFile.RightTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
+			RightTool.MouseDown(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
 		} else {
 			if CurrentFile.HasDoneMouseUpRight == false {
 				CurrentFile.HasDoneMouseUpRight = true
-				CurrentFile.RightTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
+				RightTool.MouseUp(int32(s.cursor.X), int32(s.cursor.Y), rl.MouseRightButton)
 			}
 		}
 	}

@@ -13,6 +13,14 @@ var (
 	// Files is a slice of all the files currently loaded
 	Files = make([]*File, 0, 8)
 
+	// Tool and color data
+	BrushSize  int32
+	EraserSize int32
+	LeftTool   Tool
+	RightTool  Tool
+	LeftColor  rl.Color
+	RightColor rl.Color
+
 	// CopiedSelection holds the selection when File.Copy is called
 	CopiedSelection map[IntVec2]rl.Color
 	// CopiedSelectionPixels is a different format of the above
@@ -40,6 +48,13 @@ func main() {
 
 	// Make the files
 	Files = []*File{}
+
+	BrushSize = 1
+	EraserSize = 1
+	LeftColor = rl.White
+	RightColor = rl.Black
+	LeftTool = NewPixelBrushTool("Pixel Brush L", false)
+	RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
 	// Load the settings
 	err := LoadSettings()

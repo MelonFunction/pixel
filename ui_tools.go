@@ -37,7 +37,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 		fallthrough
 	case toolPencil:
 		var size int32
-		if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
+		if lt, ok := LeftTool.(*PixelBrushTool); ok {
 			size = lt.GetSize()
 		}
 		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3.5, UIButtonHeight), fmt.Sprintf("%d", size), TextAlignCenter, false,
@@ -65,13 +65,13 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 
 							if i, err := strconv.ParseInt(drawableText.Label, 10, 64); err == nil {
 								// Set tools from label
-								if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
+								if lt, ok := LeftTool.(*PixelBrushTool); ok {
 									lt.SetSize(int32(i))
 
 									// Set label text
 									drawableText.Label = fmt.Sprintf("%d", lt.GetSize())
 								}
-								if rt, ok := CurrentFile.RightTool.(*PixelBrushTool); ok {
+								if rt, ok := RightTool.(*PixelBrushTool); ok {
 
 									rt.SetSize(int32(i))
 								}
@@ -86,11 +86,11 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 			interactable.OnScroll = func(direction int32) {
 				if drawable, ok := brushWidthInput.GetDrawable(); ok {
 					if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {
-						if lt, ok := CurrentFile.LeftTool.(*PixelBrushTool); ok {
+						if lt, ok := LeftTool.(*PixelBrushTool); ok {
 							lt.SetSize(lt.GetSize() + direction)
 							drawableText.Label = fmt.Sprintf("%d", lt.GetSize())
 						}
-						if rt, ok := CurrentFile.RightTool.(*PixelBrushTool); ok {
+						if rt, ok := RightTool.(*PixelBrushTool); ok {
 							rt.SetSize(rt.GetSize())
 							drawableText.Label = fmt.Sprintf("%d", rt.GetSize())
 						}
@@ -115,8 +115,8 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
 			}
-			CurrentFile.LeftTool = NewPixelBrushTool("Pixel Brush", false)
-			CurrentFile.RightTool = NewPixelBrushTool("Pixel Brush", false)
+			LeftTool = NewPixelBrushTool("Pixel Brush", false)
+			RightTool = NewPixelBrushTool("Pixel Brush", false)
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolEraser = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
@@ -125,8 +125,8 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
 			}
-			CurrentFile.LeftTool = NewPixelBrushTool("Eraser", true)
-			CurrentFile.RightTool = NewPixelBrushTool("Eraser", true)
+			LeftTool = NewPixelBrushTool("Eraser", true)
+			RightTool = NewPixelBrushTool("Eraser", true)
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolFill = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
@@ -135,8 +135,8 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
 			}
-			CurrentFile.LeftTool = NewFillTool("Fill")
-			CurrentFile.RightTool = NewFillTool("Fill")
+			LeftTool = NewFillTool("Fill")
+			RightTool = NewFillTool("Fill")
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolPicker = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
@@ -145,14 +145,14 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 			if len(CurrentFile.Selection) > 0 {
 				CurrentFile.CommitSelection()
 			}
-			CurrentFile.LeftTool = NewPickerTool("Picker")
-			CurrentFile.RightTool = NewPickerTool("Picker")
+			LeftTool = NewPickerTool("Picker")
+			RightTool = NewPickerTool("Picker")
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 	toolSelector = NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight, UIButtonHeight),
 		GetFile("./res/icons/selector.png"), false, func(entity *Entity, button MouseButton) {
-			CurrentFile.LeftTool = NewSelectorTool("Selector")
-			CurrentFile.RightTool = NewSelectorTool("Selector")
+			LeftTool = NewSelectorTool("Selector")
+			RightTool = NewSelectorTool("Selector")
 			ToolsUISetCurrentToolSelected(entity)
 		}, nil)
 
