@@ -4,10 +4,8 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// UIFileSystem handles non-ui drawing, including drawing the layer canvases
-// TODO rename because it has nothing to do with FileSystem, only drawing the
-// current File
-type UIFileSystem struct {
+// UIRenderFileSystem handles non-ui drawing, including drawing the layer canvases
+type UIRenderFileSystem struct {
 	BasicSystem
 
 	// Used for relational mouse movement
@@ -20,8 +18,8 @@ type UIFileSystem struct {
 }
 
 // NewUIFileSystem returns a new UIFileSystem
-func NewUIFileSystem() *UIFileSystem {
-	s := &UIFileSystem{
+func NewUIFileSystem() *UIRenderFileSystem {
+	s := &UIRenderFileSystem{
 		hasDoneFirstFrameResize: false,
 	}
 
@@ -238,7 +236,7 @@ func NewUIFileSystem() *UIFileSystem {
 
 // Draw draws everything from the file to the screen
 // TODO move all of this to system_render
-func (s *UIFileSystem) Draw() {
+func (s *UIRenderFileSystem) Draw() {
 	// Draw temp layer
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
 	// LeftTool draws last as it's more important
@@ -414,7 +412,7 @@ func recursiveResize(entity *Entity) {
 }
 
 // Resize is called when a resize event happens
-func (s *UIFileSystem) Resize() {
+func (s *UIRenderFileSystem) Resize() {
 	CurrentFile.FileCamera.Offset.X = float32(rl.GetScreenWidth()) / 2
 	CurrentFile.FileCamera.Offset.Y = float32(rl.GetScreenHeight()) / 2
 
@@ -428,7 +426,7 @@ func (s *UIFileSystem) Resize() {
 }
 
 // Update updates the system
-func (s *UIFileSystem) Update(dt float32) {
+func (s *UIRenderFileSystem) Update(dt float32) {
 	// Move target
 	if rl.IsWindowResized() || s.hasDoneFirstFrameResize == false {
 		s.Resize()

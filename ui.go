@@ -50,7 +50,7 @@ var (
 	moveable, resizeable, interactable, hoverable, drawable, scrollable *Component
 	renderSystem                                                        *UIRenderSystem
 	controlSystem                                                       *UIControlSystem
-	fileSystem                                                          *UIFileSystem
+	fileSystem                                                          *UIRenderFileSystem
 )
 
 const (
