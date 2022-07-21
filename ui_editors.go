@@ -69,7 +69,10 @@ func EditorsUIAddButton(file *File) {
 
 // NewEditorsUI returns a new entity
 func NewEditorsUI(bounds rl.Rectangle) *Entity {
-	editorsButtons = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
+	editorsButtons = NewScrollableList(bounds, []*Entity{}, FlowDirectionVertical)
+	if scrollable, ok := editorsButtons.GetScrollable(); ok {
+		scrollable.ScrollDirection = ScrollDirectionHorizontal
+	}
 	for _, f := range Files {
 		EditorsUIAddButton(f)
 	}
