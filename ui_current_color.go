@@ -290,8 +290,8 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			right := RightColor
 			CurrentColorSetRightColor(left)
 			CurrentColorSetLeftColor(right)
-			SetUIHexColor(left)
-			SetUIColors(left)
+			SetUIHexColor(LeftColor)
+			SetUIColors(LeftColor)
 		}, nil)
 	currentColorBox.PushChild(currentColorSwap)
 
