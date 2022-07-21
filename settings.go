@@ -116,6 +116,7 @@ var (
 
 		"new":    {{rl.KeyLeftControl, rl.KeyN}},
 		"open":   {{rl.KeyLeftControl, rl.KeyO}},
+		"close":  {{rl.KeyLeftControl, rl.KeyW}},
 		"save":   {{rl.KeyLeftControl, rl.KeyS}},
 		"saveAs": {{rl.KeyLeftControl, rl.KeyLeftShift, rl.KeyS}},
 		"export": {{rl.KeyLeftControl, rl.KeyE}},

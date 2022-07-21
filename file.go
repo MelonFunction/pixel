@@ -171,6 +171,9 @@ type File struct {
 	FileDir  string
 	Filename string
 
+	// FileChanged is true if a change has been made since saving
+	FileChanged bool
+
 	Layers       []*Layer // The last one is for tool previews
 	CurrentLayer int32
 
@@ -238,6 +241,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 			NewLayer(canvasWidth, canvasHeight, "background", rl.Blank, true),
 			NewLayer(canvasWidth, canvasHeight, "hidden", rl.Blank, true),
 		},
+
+		FileChanged: true,
 
 		Animations: make([]*Animation, 0),
 
@@ -712,6 +717,7 @@ func (f *File) MoveLayerDown(index int32, appendHistory bool) error {
 // AppendHistory inserts a new history interface{} to f.History depending on the
 // historyOffset
 func (f *File) AppendHistory(action interface{}) {
+	f.FileChanged = true
 	// Clear everything past the offset if a change has been made after undoing
 	f.History = f.History[0 : int32(len(f.History))-f.historyOffset]
 	f.historyOffset = 0
@@ -721,6 +727,8 @@ func (f *File) AppendHistory(action interface{}) {
 	} else {
 		f.History = append(f.History, action)
 	}
+
+	EditorsUIRebuild()
 }
 
 // DrawPixelDataToCanvas redraws the canvas using the pixel data
@@ -1143,6 +1151,7 @@ func (f *File) SaveAs(path string) {
 	f.PathDir = strings.Join(spl[:len(spl)-1], "/")
 	f.FileDir = path
 	log.Println(f.Filename, f.PathDir, f.FileDir)
+	f.FileChanged = false
 	EditorsUIRebuild()
 }
 

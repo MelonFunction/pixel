@@ -245,6 +245,17 @@ func UINew() {
 	EditorsUIRebuild()
 }
 
+// UIClose closes a file
+func UIClose() {
+	CurrentFile.Destroy()
+	if len(Files) > 0 {
+		CurrentFile = Files[len(Files)-1]
+	} else {
+		rl.CloseWindow()
+	}
+	EditorsUIRebuild()
+}
+
 // UIOpen opens a file
 func UIOpen() {
 	UIControlSystemCmds <- "open"
@@ -458,6 +469,8 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 				UINew()
 			case "open":
 				UIOpen()
+			case "close":
+				UIClose()
 			case "save":
 				if len(CurrentFile.FileDir) > 0 {
 					CurrentFile.SaveAs(CurrentFile.FileDir)

@@ -98,7 +98,7 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 	menuButtons.FlowChildren()
 
 	// File menu
-	measured = rl.MeasureTextEx(Font, "save as ", UIFontSize, 1)
+	measured = rl.MeasureTextEx(Font, "close file    ", UIFontSize, 1)
 	bounds.Y += UIFontSize * 2
 	bounds.Height = float32(rl.GetScreenHeight())
 	bounds.Width = measured.X + 10
@@ -126,6 +126,11 @@ func NewMenuUI(bounds rl.Rectangle) *Entity {
 			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
 			"open", TextAlignLeft, false, func(entity *Entity, button MouseButton) {
 				UIOpen()
+			}, nil),
+		NewButtonText( // Close
+			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),
+			"close file", TextAlignLeft, false, func(entity *Entity, button MouseButton) {
+				UIClose()
 			}, nil),
 		NewButtonText( // Resize
 			rl.NewRectangle(0, 0, measured.X+10, UIFontSize*2),

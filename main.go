@@ -7,6 +7,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+// vars
 var (
 	// CurrentFile is the current file being edited
 	CurrentFile *File
@@ -41,7 +42,7 @@ func main() {
 
 	rl.SetTraceLog(rl.LogError)
 	rl.SetConfigFlags(rl.FlagWindowResizable)
-	rl.InitWindow(1920*0.75, 1080*0.75, "Pixel")
+	rl.InitWindow(1920*0.75, 1080*0.75, "MelonPixel")
 	rl.SetWindowPosition(3840-1920*0.75-96, 128)
 	rl.SetTargetFPS(60)
 	rl.SetExitKey(0)

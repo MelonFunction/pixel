@@ -25,10 +25,15 @@ func EditorsUIRebuild() {
 func EditorsUIAddButton(file *File) {
 	isCurrent := file == CurrentFile
 
-	fo := rl.MeasureTextEx(Font, file.Filename, UIFontSize, 1)
+	filename := file.Filename
+	if file.FileChanged {
+		filename = "*" + filename
+	}
+
+	fo := rl.MeasureTextEx(Font, filename, UIFontSize, 1)
 	button := NewButtonText(
 		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
-		file.Filename, TextAlignCenter, isCurrent, func(entity *Entity, button MouseButton) {
+		filename, TextAlignCenter, isCurrent, func(entity *Entity, button MouseButton) {
 
 			if res, err := scene.QueryID(currentButton.ID); err == nil {
 				hoverable := res.Components[currentButton.Scene.ComponentsMap["hoverable"]].(*Hoverable)
