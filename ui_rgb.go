@@ -210,7 +210,7 @@ func makeOpacitySliderArea(color rl.Color) {
 }
 
 // MoveAreaSelector moves the area selector
-func MoveAreaSelector(mx, my int32) {
+func MoveAreaSelector(mx, my float32) {
 	if moveable, ok := rgbArea.GetMoveable(); ok {
 		if mx < 0 {
 			mx = 0
@@ -218,24 +218,17 @@ func MoveAreaSelector(mx, my int32) {
 		if my < 0 {
 			my = 0
 		}
-		if mx > int32(moveable.Bounds.Width)-1 {
-			mx = int32(moveable.Bounds.Width) - 1
+		if mx > 1 {
+			mx = 1
 		}
-		if my > int32(moveable.Bounds.Height)-1 {
-			my = int32(moveable.Bounds.Height) - 1
+		if my > 1 {
+			my = 1
 		}
 
 		// Move the areaSelector
 		if sm, ok := areaSelector.GetMoveable(); ok {
-			sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
-			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
-		}
-
-		loc := IntVec2{mx, my}
-		color, ok := areaColors[loc]
-		if ok {
-			lastColorLocation = loc
-			makeOpacitySliderArea(color)
+			sm.Bounds.X = moveable.Bounds.X + moveable.Bounds.Width*mx - sm.Bounds.Width/2
+			sm.Bounds.Y = moveable.Bounds.Y + moveable.Bounds.Height*my - sm.Bounds.Height/2
 		}
 	}
 }
@@ -256,12 +249,6 @@ func MoveColorSelector(mx int32) {
 		if sm, ok := colorSelector.GetMoveable(); ok {
 			sm.Bounds.X = moveable.Bounds.X + float32(mx) - sm.Bounds.Width/2
 			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
-		}
-
-		color, ok := sliderColors[int(mx)]
-		if ok {
-			makeBlendArea(color)
-			makeOpacitySliderArea(color)
 		}
 	}
 }
@@ -381,20 +368,21 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 
 				color, ok := sliderColors[int(mx)]
 				if ok {
-					makeBlendArea(color)
-					makeOpacitySliderArea(color)
-
-					// Update the current color with the last color location
-					color, ok := areaColors[lastColorLocation]
-					if ok {
-						// Set the current color in the file
+					if c, ok := areaColors[lastColorLocation]; ok {
+						// Update current color with the position-adjusted color
 						switch button {
 						case rl.MouseLeftButton:
-							CurrentColorSetLeftColor(color)
+							c.A = LeftColor.A
+							CurrentColorSetLeftColor(c)
 						case rl.MouseRightButton:
-							CurrentColorSetRightColor(color)
+							c.A = RightColor.A
+							CurrentColorSetRightColor(c)
 						}
 					}
+
+					// Update color areas with the "raw" color from the slider
+					makeBlendArea(color)
+					makeOpacitySliderArea(color)
 				}
 			}
 		},
@@ -428,9 +416,11 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 				if color, ok := opacityColors[int(mx)]; ok {
 					switch button {
 					case rl.MouseLeftButton:
-						CurrentColorSetLeftColor(color)
+						LeftColor.A = color.A
+						CurrentColorSetLeftColor(LeftColor)
 					case rl.MouseRightButton:
-						CurrentColorSetRightColor(color)
+						RightColor.A = color.A
+						CurrentColorSetRightColor(RightColor)
 					}
 				}
 			}
@@ -489,7 +479,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 		})
 	if interactable, ok := hexInput.GetInteractable(); ok {
 		interactable.OnBlur = func(entity *Entity) {
-			SetUIColors(hexColor)
+			// SetUIColors(hexColor)
 			CurrentColorSetLeftColor(hexColor)
 			if drawable, ok := hexInput.GetDrawable(); ok {
 				if drawableText, ok := drawable.DrawableType.(*DrawableText); ok {

@@ -30,6 +30,8 @@ const (
 // SetUIColors moves the pointers in the color areas
 func SetUIColors(color rl.Color) {
 	cc := color
+	cc.A = 255
+
 	// If it's R, G or B which is incremented in the loop
 	var editing colorEditing
 
@@ -156,7 +158,7 @@ func SetUIColors(color rl.Color) {
 		cc = find(cc)
 	}
 	MoveColorSelector(foundColor)
-	MoveOpacitySelector(float32(cc.A) / 255)
+	MoveOpacitySelector(float32(color.A) / 255)
 
 	// Go to the correct place in the RGB area
 	var ax, ay uint8 = 255, 0
@@ -186,13 +188,7 @@ func SetUIColors(color rl.Color) {
 	}
 	ax = 255 - uint8(math.Ceil(float64(255/scale)))
 	ay = 255 - ay
-	if ax > 0 {
-		ax--
-	}
-	if ay > 0 {
-		ay--
-	}
-	MoveAreaSelector(int32(ax), int32(ay))
+	MoveAreaSelector(float32(ax)/255, float32(ay)/255)
 }
 
 // CurrentColorSetLeftColor sets the left color and updates the UI components
@@ -213,6 +209,7 @@ func CurrentColorSetLeftColor(color rl.Color) {
 		}
 	}
 
+	SetUIColors(color)
 	SetUIHexColor(color)
 }
 
@@ -234,6 +231,7 @@ func CurrentColorSetRightColor(color rl.Color) {
 		}
 	}
 
+	SetUIColors(color)
 	SetUIHexColor(color)
 }
 
@@ -291,7 +289,7 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			CurrentColorSetRightColor(left)
 			CurrentColorSetLeftColor(right)
 			SetUIHexColor(LeftColor)
-			SetUIColors(LeftColor)
+			// SetUIColors(LeftColor)
 		}, nil)
 	currentColorBox.PushChild(currentColorSwap)
 
