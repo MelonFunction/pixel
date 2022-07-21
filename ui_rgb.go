@@ -266,6 +266,28 @@ func MoveColorSelector(mx int32) {
 	}
 }
 
+// MoveOpacitySelector moves the color selector
+func MoveOpacitySelector(percent float32) {
+	if moveable, ok := opacitySlider.GetMoveable(); ok {
+		my := int32(moveable.Bounds.Height) / 2
+
+		if percent < 0 {
+			percent = 0
+		}
+		if percent > 1 {
+			percent = 1
+		}
+
+		pos := moveable.Bounds.Width * percent
+
+		// Move the opacitySelector
+		if sm, ok := opacitySelector.GetMoveable(); ok {
+			sm.Bounds.X = moveable.Bounds.X + pos - sm.Bounds.Width/2
+			sm.Bounds.Y = moveable.Bounds.Y + float32(my) - sm.Bounds.Height/2
+		}
+	}
+}
+
 // TODO keep opacity on color change
 // TODO move selectors on start
 
@@ -313,10 +335,13 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					// Set the current color in the file
 					lastColorLocation = loc
 
+					// MoveOpacitySelector(float32(color.A) / 255)
 					switch button {
 					case rl.MouseLeftButton:
+						color.A = LeftColor.A
 						CurrentColorSetLeftColor(color)
 					case rl.MouseRightButton:
+						color.A = RightColor.A
 						CurrentColorSetRightColor(color)
 					}
 

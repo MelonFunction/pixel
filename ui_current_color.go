@@ -92,19 +92,19 @@ func SetUIColors(color rl.Color) {
 		}
 	}
 
-	var found int32
+	var foundColor int32
 	var ok bool
 	incr := -1       // -1, 1, -2, 2, -3, 3 etc
 	maxAttempts := 6 // TODO make global var for this, basically the step amount in the gradient values
 	var find func(c rl.Color) rl.Color
 	find = func(c rl.Color) rl.Color {
-		found, ok = sliderColorsRev[c]
+		foundColor, ok = sliderColorsRev[c]
 		if ok {
-			// log.Println("\tfound", incr, c, found)
+			// log.Println("\tfoundColor", incr, c, foundColor)
 			return c
 		}
 
-		// log.Println("\tnot found, retrying", incr, c)
+		// log.Println("\tnot foundColor, retrying", incr, c)
 		if incr >= 0 {
 			incr++
 		}
@@ -145,7 +145,7 @@ func SetUIColors(color rl.Color) {
 		}
 
 		if incr > maxAttempts {
-			// log.Println("\tnot found, max attempts reached", incr, c)
+			// log.Println("\tnot foundColor, max attempts reached", incr, c)
 			ok = true
 			return c
 		}
@@ -155,7 +155,8 @@ func SetUIColors(color rl.Color) {
 	if ok == false {
 		cc = find(cc)
 	}
-	MoveColorSelector(found)
+	MoveColorSelector(foundColor)
+	MoveOpacitySelector(float32(cc.A) / 255)
 
 	// Go to the correct place in the RGB area
 	var ax, ay uint8 = 255, 0
