@@ -12,7 +12,7 @@ UI
   🔴 Double click to change the text in a label, single click to activate it
 
 System
-  🔴 * on unsaved files
+  🟢 * on unsaved files
   🔴 Prevent quit when there is an unsaved file
   🔴 Opening an image with transparency causes colored artifacts
     🔴 Also transparency is wrong. Probs blending function
@@ -21,14 +21,6 @@ System
     🟢 Animations
     🟢 Layers
 
-Testing
-  🔴 lol
-
-Previews (including layers)
-  🟢 maintain aspect ratios
-  🔴 allow movement/zoom
-  🔴 lock preview window position to cell (with a hotkey)
-  
 Layers
   Actions
     🟢 Merge down
@@ -70,20 +62,22 @@ Tools
       🟢 "rl.KeyH" for Horizontal
       🟢 "rl.KeyV" for Vertical
 
-Features
-  Animation Tab
-    🟢 Create an animation button
-    🟢 List (like layers)
-      🟢 When clicked, allow tiles to be selected
-    🔴 Export
-      🔴 Name
-      🔴 Frames
-      🔴 Delays
-  
-  Preview Panel
-    🟢 Show the animation if the animation tab is selected
-      🟢 Animation speed
-      🟢 Pause/play
-    🟢 Show the tile/map editor/placer if the tiles tab is selected
-      🟢 Show the current tile being tiled in all directions
-      🔴 Allow editing in the preview panel
+Animation Tab
+  🟢 Create an animation button
+  🟢 List (like layers)
+    🟢 When clicked, allow tiles to be selected
+  🔴 Export
+    🔴 Name
+    🔴 Frames
+    🔴 Delays
+
+Preview Panel
+  🟢 Show the animation if the animation tab is selected
+    🟢 Animation speed
+    🟢 Pause/play
+  🟢 Show the tile/map editor/placer if the tiles tab is selected
+    🟢 Show the current tile being tiled in all directions
+    🟢 maintain aspect ratios
+    🔴 Allow editing in the preview panel
+    🔴 allow movement/zoom
+    🔴 lock preview window position to cell (with a hotkey)

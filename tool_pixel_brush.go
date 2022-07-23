@@ -13,6 +13,44 @@ const (
 	BrushShapeCircle
 )
 
+// Vars
+const (
+	maxBrushSize = 8 // inclusive
+)
+
+// Couldn't find a good way to generate circles, this works though 🥇
+var circlesRaw = [][][]int8{
+	1: {{1}},
+	2: {{1, 1}, {1, 1}},
+	3: {{0, 1, 0}, {1, 1, 1}, {0, 1, 0}},
+	4: {{0, 1, 1, 0}, {1, 1, 1, 1}, {1, 1, 1, 1}, {0, 1, 1, 0}},
+	5: {{0, 1, 1, 1, 0}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {0, 1, 1, 1, 0}},
+	6: {
+		{0, 1, 1, 1, 1, 0},
+		{1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1},
+		{0, 1, 1, 1, 1, 0}},
+	7: {
+		{0, 0, 1, 1, 1, 0, 0},
+		{0, 1, 1, 1, 1, 1, 0},
+		{1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1},
+		{0, 1, 1, 1, 1, 1, 0},
+		{0, 0, 1, 1, 1, 0, 0}},
+	8: {
+		{0, 0, 1, 1, 1, 1, 0, 0},
+		{0, 1, 1, 1, 1, 1, 1, 0},
+		{1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1},
+		{0, 1, 1, 1, 1, 1, 1, 0},
+		{0, 0, 1, 1, 1, 1, 0, 0}},
+}
+
 // PixelBrushTool draws a single pixel at a time and can also double as an
 // eraser if eraser is true
 type PixelBrushTool struct {
@@ -26,6 +64,7 @@ type PixelBrushTool struct {
 	drawnPixels map[IntVec2]bool
 
 	currentColor rl.Color
+	circles      []map[IntVec2]bool
 }
 
 // NewPixelBrushTool returns the pixel brush tool. Requires a name and whether
@@ -38,7 +77,32 @@ func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 		drawnPixels: make(map[IntVec2]bool),
 		// default from File. setting manually because CurrentFile isn't set yet,
 		// but it will be available on subsequent new tools
-		size: 1,
+		size:    1,
+		circles: make([]map[IntVec2]bool, maxBrushSize+1),
+	}
+
+	for d, c := range circlesRaw {
+		circle := make(map[IntVec2]bool)
+
+		var min int
+		if d%2 == 0 {
+			min = -d/2 + 1
+		} else {
+			min = -d / 2
+		}
+		for xx := 0; xx < d; xx++ {
+			for yy := 0; yy < d; yy++ {
+				// if d%2 == 0 {
+				// 	circle[IntVec2{int32(xx) + 1, int32(yy) + 1}] = true
+				// } else {
+				// }
+				loc := IntVec2{int32(xx + min), int32(yy + min)}
+				if c[yy][xx] == 1 {
+					circle[loc] = true
+				}
+			}
+		}
+		t.circles[d] = circle
 	}
 
 	if CurrentFile != nil {
@@ -67,7 +131,7 @@ func (t *PixelBrushTool) GetSize() int32 {
 
 // SetSize sets the tool size
 func (t *PixelBrushTool) SetSize(size int32) {
-	if size > 0 {
+	if size > 0 && size <= maxBrushSize {
 		t.size = size
 
 		if t.eraser {
@@ -84,32 +148,8 @@ func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]boo
 
 	switch shape {
 	case BrushShapeCircle:
-		// TODO
-		d = d / 2
-		if d < 0 {
-			return nil
-		}
-		var x, y int32 = 0, 0
-		// Bresenham algorithm
-		var x1, y1, err int32 = -d, 0, 2 - 2*d
-		for {
-			r[IntVec2{x - x1, y + y1}] = true
-			r[IntVec2{x - y1, y - x1}] = true
-			r[IntVec2{x + x1, y - y1}] = true
-			r[IntVec2{x + y1, y + x1}] = true
-			d = err
-			if d > x1 {
-				x1++
-				err += x1*2 + 1
-			}
-			if d <= y1 {
-				y1++
-				err += y1*2 + 1
-			}
-			if x1 >= 0 {
-				break
-			}
-		}
+		r = t.circles[d]
+		// r[IntVec2{0, 0}] = true
 	case BrushShapeSquare:
 		var min, max int32
 		if d%2 == 0 {
@@ -121,8 +161,11 @@ func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]boo
 		}
 		for xx := min; xx <= max; xx++ {
 			for yy := min; yy <= max; yy++ {
-				// Don't draw already drawn pixels
-				r[IntVec2{xx, yy}] = true
+				if d%2 == 0 {
+					r[IntVec2{xx + 1, yy + 1}] = true
+				} else {
+					r[IntVec2{xx, yy}] = true
+				}
 			}
 		}
 	default:
@@ -134,7 +177,7 @@ func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]boo
 
 // drawPixel draws the brush stroke
 func (t *PixelBrushTool) drawPixel(x, y int32, color rl.Color, fileDraw bool) {
-	sh := t.genFillShape(t.size, BrushShapeSquare)
+	sh := t.genFillShape(t.size, BrushShapeCircle)
 	for pos := range sh {
 		sx, sy := x+pos.X, y+pos.Y
 		if !t.exists(IntVec2{sx, sy}) {

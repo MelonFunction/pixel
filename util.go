@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
@@ -62,6 +63,12 @@ func Line(x0, y0, x1, y1 int32, drawFunc func(x, y int32)) {
 			y0 += sy
 		}
 	}
+}
+
+// Rotate rotates v by phi
+func (v IntVec2) Rotate(phi float64) IntVec2 {
+	c, s := math.Cos(phi), math.Sin(phi)
+	return IntVec2{int32(c*float64(v.X) - s*float64(v.Y)), int32(s*float64(v.X) + c*float64(v.Y))}
 }
 
 // AddAndClampUint8 adds two ints and caps them at uint8 max
