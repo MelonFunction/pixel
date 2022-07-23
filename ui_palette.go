@@ -170,6 +170,8 @@ func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 			switch button {
 			case rl.MouseLeftButton:
 				CurrentColorSetLeftColor(color)
+				makeBlendArea(color)
+				makeOpacitySliderArea(color)
 				// SetUIColors(color)
 				PaletteUICurrentColorEntity = entity
 
@@ -243,6 +245,8 @@ func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 			case rl.MouseRightButton:
 				// SetUIColors(color)
 				CurrentColorSetRightColor(color)
+				makeBlendArea(color)
+				makeOpacitySliderArea(color)
 			}
 		},
 		func(entity *Entity, button MouseButton, isHeld bool) {
