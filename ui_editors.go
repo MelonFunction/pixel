@@ -32,7 +32,7 @@ func EditorsUIAddButton(file *File) {
 
 	fo := rl.MeasureTextEx(Font, filename, UIFontSize, 1)
 	button := NewButtonText(
-		rl.NewRectangle(0, 0, fo.X+10, UIFontSize*2),
+		rl.NewRectangle(0, 0, fo.X+20, UIFontSize*2),
 		filename, TextAlignCenter, isCurrent, func(entity *Entity, button MouseButton) {
 
 			if res, err := scene.QueryID(currentButton.ID); err == nil {
@@ -69,7 +69,7 @@ func EditorsUIAddButton(file *File) {
 
 // NewEditorsUI returns a new entity
 func NewEditorsUI(bounds rl.Rectangle) *Entity {
-	editorsButtons = NewScrollableList(bounds, []*Entity{}, FlowDirectionVertical)
+	editorsButtons = NewScrollableList(bounds, []*Entity{}, FlowDirectionHorizontal)
 	if scrollable, ok := editorsButtons.GetScrollable(); ok {
 		scrollable.ScrollDirection = ScrollDirectionHorizontal
 	}
