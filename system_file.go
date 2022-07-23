@@ -131,7 +131,7 @@ func NewUIFileSystem() *UIRenderFileSystem {
 	tools := NewToolsUI(rl.NewRectangle(
 		0,
 		0,
-		rgbWidth+UIButtonHeight*2,
+		rgbWidth+paletteWidth,
 		UIButtonHeight))
 	tools.Snap([]SnapData{
 		{currentColor, SideLeft, SideLeft},

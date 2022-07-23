@@ -37,10 +37,36 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 		fallthrough
 	case toolPencil:
 		var size int32
+		var shape BrushShape
 		if lt, ok := LeftTool.(*PixelBrushTool); ok {
 			size = lt.GetSize()
+			shape = lt.GetShape()
 		}
-		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3.5, UIButtonHeight), fmt.Sprintf("%d", size), TextAlignCenter, false,
+		brushShapeBox := NewBox(rl.NewRectangle(0, 0, UIButtonHeight*0.5, UIButtonHeight), []*Entity{
+			NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/circle.png"), shape == BrushShapeCircle,
+				func(e *Entity, button MouseButton) {
+					// button up
+					if lt, ok := LeftTool.(*PixelBrushTool); ok {
+						lt.SetShape(BrushShapeCircle)
+					}
+					if rt, ok := RightTool.(*PixelBrushTool); ok {
+						rt.SetShape(BrushShapeCircle)
+					}
+					ToolsUISetCurrentToolSelected(entity)
+				}, nil),
+			NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/square.png"), shape == BrushShapeSquare,
+				func(e *Entity, button MouseButton) {
+					// button up
+					if lt, ok := LeftTool.(*PixelBrushTool); ok {
+						lt.SetShape(BrushShapeSquare)
+					}
+					if rt, ok := RightTool.(*PixelBrushTool); ok {
+						rt.SetShape(BrushShapeSquare)
+					}
+					ToolsUISetCurrentToolSelected(entity)
+				}, nil),
+		}, FlowDirectionVertical)
+		brushWidthInput := NewInput(rl.NewRectangle(0, 0, UIButtonHeight*3, UIButtonHeight), fmt.Sprintf("%d", size), TextAlignCenter, false,
 			func(entity *Entity, button MouseButton) {
 				// button up
 			},
@@ -54,12 +80,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 						if key == rl.KeyBackspace && len(drawableText.Label) > 0 {
 							drawableText.Label = drawableText.Label[:len(drawableText.Label)-1]
 						} else if len(drawableText.Label) < 12 {
-							switch {
-							case key >= 48 && key <= 57: // 0 to 9
-								fallthrough
-							case key >= 97 && key <= 97+26: // a to z
-								fallthrough
-							case key >= rl.KeyA && key <= rl.KeyZ:
+							if key >= 48 && key <= 57 { // 0 to 9
 								drawableText.Label += string(rune(key))
 							}
 
@@ -98,6 +119,7 @@ func ToolsUISetCurrentToolSelected(entity *Entity) {
 				}
 			}
 		}
+		toolSettings.PushChild(brushShapeBox)
 		toolSettings.PushChild(brushWidthInput)
 	}
 
@@ -157,7 +179,7 @@ func NewToolsUI(bounds rl.Rectangle) *Entity {
 		}, nil)
 
 	// currently only 5 buttons
-	bounds.Width -= UIButtonHeight * 5
+	// bounds.Width = UIButtonHeight
 	toolSettings = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
 	toolsButtons.PushChild(toolPencil)

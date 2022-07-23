@@ -105,12 +105,12 @@ func NewPixelBrushTool(name string, eraser bool) *PixelBrushTool {
 		t.circles[d] = circle
 	}
 
-	if CurrentFile != nil {
-		if eraser {
-			t.size = EraserSize
-		} else {
-			t.size = BrushSize
-		}
+	if eraser {
+		t.size = GlobalEraserSize
+		t.shape = GlobalErasorShape
+	} else {
+		t.size = GlobalBrushSize
+		t.shape = GlobalBrushShape
 	}
 
 	return t
@@ -124,9 +124,9 @@ func (t *PixelBrushTool) exists(e IntVec2) bool {
 // GetSize returns the tool size
 func (t *PixelBrushTool) GetSize() int32 {
 	if t.eraser {
-		return EraserSize
+		return GlobalEraserSize
 	}
-	return BrushSize
+	return GlobalBrushSize
 }
 
 // SetSize sets the tool size
@@ -135,14 +135,32 @@ func (t *PixelBrushTool) SetSize(size int32) {
 		t.size = size
 
 		if t.eraser {
-			EraserSize = size
+			GlobalEraserSize = size
 		} else {
-			BrushSize = size
+			GlobalBrushSize = size
 		}
 	}
 }
 
-// genFillShape  d is the diamater/width
+// GetShape returns the tool shape
+func (t *PixelBrushTool) GetShape() BrushShape {
+	if t.eraser {
+		return GlobalErasorShape
+	}
+	return GlobalBrushShape
+}
+
+// SetShape sets the tool shape
+func (t *PixelBrushTool) SetShape(shape BrushShape) {
+	t.shape = shape
+	if t.eraser {
+		GlobalErasorShape = shape
+	} else {
+		GlobalBrushShape = shape
+	}
+}
+
+// genFillShape d is the diamater/width
 func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]bool {
 	r := make(map[IntVec2]bool)
 
@@ -177,7 +195,7 @@ func (t *PixelBrushTool) genFillShape(d int32, shape BrushShape) map[IntVec2]boo
 
 // drawPixel draws the brush stroke
 func (t *PixelBrushTool) drawPixel(x, y int32, color rl.Color, fileDraw bool) {
-	sh := t.genFillShape(t.size, BrushShapeCircle)
+	sh := t.genFillShape(t.size, t.shape)
 	for pos := range sh {
 		sx, sy := x+pos.X, y+pos.Y
 		if !t.exists(IntVec2{sx, sy}) {

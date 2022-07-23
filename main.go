@@ -15,12 +15,14 @@ var (
 	Files = make([]*File, 0, 8)
 
 	// Tool and color data
-	BrushSize  int32
-	EraserSize int32
-	LeftTool   Tool
-	RightTool  Tool
-	LeftColor  rl.Color
-	RightColor rl.Color
+	GlobalBrushSize   int32
+	GlobalEraserSize  int32
+	GlobalBrushShape  = BrushShapeCircle
+	GlobalErasorShape = BrushShapeSquare
+	LeftTool          Tool
+	RightTool         Tool
+	LeftColor         rl.Color
+	RightColor        rl.Color
 
 	// CopiedSelection holds the selection when File.Copy is called
 	CopiedSelection map[IntVec2]rl.Color
@@ -50,8 +52,8 @@ func main() {
 	// Make the files
 	Files = []*File{}
 
-	BrushSize = 1
-	EraserSize = 1
+	GlobalBrushSize = 1
+	GlobalEraserSize = 1
 	LeftColor = rl.White
 	RightColor = rl.Black
 	LeftTool = NewPixelBrushTool("Pixel Brush L", false)
