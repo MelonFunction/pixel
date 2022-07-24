@@ -85,8 +85,9 @@ func BlendWithOpacity(a, b rl.Color) rl.Color {
 	if b.A == 0 {
 		return a
 	}
-	if a.A == 0 {
-		return b
+	if a.A == 0 { // TODO check if a.A != 255 is better
+		// return b
+		a.A = 255
 	}
 
 	a.A = AddAndClampUint8(a.A, b.A/2)
