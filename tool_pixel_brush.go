@@ -240,7 +240,10 @@ func (t *PixelBrushTool) MouseDown(x, y int32, button MouseButton) {
 
 	if t.shouldConnectToLastPos || t.isLineModifierDown() {
 		Line(t.lastPos.X, t.lastPos.Y, x, y, func(x, y int32) {
-			t.drawPixel(x, y, t.currentColor, true)
+			// prevent drawing over the first pixel and stacking them, with color.A<255, opacity stacks 😠
+			if !(x == t.lastPos.X && y == t.lastPos.Y) {
+				t.drawPixel(x, y, t.currentColor, true)
+			}
 		})
 	} else {
 		t.shouldConnectToLastPos = true
