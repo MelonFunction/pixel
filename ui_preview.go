@@ -78,23 +78,19 @@ func PreviewUIDrawTile(x, y int32) {
 				rl.DrawRectangle(0, 0, int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 				rl.DrawRectangle(0, int32(renderTexture.Texture.Texture.Width)-int32(dst.Y), int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 
-				for _, layer := range CurrentFile.Layers {
-					if !layer.Hidden {
-						rl.DrawTexturePro(
-							layer.Canvas.Texture,
-							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
-							rl.NewRectangle(
-								0,
-								0,
-								float32(CurrentFile.CanvasWidth),
-								-float32(CurrentFile.CanvasHeight)),
-							dst,
-							rl.NewVector2(0, 0),
-							0,
-							rl.White,
-						)
-					}
-				}
+				rl.DrawTexturePro(
+					CurrentFile.RenderLayer.Canvas.Texture,
+					// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
+					rl.NewRectangle(
+						0,
+						0,
+						float32(CurrentFile.CanvasWidth),
+						-float32(CurrentFile.CanvasHeight)),
+					dst,
+					rl.NewVector2(0, 0),
+					0,
+					rl.White,
+				)
 
 			case previewCurrentTile:
 				// TODO button to select and lock the tile being previewed
@@ -103,56 +99,42 @@ func PreviewUIDrawTile(x, y int32) {
 
 				for x := 0; x < 3; x++ {
 					for y := 0; y < 3; y++ {
-						for i, layer := range CurrentFile.Layers {
-							if i == len(CurrentFile.Layers)-1 {
-								continue
-							}
-							if !layer.Hidden {
-								rl.DrawTexturePro(
-									layer.Canvas.Texture,
-									// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
-									rl.NewRectangle(
-										float32(tilePos.X),
-										-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
-										float32(CurrentFile.TileWidth),
-										-float32(CurrentFile.TileHeight)),
-									rl.NewRectangle(
-										float32(renderTexture.Texture.Texture.Width)/3*float32(x),
-										float32(renderTexture.Texture.Texture.Height)/3*float32(y),
-										float32(renderTexture.Texture.Texture.Width)/3,
-										float32(renderTexture.Texture.Texture.Height)/3),
-									rl.NewVector2(0, 0),
-									0,
-									rl.White,
-								)
-							}
-						}
-					}
-				}
-
-			case previewCurrentPixel:
-				clampedPos := GetClampedCoordinates(x, y)
-
-				for i, layer := range CurrentFile.Layers {
-					if i == len(CurrentFile.Layers)-1 {
-						continue
-					}
-					if !layer.Hidden {
 						rl.DrawTexturePro(
-							layer.Canvas.Texture,
+							CurrentFile.RenderLayer.Canvas.Texture,
 							// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
 							rl.NewRectangle(
-								float32(clampedPos.X)-float32(CurrentFile.TileWidth)/2,
-								-float32(clampedPos.Y)-float32(CurrentFile.TileHeight)/2,
+								float32(tilePos.X),
+								-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
 								float32(CurrentFile.TileWidth),
 								-float32(CurrentFile.TileHeight)),
-							rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+							rl.NewRectangle(
+								float32(renderTexture.Texture.Texture.Width)/3*float32(x),
+								float32(renderTexture.Texture.Texture.Height)/3*float32(y),
+								float32(renderTexture.Texture.Texture.Width)/3,
+								float32(renderTexture.Texture.Texture.Height)/3),
 							rl.NewVector2(0, 0),
 							0,
 							rl.White,
 						)
 					}
 				}
+
+			case previewCurrentPixel:
+				clampedPos := GetClampedCoordinates(x, y)
+
+				rl.DrawTexturePro(
+					CurrentFile.RenderLayer.Canvas.Texture,
+					// rl.NewRectangle(0, 0, float32(CurrentFile.CanvasWidth), -float32(CurrentFile.CanvasHeight)),
+					rl.NewRectangle(
+						float32(clampedPos.X)-float32(CurrentFile.TileWidth)/2,
+						-float32(clampedPos.Y)-float32(CurrentFile.TileHeight)/2,
+						float32(CurrentFile.TileWidth),
+						-float32(CurrentFile.TileHeight)),
+					rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)),
+					rl.NewVector2(0, 0),
+					0,
+					rl.White,
+				)
 
 				// Draw 2 rectangles so that the pixel is always highlighted
 				// regardless of the color
@@ -217,26 +199,18 @@ func PreviewUIDrawTile(x, y int32) {
 				rl.DrawRectangle(0, 0, int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 				rl.DrawRectangle(0, int32(renderTexture.Texture.Texture.Width)-int32(dst.Y), int32(renderTexture.Texture.Texture.Width), int32(dst.Y), rl.DarkGray)
 
-				for i, layer := range CurrentFile.Layers {
-					if i == len(CurrentFile.Layers)-1 {
-						continue
-					}
-					if !layer.Hidden {
-						rl.DrawTexturePro(
-							layer.Canvas.Texture,
-							rl.NewRectangle(
-								float32(tilePos.X),
-								-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
-								float32(CurrentFile.TileWidth),
-								-float32(CurrentFile.TileHeight)),
-							dst,
-							rl.NewVector2(0, 0),
-							0,
-							rl.White,
-						)
-					}
-				}
-
+				rl.DrawTexturePro(
+					CurrentFile.RenderLayer.Canvas.Texture,
+					rl.NewRectangle(
+						float32(tilePos.X),
+						-float32(tilePos.Y)-float32(CurrentFile.TileHeight),
+						float32(CurrentFile.TileWidth),
+						-float32(CurrentFile.TileHeight)),
+					dst,
+					rl.NewVector2(0, 0),
+					0,
+					rl.White,
+				)
 			}
 
 			rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
