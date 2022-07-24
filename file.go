@@ -1243,6 +1243,7 @@ func Open(openPath string) *File {
 				}
 				f.Layers[i].Redraw()
 			}
+			f.RenderLayer = NewLayer(f.CanvasWidth, f.CanvasHeight, "render", rl.Blank, true)
 			f.Animations = make([]*Animation, len(fileSer.Animations))
 			for i, animation := range fileSer.Animations {
 				f.Animations[i] = &Animation{
@@ -1279,9 +1280,9 @@ func Open(openPath string) *File {
 					r, g, b, a := color.RGBA()
 					rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
 					editedLayer.PixelData[IntVec2{x, y}] = rlColor
-					// rl.DrawPixel(x, y, rlColor)
 				}
 			}
+			f.RenderLayer = NewLayer(f.CanvasWidth, f.CanvasHeight, "render", rl.Blank, true)
 			rl.EndTextureMode()
 			editedLayer.Redraw()
 
