@@ -14,7 +14,9 @@ type UIRenderSystem struct {
 
 // NewUIRenderSystem returs a new UIRenderSystem
 func NewUIRenderSystem() *UIRenderSystem {
-	return &UIRenderSystem{camera: rl.Camera2D{Zoom: 1}}
+	return &UIRenderSystem{
+		camera: rl.Camera2D{Zoom: 1},
+	}
 }
 
 func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, offset rl.Vector2) {
@@ -127,7 +129,6 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 		s.camera.Target.Y = moveable.Bounds.Y
 		childOffset := rl.Vector2{}
 		if scrollable != nil {
-			// TODO alter child offset positions here?
 			switch scrollable.ScrollDirection {
 			case ScrollDirectionVertical:
 				s.camera.Target.Y -= float32(scrollable.ScrollOffset)

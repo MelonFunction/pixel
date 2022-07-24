@@ -249,16 +249,38 @@ func (s *UIRenderFileSystem) Draw() {
 
 	rl.EndTextureMode()
 
-	// Draw layers
-	rl.BeginMode2D(CurrentFile.FileCamera)
-	for _, layer := range CurrentFile.Layers {
-		if !layer.Hidden {
-			rl.DrawTextureRec(layer.Canvas.Texture,
-				rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
-				rl.NewVector2(-float32(layer.Canvas.Texture.Width)/2, -float32(layer.Canvas.Texture.Height)/2),
-				rl.White)
+	// Draw layer
+	if CurrentFile.ShouldRedraw {
+		CurrentFile.ShouldRedraw = false
+		CurrentFile.RenderLayer.PixelData = make(map[IntVec2]rl.Color)
+		for _, layer := range CurrentFile.Layers {
+			if !layer.Hidden {
+				for loc, color := range layer.PixelData {
+					CurrentFile.RenderLayer.PixelData[loc] = BlendWithOpacity(CurrentFile.RenderLayer.PixelData[loc], color)
+				}
+				// rl.DrawTextureRec(layer.Canvas.Texture,
+				// 	rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
+				// 	rl.NewVector2(-float32(layer.Canvas.Texture.Width)/2, -float32(layer.Canvas.Texture.Height)/2),
+				// 	rl.White)
+			}
 		}
+		CurrentFile.RenderLayer.Redraw()
 	}
+	rl.BeginMode2D(CurrentFile.FileCamera)
+
+	previewLayer := CurrentFile.Layers[len(CurrentFile.Layers)-1]
+
+	// Render layer
+	rl.DrawTextureRec(CurrentFile.RenderLayer.Canvas.Texture,
+		rl.NewRectangle(0, 0, float32(CurrentFile.RenderLayer.Canvas.Texture.Width), -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)),
+		rl.NewVector2(-float32(CurrentFile.RenderLayer.Canvas.Texture.Width)/2, -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)/2),
+		rl.White)
+
+	// Preview layer
+	rl.DrawTextureRec(previewLayer.Canvas.Texture,
+		rl.NewRectangle(0, 0, float32(previewLayer.Canvas.Texture.Width), -float32(previewLayer.Canvas.Texture.Height)),
+		rl.NewVector2(-float32(previewLayer.Canvas.Texture.Width)/2, -float32(previewLayer.Canvas.Texture.Height)/2),
+		rl.White)
 
 	// Grid drawing
 	if CurrentFile.DrawGrid {
