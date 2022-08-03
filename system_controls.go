@@ -259,35 +259,11 @@ func UIClose() {
 // UIOpen opens a file
 func UIOpen() {
 	UIControlSystemCmds <- "open"
-	waiting := true
-	for waiting {
-		select {
-		case name := <-UIControlSystemReturns:
-			waiting = false
-			if len(name) > 0 {
-				// open also sets the currentfile before rebuilding ui
-				file := Open(name)
-				// log.Println(file)
-				Files = append(Files, file)
-				EditorsUIAddButton(file)
-			}
-		}
-	}
 }
 
 // UISaveAs saves the file
 func UISaveAs() {
 	UIControlSystemCmds <- "save"
-	waiting := true
-	for waiting {
-		select {
-		case name := <-UIControlSystemReturns:
-			waiting = false
-			if len(name) > 0 {
-				CurrentFile.SaveAs(name)
-			}
-		}
-	}
 }
 
 // HandleKeyboardEvents handles keyboard events
@@ -579,6 +555,23 @@ func (s *UIControlSystem) HandleKeyboardEvents() {
 // Update updates the control system
 func (s *UIControlSystem) Update(dt float32) {
 	s.HandleKeyboardEvents()
+
+	// Open/save file
+	select {
+	case name := <-UIControlSystemReturns:
+		if len(name) > 0 {
+			// open also sets the currentfile before rebuilding ui
+			file := Open(name)
+			// log.Println(file)
+			Files = append(Files, file)
+			EditorsUIAddButton(file)
+		}
+	case name := <-UIControlSystemReturns:
+		if len(name) > 0 {
+			CurrentFile.SaveAs(name)
+		}
+	default:
+	}
 
 	// Don't bother with UI controls, something is being drawn
 	if FileHasControl {
