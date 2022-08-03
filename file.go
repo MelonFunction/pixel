@@ -1198,7 +1198,6 @@ func (f *File) SaveAs(path string) {
 	f.FileDir = path
 	log.Println(f.Filename, f.PathDir, f.FileDir)
 	f.FileChanged = false
-	EditorsUIRebuild()
 }
 
 // Open a file

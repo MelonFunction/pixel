@@ -20,8 +20,8 @@ var (
 		rl.KeyRightAlt,
 	}
 
-	UIControlSystemCmds    chan string
-	UIControlSystemReturns chan string
+	UIControlSystemCmds    chan UIControlChanData
+	UIControlSystemReturns chan UIControlChanData
 )
 
 // UIControlSystem handles keyboard and mouse controls
@@ -40,11 +40,28 @@ type UIControlSystem struct {
 	ScrollScalar int32
 }
 
+// CommandType specifies the type of command the file dialog has done
+type CommandType int
+
+// CommandTypes
+const (
+	CommandTypeOpen CommandType = iota
+	CommandTypeSave
+	CommandTypeFail
+	CommandTypeQuit
+)
+
+// UIControlChanData send/return data from gtk
+type UIControlChanData struct {
+	CommandType CommandType
+	Name        string
+}
+
 // NewUIControlSystem creates and returns a new NewUIControlSystem reference
 func NewUIControlSystem(keymap Keymap) *UIControlSystem {
-	UIControlSystemCmds = make(chan string)
-	UIControlSystemReturns = make(chan string)
-	go func(cmds, returns chan string) {
+	UIControlSystemCmds = make(chan UIControlChanData)
+	UIControlSystemReturns = make(chan UIControlChanData)
+	go func(cmds, returns chan UIControlChanData) {
 		gtk.Init(nil)
 
 		win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
@@ -68,8 +85,8 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 		for running {
 			select {
 			case cmd := <-cmds:
-				switch cmd {
-				case "open":
+				switch cmd.CommandType {
+				case CommandTypeOpen:
 					fc, err := gtk.FileChooserNativeDialogNew(
 						"Select file to open",
 						win,
@@ -88,13 +105,13 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					case int(gtk.RESPONSE_ACCEPT):
 						name := fc.GetFilename()
 						log.Println("Opened file: ", name)
-						returns <- name
+						returns <- UIControlChanData{CommandType: CommandTypeOpen, Name: name}
 					default:
-						returns <- ""
+						returns <- UIControlChanData{CommandType: CommandTypeFail}
 					}
 					fc.Destroy()
 
-				case "save":
+				case CommandTypeSave:
 					fc, err := gtk.FileChooserNativeDialogNew(
 						"Select file to save",
 						win,
@@ -113,12 +130,12 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 					case int(gtk.RESPONSE_ACCEPT):
 						name := fc.GetFilename()
 						log.Println("Saved file: ", name)
-						returns <- name
+						returns <- UIControlChanData{CommandType: CommandTypeSave, Name: name}
 					default:
-						returns <- ""
+						returns <- UIControlChanData{CommandType: CommandTypeFail}
 					}
 					fc.Destroy()
-				case "quit":
+				case CommandTypeQuit:
 					running = false
 				}
 			default:
@@ -258,12 +275,12 @@ func UIClose() {
 
 // UIOpen opens a file
 func UIOpen() {
-	UIControlSystemCmds <- "open"
+	UIControlSystemCmds <- UIControlChanData{CommandType: CommandTypeOpen}
 }
 
 // UISaveAs saves the file
 func UISaveAs() {
-	UIControlSystemCmds <- "save"
+	UIControlSystemCmds <- UIControlChanData{CommandType: CommandTypeSave}
 }
 
 // HandleKeyboardEvents handles keyboard events
@@ -558,17 +575,22 @@ func (s *UIControlSystem) Update(dt float32) {
 
 	// Open/save file
 	select {
-	case name := <-UIControlSystemReturns:
-		if len(name) > 0 {
-			// open also sets the currentfile before rebuilding ui
-			file := Open(name)
-			// log.Println(file)
-			Files = append(Files, file)
-			EditorsUIAddButton(file)
-		}
-	case name := <-UIControlSystemReturns:
-		if len(name) > 0 {
-			CurrentFile.SaveAs(name)
+	case cmd := <-UIControlSystemReturns:
+		switch cmd.CommandType {
+		case CommandTypeOpen:
+			if len(cmd.Name) > 0 {
+				// open also sets the currentfile before rebuilding ui
+				file := Open(cmd.Name)
+				log.Println("adding new file", cmd.Name)
+				Files = append(Files, file)
+				// EditorsUIAddButton(file)
+				EditorsUIRebuild()
+
+			}
+		case CommandTypeSave:
+			if len(cmd.Name) > 0 {
+				CurrentFile.SaveAs(cmd.Name)
+			}
 		}
 	default:
 	}

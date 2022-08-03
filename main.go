@@ -108,7 +108,7 @@ func main() {
 		file.Destroy()
 	}
 	DestroyUI()
-	UIControlSystemCmds <- "quit"
+	UIControlSystemCmds <- UIControlChanData{CommandType: CommandTypeQuit}
 
 	rl.CloseWindow()
 }
