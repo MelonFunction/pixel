@@ -337,6 +337,7 @@ func (f *File) DeleteSelection() {
 	f.MoveSelection(0, 0)
 	f.Selection = make(map[IntVec2]rl.Color)
 	f.SelectionPixels = make([]rl.Color, 0)
+	f.CommitSelection()
 }
 
 // CancelSelection cancels the selection
