@@ -315,6 +315,7 @@ func (f *File) ResizeCanvas(width, height int32, direction ResizeDirection) {
 		layer.Resize(width, height, direction)
 		currentLayerDatas = append(currentLayerDatas, layer.PixelData)
 	}
+	f.RenderLayer.Resize(width, height, direction)
 
 	f.AppendHistory(HistoryResize{prevLayerDatas, currentLayerDatas, f.CanvasWidth, f.CanvasHeight, width, height})
 	f.CanvasWidth = width
