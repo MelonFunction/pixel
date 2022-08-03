@@ -71,7 +71,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/eye_open.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-
+			CurrentFile.ShouldRedraw = true
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
 				CurrentFile.Layers[y].Hidden = !CurrentFile.Layers[y].Hidden
@@ -88,6 +88,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
+			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MoveLayerUp(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y + 1)
@@ -98,6 +99,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
+			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MoveLayerDown(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y - 1)
@@ -108,6 +110,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	mergeDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/merge_down.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
+			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MergeLayerDown(y); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y - 1)
@@ -120,6 +123,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
+			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.DeleteLayer(y, true); err == nil {
 				LayersUIRebuildList()
 			}
