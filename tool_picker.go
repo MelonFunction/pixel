@@ -27,10 +27,14 @@ func (t *PickerTool) MouseUp(x, y int32, button MouseButton) {
 		switch button {
 		case rl.MouseLeftButton:
 			CurrentColorSetLeftColor(color)
-			// SetUIColors(color)
+			SetUIColors(color)
+			makeBlendArea(color)
+			makeOpacitySliderArea(color)
 		case rl.MouseRightButton:
 			CurrentColorSetRightColor(color)
-			// SetUIColors(color)
+			SetUIColors(color)
+			makeBlendArea(color)
+			makeOpacitySliderArea(color)
 		}
 	}
 

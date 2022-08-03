@@ -169,10 +169,10 @@ func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 			// Up
 			switch button {
 			case rl.MouseLeftButton:
+				SetUIColors(color)
 				CurrentColorSetLeftColor(color)
 				makeBlendArea(color)
 				makeOpacitySliderArea(color)
-				// SetUIColors(color)
 				PaletteUICurrentColorEntity = entity
 
 				children, err := PaletteUIPaletteEntity.GetChildren()
@@ -243,7 +243,7 @@ func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 				}
 				PaletteUIPaletteEntity.FlowChildren()
 			case rl.MouseRightButton:
-				// SetUIColors(color)
+				SetUIColors(color)
 				CurrentColorSetRightColor(color)
 				makeBlendArea(color)
 				makeOpacitySliderArea(color)

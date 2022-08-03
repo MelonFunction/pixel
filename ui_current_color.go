@@ -28,6 +28,8 @@ const (
 )
 
 // SetUIColors moves the pointers in the color areas
+// This should only be used for cases like selecting a color from the palette, switching colors etc as it isn't
+// compatible with selecting directly from the color area
 func SetUIColors(color rl.Color) {
 	cc := color
 	cc.A = 255
@@ -95,6 +97,7 @@ func SetUIColors(color rl.Color) {
 	}
 
 	var foundColor int32
+	_ = foundColor
 	var ok bool
 	incr := -1       // -1, 1, -2, 2, -3, 3 etc
 	maxAttempts := 6 // TODO make global var for this, basically the step amount in the gradient values
@@ -157,8 +160,6 @@ func SetUIColors(color rl.Color) {
 	if ok == false {
 		cc = find(cc)
 	}
-	MoveColorSelector(foundColor)
-	MoveOpacitySelector(float32(color.A) / 255)
 
 	// Go to the correct place in the RGB area
 	var ax, ay uint8 = 255, 0
@@ -188,6 +189,9 @@ func SetUIColors(color rl.Color) {
 	}
 	ax = 255 - uint8(math.Ceil(float64(255/scale)))
 	ay = 255 - ay
+
+	MoveColorSelector(foundColor)
+	MoveOpacitySelector(float32(color.A) / 255)
 	MoveAreaSelector(float32(ax)/255, float32(ay)/255)
 }
 
@@ -209,7 +213,6 @@ func CurrentColorSetLeftColor(color rl.Color) {
 		}
 	}
 
-	SetUIColors(color)
 	SetUIHexColor(color)
 }
 
