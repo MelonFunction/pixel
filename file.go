@@ -1273,9 +1273,9 @@ func Open(openPath string) *File {
 			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Blank, false)
 
 			rl.BeginTextureMode(editedLayer.Canvas)
-			for x := int32(0); x < f.CanvasWidth; x++ {
-				for y := int32(0); y < f.CanvasHeight; y++ {
-					color := pixelColors[x+y*f.CanvasHeight]
+			for y := int32(0); y < f.CanvasHeight; y++ {
+				for x := int32(0); x < f.CanvasWidth; x++ {
+					color := pixelColors[x+y*f.CanvasWidth]
 					editedLayer.PixelData[IntVec2{x, y}] = color
 				}
 			}
