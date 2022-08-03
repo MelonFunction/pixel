@@ -1212,14 +1212,14 @@ func Open(openPath string) *File {
 		log.Println(err)
 	}
 	if fi.Mode().IsRegular() {
-		reader, err := os.Open(openPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer reader.Close()
 
 		switch filepath.Ext(openPath) {
 		case ".pix":
+			reader, err := os.Open(openPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer reader.Close()
 			dec := gob.NewDecoder(reader)
 			fileSer := &FileSer{}
 			if err := dec.Decode(&fileSer); err != nil {
@@ -1264,23 +1264,19 @@ func Open(openPath string) *File {
 			LayersUIRebuildList()
 
 		case ".png":
-			img, err := png.Decode(reader)
-			if err != nil {
-				log.Fatal(err)
-			}
+			tex := rl.LoadTexture(openPath)
+			pixelColors := rl.LoadImageColors(rl.LoadImageFromTexture(tex))
 
-			f.CanvasWidth = int32(img.Bounds().Max.X)
-			f.CanvasHeight = int32(img.Bounds().Max.Y)
+			f.CanvasWidth = tex.Width
+			f.CanvasHeight = tex.Height
 
 			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Blank, false)
 
 			rl.BeginTextureMode(editedLayer.Canvas)
 			for x := int32(0); x < f.CanvasWidth; x++ {
 				for y := int32(0); y < f.CanvasHeight; y++ {
-					color := img.At(int(x), int(y))
-					r, g, b, a := color.RGBA()
-					rlColor := rl.NewColor(uint8(r), uint8(g), uint8(b), uint8(a))
-					editedLayer.PixelData[IntVec2{x, y}] = rlColor
+					color := pixelColors[x+y*f.CanvasHeight]
+					editedLayer.PixelData[IntVec2{x, y}] = color
 				}
 			}
 			f.RenderLayer = NewLayer(f.CanvasWidth, f.CanvasHeight, "render", rl.Blank, true)
