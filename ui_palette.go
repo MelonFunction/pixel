@@ -271,8 +271,9 @@ func PaletteUIAddColor(color rl.Color, index int32) *Entity {
 		if ok {
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
-			rl.DrawRectangle(0, 0, int32(w)/2, int32(h)/2, rl.White)
-			rl.DrawRectangle(int32(w)/2, int32(h)/2, int32(w)/2, int32(h)/2, rl.White)
+			rl.ClearBackground(rl.Blank)
+			rl.DrawRectangle(0, 0, int32(w)/2, int32(h)/2, rl.Black)
+			rl.DrawRectangle(int32(w)/2, int32(h)/2, int32(w)/2, int32(h)/2, rl.Black)
 			rl.DrawRectangle(int32(w)/2, 0, int32(w)/2, int32(h)/2, rl.Gray)
 			rl.DrawRectangle(0, int32(h)/2, int32(w)/2, int32(h)/2, rl.Gray)
 

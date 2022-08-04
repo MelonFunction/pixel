@@ -203,9 +203,19 @@ func CurrentColorSetLeftColor(color rl.Color) {
 		if ok {
 			LeftColor = color
 
+			w := float32(renderTexture.Texture.Texture.Width)
+			h := float32(renderTexture.Texture.Texture.Height)
+
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
-			rl.ClearBackground(color)
+			rl.ClearBackground(rl.Blank)
+			rl.DrawRectangle(0, 0, int32(w)/2, int32(h)/2, rl.Black)
+			rl.DrawRectangle(int32(w)/2, int32(h)/2, int32(w)/2, int32(h)/2, rl.Black)
+			rl.DrawRectangle(int32(w)/2, 0, int32(w)/2, int32(h)/2, rl.Gray)
+			rl.DrawRectangle(0, int32(h)/2, int32(w)/2, int32(h)/2, rl.Gray)
+
+			rl.DrawRectangle(0, 0, int32(w), int32(h), color)
+
 			if int32(color.R)+int32(color.G)+int32(color.B) < 128 || color.A < 128 {
 				rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
 			}
@@ -224,9 +234,19 @@ func CurrentColorSetRightColor(color rl.Color) {
 		if ok {
 			RightColor = color
 
+			w := float32(renderTexture.Texture.Texture.Width)
+			h := float32(renderTexture.Texture.Texture.Height)
+
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
-			rl.ClearBackground(color)
+			rl.ClearBackground(rl.Blank)
+			rl.DrawRectangle(0, 0, int32(w)/2, int32(h)/2, rl.Black)
+			rl.DrawRectangle(int32(w)/2, int32(h)/2, int32(w)/2, int32(h)/2, rl.Black)
+			rl.DrawRectangle(int32(w)/2, 0, int32(w)/2, int32(h)/2, rl.Gray)
+			rl.DrawRectangle(0, int32(h)/2, int32(w)/2, int32(h)/2, rl.Gray)
+
+			rl.DrawRectangle(0, 0, int32(w), int32(h), color)
+
 			if int32(color.R)+int32(color.G)+int32(color.B) < 128 || color.A < 128 {
 				rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
 			}
@@ -292,7 +312,10 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			CurrentColorSetRightColor(left)
 			CurrentColorSetLeftColor(right)
 			SetUIHexColor(LeftColor)
-			// SetUIColors(LeftColor)
+
+			SetUIColors(LeftColor)
+			makeBlendArea(LeftColor)
+			makeOpacitySliderArea(LeftColor)
 		}, nil)
 	currentColorBox.PushChild(currentColorSwap)
 
