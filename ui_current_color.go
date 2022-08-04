@@ -208,7 +208,8 @@ func CurrentColorSetLeftColor(color rl.Color) {
 
 			texture := renderTexture.Texture
 			rl.BeginTextureMode(texture)
-			rl.ClearBackground(rl.Blank)
+			rl.BeginBlendMode(rl.BlendAlpha)
+			rl.ClearBackground(rl.Black)
 			rl.DrawRectangle(0, 0, int32(w)/2, int32(h)/2, rl.Black)
 			rl.DrawRectangle(int32(w)/2, int32(h)/2, int32(w)/2, int32(h)/2, rl.Black)
 			rl.DrawRectangle(int32(w)/2, 0, int32(w)/2, int32(h)/2, rl.Gray)
@@ -219,6 +220,7 @@ func CurrentColorSetLeftColor(color rl.Color) {
 			if int32(color.R)+int32(color.G)+int32(color.B) < 128 || color.A < 128 {
 				rl.DrawRectangleLinesEx(rl.NewRectangle(0, 0, float32(renderTexture.Texture.Texture.Width), float32(renderTexture.Texture.Texture.Height)), 2, rl.Gray)
 			}
+			rl.EndBlendMode()
 			rl.EndTextureMode()
 		}
 	}

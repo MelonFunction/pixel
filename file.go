@@ -77,48 +77,42 @@ type HistoryResize struct {
 
 // DrawPixel draws a pixel. It records actions into history.
 // todo remove saveToHistory
-func (f *File) DrawPixel(x, y int32, color rl.Color, saveToHistory bool) {
+func (f *File) DrawPixel(x, y int32, color rl.Color) {
 	// Set the pixel data in the current layer
-	layer := f.GetCurrentLayer()
-	if saveToHistory {
-		if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
-			f.ShouldRedraw = true
+	cl := f.GetCurrentLayer()
+	if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
+		f.ShouldRedraw = true
 
-			// Add old color to history
-			oldColor, ok := layer.PixelData[IntVec2{x, y}]
-			if !ok {
-				oldColor = rl.Blank
+		// Add old color to history
+		oldColor, ok := cl.PixelData[IntVec2{x, y}]
+		if !ok {
+			oldColor = rl.Blank
+		}
+
+		rl.BeginTextureMode(cl.Canvas)
+		if color == rl.Blank {
+			rl.DrawPixel(x, y, rl.Black)
+		} else {
+			rl.DrawPixel(x, y, rl.Black)
+			rl.DrawPixel(x, y, color)
+		}
+		rl.EndTextureMode()
+
+		color = BlendWithOpacity(oldColor, color, cl.BlendMode)
+		// Change pixel data to the new color
+		cl.PixelData[IntVec2{x, y}] = color
+
+		// Prevent overwriting the old color with the new color since this function is called every frame
+		// Always draws to the last element of f.History since the offset is removed automatically on mouse down
+		if oldColor != color {
+			latestHistoryInterface := f.History[len(f.History)-1]
+			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+			if ok {
+				ps := latestHistory.PixelState[IntVec2{x, y}]
+				ps.Current = color
+				ps.Prev = oldColor
+				latestHistory.PixelState[IntVec2{x, y}] = ps
 			}
-
-			if color != rl.Blank {
-				color = BlendWithOpacity(oldColor, color)
-			}
-
-			// Prevent overwriting the old color with the new color since this
-			// function is called every frame
-			// Always draws to the last element of f.History since the
-			// offset is removed automatically on mouse down
-			if oldColor != color {
-				latestHistoryInterface := f.History[len(f.History)-1]
-				latestHistory, ok := latestHistoryInterface.(HistoryPixel)
-				if ok {
-					ps := latestHistory.PixelState[IntVec2{x, y}]
-					ps.Current = color
-					ps.Prev = oldColor
-					latestHistory.PixelState[IntVec2{x, y}] = ps
-				}
-			}
-
-			// Change pixel data to the new color
-			layer.PixelData[IntVec2{x, y}] = color
-
-			rl.BeginTextureMode(layer.Canvas)
-			if color == rl.Blank {
-				rl.DrawPixel(x, y, rl.Black)
-			} else {
-				rl.DrawPixel(x, y, color)
-			}
-			rl.EndTextureMode()
 		}
 	}
 }
@@ -283,6 +277,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
 	}
+
+	f.Layers[0].BlendMode = rl.BlendAddColors
 
 	return f
 }
@@ -491,13 +487,13 @@ func (f *File) CommitSelection() {
 
 				alreadyWritten, ok := latestHistory.PixelState[loc]
 				if ok {
-					currentColor = BlendWithOpacity(alreadyWritten.Current, color)
+					currentColor = BlendWithOpacity(alreadyWritten.Current, color, cl.BlendMode)
 					// Overwrite the existing history
 					alreadyWritten.Current = currentColor
 					latestHistory.PixelState[loc] = alreadyWritten
 
 				} else {
-					currentColor = BlendWithOpacity(cl.PixelData[loc], color)
+					currentColor = BlendWithOpacity(cl.PixelData[loc], color, cl.BlendMode)
 					ps := latestHistory.PixelState[loc]
 					ps.Current = currentColor
 					ps.Prev = cl.PixelData[loc]
@@ -661,7 +657,7 @@ func (f *File) MergeLayerDown(index int32) error {
 	for loc, color := range from.PixelData {
 		hist := historyPixel.PixelState[loc]
 		hist.Prev = to.PixelData[loc]
-		newColor := BlendWithOpacity(to.PixelData[loc], color)
+		newColor := BlendWithOpacity(to.PixelData[loc], color, from.BlendMode)
 		to.PixelData[loc] = newColor
 		hist.Current = newColor
 
@@ -1117,14 +1113,28 @@ func (f *File) SaveAs(path string) {
 		// 	}
 		// }
 
-		for pos, col := range f.RenderLayer.PixelData {
-			img.Set(int(pos.X), int(pos.Y), color.NRGBA{
-				R: col.R,
-				G: col.G,
-				B: col.B,
-				A: col.A,
-			})
+		pixelColors := rl.LoadImageColors(rl.LoadImageFromTexture(f.RenderLayer.Canvas.Texture))
+
+		for x := int32(0); x < f.CanvasWidth; x++ {
+			for y := int32(0); y < f.CanvasHeight; y++ {
+				col := pixelColors[x+y*f.CanvasWidth]
+				img.Set(int(x), int(f.CanvasHeight-y-1), color.NRGBA{
+					col.R,
+					col.G,
+					col.B,
+					col.A,
+				})
+			}
 		}
+
+		// for pos, col := range f.RenderLayer.PixelData {
+		// 	img.Set(int(pos.X), int(pos.Y), color.NRGBA{
+		// 		R: col.R,
+		// 		G: col.G,
+		// 		B: col.B,
+		// 		A: col.A,
+		// 	})
+		// }
 
 		// for pos, data := range combined {
 		// 	img.Set(int(pos.X), int(pos.Y), color.NRGBA{
@@ -1198,6 +1208,7 @@ func (f *File) SaveAs(path string) {
 	f.FileDir = path
 	log.Println(f.Filename, f.PathDir, f.FileDir)
 	f.FileChanged = false
+	EditorsUIRebuild()
 }
 
 // Open a file
@@ -1294,6 +1305,7 @@ func Open(openPath string) *File {
 	}
 
 	CurrentFile = f
+	EditorsUIRebuild()
 
 	return f
 }

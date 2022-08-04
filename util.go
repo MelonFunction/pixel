@@ -73,34 +73,57 @@ func (v IntVec2) Rotate(phi float64) IntVec2 {
 
 // AddAndClampUint8 adds two ints and caps them at uint8 max
 func AddAndClampUint8(a, b uint8) uint8 {
-	if int32(a)+int32(b) > 255 {
+	if int32(a)+int32(b) >= 255 {
 		return 255
 	}
 	return a + b
 }
 
-// BlendWithOpacity blends two colors together
-// It assumes that b is the color being drawn on top
-func BlendWithOpacity(a, b rl.Color) rl.Color {
+// MulAndClampUint8 multiplies two ints and caps them at uint8 max
+func MulAndClampUint8(a, b uint8) uint8 {
+	if int32(a)*int32(b) >= 255 {
+		return 255
+	}
+	return a + b
+}
+
+// BlendWithOpacity blends two colors together. B is drawn over A.
+func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
+	if a.A == 0 {
+		// log.Println("b", b)
+		return b
+		// a.A = b.A
+	}
 	if b.A == 0 {
+		// log.Println("a", a)
 		return a
 	}
-	if a.A == 0 { // TODO check if a.A != 255 is better
-		// return b
-		a.A = 255
+
+	switch blendMode {
+	case rl.BlendAlpha:
+		// return rl.ColorAlphaBlend(b, a, rl.White)
+		// blendRatio := 255 / float32(b.A)
+		a.A = 255/2 + a.A/2
+		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
+
+		return rl.Color{
+			A: a.A,
+			R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),
+			G: uint8(float32(a.G)*blendRatio + float32(b.G)*(1-blendRatio)),
+			B: uint8(float32(a.B)*blendRatio + float32(b.B)*(1-blendRatio)),
+		}
+	case rl.BlendAddColors:
+		return rl.Color{
+			A: AddAndClampUint8(a.A, b.A),
+			R: AddAndClampUint8(a.R, b.R),
+			G: AddAndClampUint8(a.G, b.G),
+			B: AddAndClampUint8(a.B, b.B),
+		}
+	case rl.BlendMultiplied:
+	case rl.BlendSubtractColors:
 	}
 
-	a.A = AddAndClampUint8(a.A, b.A/2)
-	blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
-
-	c := rl.Color{
-		A: a.A,
-		R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),
-		G: uint8(float32(a.G)*blendRatio + float32(b.G)*(1-blendRatio)),
-		B: uint8(float32(a.B)*blendRatio + float32(b.B)*(1-blendRatio)),
-	}
-
-	return c
+	return b
 }
 
 // ColorToHex converts an rl.Color into a hex string

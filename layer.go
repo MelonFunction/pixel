@@ -10,6 +10,7 @@ type Layer struct {
 	Canvas        rl.RenderTexture2D
 	Name          string
 	Width, Height int32
+	BlendMode     rl.BlendMode
 
 	// PixelData is the "raw" pixels map
 	PixelData map[IntVec2]rl.Color
@@ -96,5 +97,6 @@ func NewLayer(width, height int32, name string, fillColor rl.Color, shouldFill b
 		Hidden:    false,
 		Width:     width,
 		Height:    height,
+		BlendMode: rl.BlendAlpha,
 	}
 }

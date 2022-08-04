@@ -200,7 +200,7 @@ func (t *PixelBrushTool) drawPixel(x, y int32, color rl.Color, fileDraw bool) {
 		sx, sy := x+pos.X, y+pos.Y
 		if !t.exists(IntVec2{sx, sy}) {
 			if fileDraw {
-				CurrentFile.DrawPixel(sx, sy, color, true)
+				CurrentFile.DrawPixel(sx, sy, color)
 				t.drawnPixels[IntVec2{sx, sy}] = true
 			} else {
 				rl.DrawPixel(sx, sy, color)
