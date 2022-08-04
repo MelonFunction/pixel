@@ -456,6 +456,7 @@ func NewRGBUI(bounds rl.Rectangle) *Entity {
 					// Set the color from the hex
 					if color, err := HexToColor(drawableText.Label); err == nil {
 						hexColor = color
+						SetUIColors(hexColor)
 						makeBlendArea(color)
 						makeOpacitySliderArea(color)
 					}
