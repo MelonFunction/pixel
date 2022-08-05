@@ -76,7 +76,8 @@ type HistoryResize struct {
 }
 
 // DrawPixel draws a pixel. It records actions into history.
-// todo remove saveToHistory
+// TODO replace all instances of accessing layer.PixelData with file.DrawPixel
+// TODO draw to render layer here too
 func (f *File) DrawPixel(x, y int32, color rl.Color) {
 	// Set the pixel data in the current layer
 	cl := f.GetCurrentLayer()
@@ -93,8 +94,10 @@ func (f *File) DrawPixel(x, y int32, color rl.Color) {
 		if color == rl.Blank {
 			rl.DrawPixel(x, y, rl.Black)
 		} else {
-			rl.DrawPixel(x, y, rl.Black)
+			rl.BeginBlendMode(cl.BlendMode)
+			// rl.DrawPixel(x, y, rl.Black)
 			rl.DrawPixel(x, y, color)
+			rl.EndBlendMode()
 		}
 		rl.EndTextureMode()
 

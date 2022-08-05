@@ -101,7 +101,7 @@ func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 
 	switch blendMode {
 	case rl.BlendAlpha:
-		// return rl.ColorAlphaBlend(b, a, rl.White)
+		return rl.ColorAlphaBlend(b, a, rl.White)
 		// blendRatio := 255 / float32(b.A)
 		a.A = 255/2 + a.A/2
 		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)

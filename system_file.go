@@ -235,7 +235,6 @@ func NewUIFileSystem() *UIRenderFileSystem {
 }
 
 // Draw draws everything from the file to the screen
-// TODO move all of this to system_render
 func (s *UIRenderFileSystem) Draw() {
 	// Draw temp layer
 	rl.BeginTextureMode(CurrentFile.Layers[len(CurrentFile.Layers)-1].Canvas)
@@ -249,8 +248,7 @@ func (s *UIRenderFileSystem) Draw() {
 
 	rl.EndTextureMode()
 
-	// Draw layers
-
+	// Draw layers to the render layer
 	rl.BeginTextureMode(CurrentFile.RenderLayer.Canvas)
 	rl.ClearBackground(rl.Black)
 	for _, layer := range CurrentFile.Layers[:len(CurrentFile.Layers)-1] {
@@ -266,37 +264,14 @@ func (s *UIRenderFileSystem) Draw() {
 	rl.EndTextureMode()
 
 	rl.BeginMode2D(CurrentFile.FileCamera)
-	// Draw layer
-	// if CurrentFile.ShouldRedraw {
-	// CurrentFile.ShouldRedraw = false
-	// CurrentFile.RenderLayer.PixelData = make(map[IntVec2]rl.Color)
-	// rl.BeginBlendMode(rl.BlendAlpha)
-	// rl.BeginTextureMode(CurrentFile.RenderLayer.Canvas)
-	// for _, layer := range CurrentFile.Layers[:len(CurrentFile.Layers)-1] {
-	// 	if !layer.Hidden {
-	// 		// for loc, color := range layer.PixelData {
-	// 		// 	CurrentFile.RenderLayer.PixelData[loc] = BlendWithOpacity(CurrentFile.RenderLayer.PixelData[loc], color)
-	// 		// }
-	// 		rl.DrawTextureRec(layer.Canvas.Texture,
-	// 			rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
-	// 			rl.NewVector2(0, 0),
-	// 			rl.White)
-	// 	}
-	// }
-	// rl.EndTextureMode()
-	// rl.EndBlendMode()
-	// CurrentFile.RenderLayer.Redraw()
-	// }
 
-	// rl.BeginMode2D(CurrentFile.FileCamera)
-
-	// Render layer
+	// Draw render layer
 	rl.DrawTextureRec(CurrentFile.RenderLayer.Canvas.Texture,
 		rl.NewRectangle(0, 0, float32(CurrentFile.RenderLayer.Canvas.Texture.Width), -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)),
 		rl.NewVector2(-float32(CurrentFile.RenderLayer.Canvas.Texture.Width)/2, -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)/2),
 		rl.White)
 
-	// Preview layer
+	// Draw preview layer
 	previewLayer := CurrentFile.Layers[len(CurrentFile.Layers)-1]
 	rl.DrawTextureRec(previewLayer.Canvas.Texture,
 		rl.NewRectangle(0, 0, float32(previewLayer.Canvas.Texture.Width), -float32(previewLayer.Canvas.Texture.Height)),
