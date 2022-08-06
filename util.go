@@ -101,7 +101,7 @@ func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 
 	switch blendMode {
 	case rl.BlendAlpha:
-		return rl.ColorAlphaBlend(b, a, rl.White)
+		// return rl.ColorAlphaBlend(b, a, rl.White)
 		// blendRatio := 255 / float32(b.A)
 		a.A = 255/2 + a.A/2
 		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
@@ -115,9 +115,9 @@ func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 	case rl.BlendAddColors:
 		return rl.Color{
 			A: AddAndClampUint8(a.A, b.A),
-			R: AddAndClampUint8(a.R, b.R),
-			G: AddAndClampUint8(a.G, b.G),
-			B: AddAndClampUint8(a.B, b.B),
+			R: AddAndClampUint8(a.R, b.R), // TODO reduce value by alpha
+			G: AddAndClampUint8(a.G, b.G), // TODO reduce value by alpha
+			B: AddAndClampUint8(a.B, b.B), // TODO reduce value by alpha
 		}
 	case rl.BlendMultiplied:
 	case rl.BlendSubtractColors:

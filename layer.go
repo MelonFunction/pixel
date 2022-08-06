@@ -20,10 +20,11 @@ type Layer struct {
 func (l *Layer) Redraw() {
 	rl.BeginTextureMode(l.Canvas)
 	rl.ClearBackground(rl.Blank)
+	rl.BeginBlendMode(l.BlendMode)
 	for p, color := range l.PixelData {
 		rl.DrawPixel(p.X, p.Y, color)
 	}
-
+	rl.EndBlendMode()
 	rl.EndTextureMode()
 }
 

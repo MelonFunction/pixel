@@ -75,35 +75,75 @@ type HistoryResize struct {
 	CurrentWidth, CurrentHeight int32
 }
 
+// RedrawRenderLayer redraws the render layer
+func (f *File) RedrawRenderLayer() {
+	rl.BeginTextureMode(f.RenderLayer.Canvas)
+	rl.ClearBackground(rl.Black)
+	rl.EndTextureMode()
+
+	for _, layer := range f.Layers[:len(f.Layers)-1] {
+		log.Println(layer.BlendMode)
+	}
+
+	for x := int32(0); x < f.CanvasWidth; x++ {
+		for y := int32(0); y < f.CanvasHeight; y++ {
+			color := rl.Blank
+			loc := IntVec2{x, y}
+			for _, layer := range f.Layers[:len(f.Layers)-1] {
+				if !layer.Hidden {
+					if layerColor, ok := layer.PixelData[loc]; ok {
+						color = BlendWithOpacity(color, layerColor, layer.BlendMode)
+					}
+				}
+			}
+			f.RenderLayer.PixelData[loc] = color
+		}
+	}
+	f.RenderLayer.Redraw()
+}
+
 // DrawPixel draws a pixel. It records actions into history.
 // TODO replace all instances of accessing layer.PixelData with file.DrawPixel
-// TODO draw to render layer here too
-func (f *File) DrawPixel(x, y int32, color rl.Color) {
+func (f *File) DrawPixel(x, y int32, color rl.Color, layer *Layer) {
 	// Set the pixel data in the current layer
-	cl := f.GetCurrentLayer()
 	if x >= 0 && y >= 0 && x < f.CanvasWidth && y < f.CanvasHeight {
-		f.ShouldRedraw = true
+		loc := IntVec2{x, y}
 
 		// Add old color to history
-		oldColor, ok := cl.PixelData[IntVec2{x, y}]
+		oldColor, ok := layer.PixelData[loc]
 		if !ok {
 			oldColor = rl.Blank
 		}
 
-		rl.BeginTextureMode(cl.Canvas)
+		// Blend color on passed layer
+		color = BlendWithOpacity(oldColor, color, layer.BlendMode)
+		layer.PixelData[loc] = color
+		// Blend new color with existing render layer color
+		f.RenderLayer.PixelData[loc] = BlendWithOpacity(f.RenderLayer.PixelData[loc], color, layer.BlendMode)
+
+		// Draw to passed layer
+		rl.BeginTextureMode(layer.Canvas)
 		if color == rl.Blank {
 			rl.DrawPixel(x, y, rl.Black)
 		} else {
-			rl.BeginBlendMode(cl.BlendMode)
+			// rl.BeginBlendMode(layer.BlendMode)
+			// rl.DrawPixel(x, y, rl.Black)
+			rl.DrawPixel(x, y, color)
+			// rl.EndBlendMode()
+		}
+		rl.EndTextureMode()
+
+		// Draw to render layer
+		rl.BeginTextureMode(f.RenderLayer.Canvas)
+		if color == rl.Blank {
+			rl.DrawPixel(x, y, rl.Black)
+		} else {
+			rl.BeginBlendMode(layer.BlendMode)
 			// rl.DrawPixel(x, y, rl.Black)
 			rl.DrawPixel(x, y, color)
 			rl.EndBlendMode()
 		}
 		rl.EndTextureMode()
-
-		color = BlendWithOpacity(oldColor, color, cl.BlendMode)
-		// Change pixel data to the new color
-		cl.PixelData[IntVec2{x, y}] = color
 
 		// Prevent overwriting the old color with the new color since this function is called every frame
 		// Always draws to the last element of f.History since the offset is removed automatically on mouse down
@@ -282,6 +322,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 	}
 
 	f.Layers[0].BlendMode = rl.BlendAddColors
+	f.RenderLayer.BlendMode = rl.BlendAddColors
 
 	return f
 }
@@ -848,7 +889,6 @@ func (f *File) Outline() {
 // FlipHorizontal flips the layer horizontally, or flips the selection if anything
 // is selected
 func (f *File) FlipHorizontal() {
-	f.ShouldRedraw = true
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
 
 	var sx, sy int32 = 0, 0
@@ -902,12 +942,12 @@ func (f *File) FlipHorizontal() {
 	}
 
 	cl.Redraw()
+	f.RedrawRenderLayer()
 }
 
 // FlipVertical flips the layer vertically, or flips the selection if anything
 // is selected
 func (f *File) FlipVertical() {
-	f.ShouldRedraw = true
 	latestHistory := HistoryPixel{make(map[IntVec2]PixelStateData), CurrentFile.CurrentLayer}
 
 	var sx, sy int32 = 0, 0
@@ -960,11 +1000,11 @@ func (f *File) FlipVertical() {
 	}
 
 	cl.Redraw()
+	f.RedrawRenderLayer()
 }
 
 // Undo undoes an action
 func (f *File) Undo() {
-	f.ShouldRedraw = true
 	if f.historyOffset < int32(len(f.History)) {
 		f.historyOffset++
 		index := int32(len(f.History)) - f.historyOffset
@@ -1017,6 +1057,7 @@ func (f *File) Undo() {
 		process(history)
 
 		LayersUIRebuildList()
+		f.RedrawRenderLayer()
 	}
 }
 
@@ -1070,6 +1111,7 @@ func (f *File) Redo() {
 		process(history)
 
 		LayersUIRebuildList()
+		f.RedrawRenderLayer()
 	}
 }
 

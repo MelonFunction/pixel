@@ -40,7 +40,8 @@ func (t *FillTool) MouseUp(x, y int32, button MouseButton) {
 		if pd[IntVec2{rx, ry}] == clickedColor && color != clickedColor {
 			// Set color
 			oldColor := pd[IntVec2{rx, ry}]
-			pd[IntVec2{rx, ry}] = color
+			// pd[IntVec2{rx, ry}] = color
+			CurrentFile.DrawPixel(rx, ry, color, CurrentFile.GetCurrentLayer())
 
 			// Append history
 			if oldColor != color {

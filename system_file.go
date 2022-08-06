@@ -249,27 +249,29 @@ func (s *UIRenderFileSystem) Draw() {
 	rl.EndTextureMode()
 
 	// Draw layers to the render layer
-	rl.BeginTextureMode(CurrentFile.RenderLayer.Canvas)
-	rl.ClearBackground(rl.Black)
-	for _, layer := range CurrentFile.Layers[:len(CurrentFile.Layers)-1] {
-		if !layer.Hidden {
-			rl.BeginBlendMode(layer.BlendMode)
-			rl.DrawTextureRec(layer.Canvas.Texture,
-				rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
-				rl.NewVector2(0, 0),
-				rl.White)
-			rl.EndBlendMode()
-		}
-	}
-	rl.EndTextureMode()
+	// rl.BeginTextureMode(CurrentFile.RenderLayer.Canvas)
+	// rl.ClearBackground(rl.Black)
+	// for _, layer := range CurrentFile.Layers[:len(CurrentFile.Layers)-1] {
+	// 	if !layer.Hidden {
+	// 		rl.BeginBlendMode(layer.BlendMode)
+	// 		rl.DrawTextureRec(layer.Canvas.Texture,
+	// 			rl.NewRectangle(0, 0, float32(layer.Canvas.Texture.Width), -float32(layer.Canvas.Texture.Height)),
+	// 			rl.NewVector2(0, 0),
+	// 			rl.White)
+	// 		rl.EndBlendMode()
+	// 	}
+	// }
+	// rl.EndTextureMode()
 
 	rl.BeginMode2D(CurrentFile.FileCamera)
 
 	// Draw render layer
+	// rl.BeginBlendMode(CurrentFile.RenderLayer.BlendMode)
 	rl.DrawTextureRec(CurrentFile.RenderLayer.Canvas.Texture,
 		rl.NewRectangle(0, 0, float32(CurrentFile.RenderLayer.Canvas.Texture.Width), -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)),
 		rl.NewVector2(-float32(CurrentFile.RenderLayer.Canvas.Texture.Width)/2, -float32(CurrentFile.RenderLayer.Canvas.Texture.Height)/2),
 		rl.White)
+	// rl.EndBlendMode()
 
 	// Draw preview layer
 	previewLayer := CurrentFile.Layers[len(CurrentFile.Layers)-1]
