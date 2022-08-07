@@ -78,16 +78,11 @@ type HistoryResize struct {
 // RedrawRenderLayer redraws the render layer
 func (f *File) RedrawRenderLayer() {
 	rl.BeginTextureMode(f.RenderLayer.Canvas)
-	rl.ClearBackground(rl.Black)
-	rl.EndTextureMode()
-
-	for _, layer := range f.Layers[:len(f.Layers)-1] {
-		log.Println(layer.BlendMode)
-	}
-
+	rl.ClearBackground(rl.Blank)
+	rl.BeginBlendMode(rl.BlendAlpha)
 	for x := int32(0); x < f.CanvasWidth; x++ {
 		for y := int32(0); y < f.CanvasHeight; y++ {
-			color := rl.Blank
+			color := rl.Black
 			loc := IntVec2{x, y}
 			for _, layer := range f.Layers[:len(f.Layers)-1] {
 				if !layer.Hidden {
@@ -97,9 +92,11 @@ func (f *File) RedrawRenderLayer() {
 				}
 			}
 			f.RenderLayer.PixelData[loc] = color
+			rl.DrawPixel(x, y, color)
 		}
 	}
-	f.RenderLayer.Redraw()
+	rl.EndBlendMode()
+	rl.EndTextureMode()
 }
 
 // DrawPixel draws a pixel. It records actions into history.
@@ -121,6 +118,19 @@ func (f *File) DrawPixel(x, y int32, color rl.Color, layer *Layer) {
 		// Blend new color with existing render layer color
 		f.RenderLayer.PixelData[loc] = BlendWithOpacity(f.RenderLayer.PixelData[loc], color, layer.BlendMode)
 
+		// Prevent overwriting the old color with the new color since this function is called every frame
+		// Always draws to the last element of f.History since the offset is removed automatically on mouse down
+		if oldColor != color {
+			latestHistoryInterface := f.History[len(f.History)-1]
+			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
+			if ok {
+				ps := latestHistory.PixelState[IntVec2{x, y}]
+				ps.Current = color
+				ps.Prev = oldColor
+				latestHistory.PixelState[IntVec2{x, y}] = ps
+			}
+		}
+
 		// Draw to passed layer
 		rl.BeginTextureMode(layer.Canvas)
 		if color == rl.Blank {
@@ -138,25 +148,27 @@ func (f *File) DrawPixel(x, y int32, color rl.Color, layer *Layer) {
 		if color == rl.Blank {
 			rl.DrawPixel(x, y, rl.Black)
 		} else {
-			rl.BeginBlendMode(layer.BlendMode)
+			// rl.BeginBlendMode(rl.BlendSubtractColors)
 			// rl.DrawPixel(x, y, rl.Black)
-			rl.DrawPixel(x, y, color)
+			// rl.EndBlendMode()
+
+			rl.BeginBlendMode(rl.BlendAlpha)
+			nc := rl.Black
+			for _, layer := range f.Layers[:len(f.Layers)-1] {
+				if !layer.Hidden {
+					if layerColor, ok := layer.PixelData[loc]; ok {
+						nc = BlendWithOpacity(nc, layerColor, layer.BlendMode)
+					}
+				}
+			}
+
+			f.RenderLayer.PixelData[loc] = nc
+			rl.DrawPixel(x, y, rl.Black)
+			rl.DrawPixel(x, y, nc)
 			rl.EndBlendMode()
 		}
 		rl.EndTextureMode()
 
-		// Prevent overwriting the old color with the new color since this function is called every frame
-		// Always draws to the last element of f.History since the offset is removed automatically on mouse down
-		if oldColor != color {
-			latestHistoryInterface := f.History[len(f.History)-1]
-			latestHistory, ok := latestHistoryInterface.(HistoryPixel)
-			if ok {
-				ps := latestHistory.PixelState[IntVec2{x, y}]
-				ps.Current = color
-				ps.Prev = oldColor
-				latestHistory.PixelState[IntVec2{x, y}] = ps
-			}
-		}
 	}
 }
 
@@ -321,8 +333,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		TileHeightResizePreview:   tileHeight,
 	}
 
-	f.Layers[0].BlendMode = rl.BlendAddColors
-	f.RenderLayer.BlendMode = rl.BlendAddColors
+	// f.Layers[0].BlendMode = rl.BlendAddColors
+	// f.RenderLayer.BlendMode = rl.BlendAddColors
 
 	return f
 }
@@ -346,7 +358,6 @@ const (
 
 // ResizeCanvas resizes the canvas from a specified edge
 func (f *File) ResizeCanvas(width, height int32, direction ResizeDirection) {
-	f.ShouldRedraw = true
 	prevLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 	currentLayerDatas := make([]map[IntVec2]rl.Color, 0, len(f.Layers))
 
@@ -361,19 +372,20 @@ func (f *File) ResizeCanvas(width, height int32, direction ResizeDirection) {
 	f.CanvasWidth = width
 	f.CanvasHeight = height
 
+	f.RedrawRenderLayer()
 	LayersUIRebuildList()
 }
 
 // ResizeTileSize resizes the tile size
 func (f *File) ResizeTileSize(width, height int32) {
-	f.ShouldRedraw = true
+	f.RedrawRenderLayer()
 	f.TileWidth = width
 	f.TileHeight = height
 }
 
 // DeleteSelection deletes the selection
 func (f *File) DeleteSelection() {
-	f.ShouldRedraw = true
+	f.RedrawRenderLayer()
 	f.MoveSelection(0, 0)
 	f.Selection = make(map[IntVec2]rl.Color)
 	f.SelectionPixels = make([]rl.Color, 0)
@@ -382,7 +394,7 @@ func (f *File) DeleteSelection() {
 
 // CancelSelection cancels the selection
 func (f *File) CancelSelection() {
-	f.ShouldRedraw = true
+	f.RedrawRenderLayer()
 	f.Selection = make(map[IntVec2]rl.Color)
 	f.SelectionMoving = false
 	f.DoingSelection = false
@@ -423,7 +435,6 @@ func (f *File) Copy() {
 
 // Paste the selection
 func (f *File) Paste() {
-	f.ShouldRedraw = true
 	// Appends history
 	f.SelectionMoving = false
 	f.IsSelectionPasted = true
@@ -448,12 +459,13 @@ func (f *File) Paste() {
 	if interactable, ok := toolSelector.GetInteractable(); ok {
 		interactable.OnMouseUp(toolSelector, rl.MouseRightButton)
 	}
+
+	f.RedrawRenderLayer()
 }
 
 // MoveSelection moves the selection in the specified direction by one pixel
 // dx and dy is how much the selection has moved
 func (f *File) MoveSelection(dx, dy int32) {
-	f.ShouldRedraw = true
 	cl := f.GetCurrentLayer()
 
 	if len(f.Selection) > 0 {
@@ -500,11 +512,11 @@ func (f *File) MoveSelection(dx, dy int32) {
 	}
 
 	cl.Redraw()
+	f.RedrawRenderLayer()
 }
 
 // CommitSelection "stamps" the floating selection in place
 func (f *File) CommitSelection() {
-	f.ShouldRedraw = true
 	f.IsSelectionPasted = false
 	f.DoingSelection = false
 
@@ -551,6 +563,7 @@ func (f *File) CommitSelection() {
 		}
 
 		cl.Redraw()
+		f.RedrawRenderLayer()
 	}
 
 	// Reset the selection
@@ -667,7 +680,6 @@ func (f *File) DeleteLayer(index int32, appendHistory bool) error {
 // RestoreLayer restores the last layer from f.deletedLayers to the position of
 // index in f.Layers
 func (f *File) RestoreLayer(index int32) error {
-	f.ShouldRedraw = true
 	if len(f.deletedLayers) == 0 {
 		return fmt.Errorf("No layers to restore")
 	}
@@ -681,12 +693,12 @@ func (f *File) RestoreLayer(index int32) error {
 		f.deletedLayers[:len(f.deletedLayers)-1],
 		f.deletedLayers[len(f.deletedLayers):]...)
 
+	f.RedrawRenderLayer()
 	return nil
 }
 
 // MergeLayerDown merges the layer with the one below
 func (f *File) MergeLayerDown(index int32) error {
-	f.ShouldRedraw = true
 	if len(f.Layers) <= 2 {
 		return fmt.Errorf("Couldn't merge layer down: Not enough layers")
 	}
@@ -725,22 +737,22 @@ func (f *File) MergeLayerDown(index int32) error {
 	}
 	f.AppendHistory(comp)
 
+	f.RedrawRenderLayer()
 	return nil
 }
 
 // AddNewLayer inserts a new layer
 func (f *File) AddNewLayer() {
-	f.ShouldRedraw = true
 	newLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "new layer", rl.Blank, true)
 	f.Layers = append(f.Layers[:len(f.Layers)-1], newLayer, f.Layers[len(f.Layers)-1])
 	f.SetCurrentLayer(int32(len(f.Layers) - 2)) // -2 bc temp layer is excluded
 
 	f.AppendHistory(HistoryLayer{HistoryLayerActionCreate, f.CurrentLayer})
+	f.RedrawRenderLayer()
 }
 
 // MoveLayerUp moves the layer up
 func (f *File) MoveLayerUp(index int32, appendHistory bool) error {
-	f.ShouldRedraw = true
 	if index < int32(len(f.Layers)-2) {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -749,6 +761,7 @@ func (f *File) MoveLayerUp(index int32, appendHistory bool) error {
 		if appendHistory {
 			f.AppendHistory(HistoryLayer{HistoryLayerActionMoveUp, index})
 		}
+		f.RedrawRenderLayer()
 		return nil
 	}
 
@@ -757,7 +770,6 @@ func (f *File) MoveLayerUp(index int32, appendHistory bool) error {
 
 // MoveLayerDown moves the layer down
 func (f *File) MoveLayerDown(index int32, appendHistory bool) error {
-	f.ShouldRedraw = true
 	if index > 0 {
 		toMove := f.Layers[index]
 		f.Layers = append(f.Layers[:index], f.Layers[index+1:]...)
@@ -770,6 +782,7 @@ func (f *File) MoveLayerDown(index int32, appendHistory bool) error {
 		if appendHistory {
 			f.AppendHistory(HistoryLayer{HistoryLayerActionMoveDown, index})
 		}
+		f.RedrawRenderLayer()
 		return nil
 	}
 
@@ -780,7 +793,6 @@ func (f *File) MoveLayerDown(index int32, appendHistory bool) error {
 // AppendHistory inserts a new history interface{} to f.History depending on the
 // historyOffset
 func (f *File) AppendHistory(action interface{}) {
-	f.ShouldRedraw = true
 	f.FileChanged = true
 	// Clear everything past the offset if a change has been made after undoing
 	f.History = f.History[0 : int32(len(f.History))-f.historyOffset]
@@ -792,6 +804,7 @@ func (f *File) AppendHistory(action interface{}) {
 		f.History = append(f.History, action)
 	}
 
+	f.RedrawRenderLayer()
 	EditorsUIRebuild()
 }
 
@@ -813,7 +826,6 @@ func (f *File) DrawPixelDataToCanvas() {
 // Will only outline pixels on the current layer. Make sure to merge layers if
 // sprite is composed of multiple parts
 func (f *File) Outline() {
-	f.ShouldRedraw = true
 	var sx, sy int32 = 0, 0
 	mx, my := f.CanvasWidth, f.CanvasHeight
 
@@ -884,6 +896,7 @@ func (f *File) Outline() {
 	}
 
 	cl.Redraw()
+	f.RedrawRenderLayer()
 }
 
 // FlipHorizontal flips the layer horizontally, or flips the selection if anything
@@ -1143,27 +1156,19 @@ func (f *File) SaveAs(path string) {
 		// Create a colored image of the given width and height.
 		img := image.NewNRGBA(image.Rect(0, 0, int(f.CanvasWidth), int(f.CanvasHeight)))
 
-		// combined := make(map[IntVec2]rl.Color)
-		// for x := int32(0); x < f.CanvasWidth; x++ {
-		// 	for y := int32(0); y < f.CanvasHeight; y++ {
-		// 		combined[IntVec2{x, y}] = rl.Blank
-		// 	}
-		// }
-
-		// for _, layer := range f.Layers[:len(f.Layers)-1] {
-		// 	if !layer.Hidden {
-		// 		for pos, data := range layer.PixelData {
-		// 			combined[pos] = BlendWithOpacity(combined[pos], data)
-		// 		}
-		// 	}
-		// }
-
-		pixelColors := rl.LoadImageColors(rl.LoadImageFromTexture(f.RenderLayer.Canvas.Texture))
-
 		for x := int32(0); x < f.CanvasWidth; x++ {
 			for y := int32(0); y < f.CanvasHeight; y++ {
-				col := pixelColors[x+y*f.CanvasWidth]
-				img.Set(int(x), int(f.CanvasHeight-y-1), color.NRGBA{
+				col := rl.Blank
+				loc := IntVec2{x, y}
+				for _, layer := range f.Layers[:len(f.Layers)-1] {
+					if !layer.Hidden {
+						if layerColor, ok := layer.PixelData[loc]; ok {
+							col = BlendWithOpacity(col, layerColor, layer.BlendMode)
+						}
+					}
+				}
+
+				img.Set(int(x), int(y), color.NRGBA{
 					col.R,
 					col.G,
 					col.B,
@@ -1171,24 +1176,6 @@ func (f *File) SaveAs(path string) {
 				})
 			}
 		}
-
-		// for pos, col := range f.RenderLayer.PixelData {
-		// 	img.Set(int(pos.X), int(pos.Y), color.NRGBA{
-		// 		R: col.R,
-		// 		G: col.G,
-		// 		B: col.B,
-		// 		A: col.A,
-		// 	})
-		// }
-
-		// for pos, data := range combined {
-		// 	img.Set(int(pos.X), int(pos.Y), color.NRGBA{
-		// 		R: data.R,
-		// 		G: data.G,
-		// 		B: data.B,
-		// 		A: data.A,
-		// 	})
-		// }
 
 		file, err := os.Create(path)
 		if err != nil {
@@ -1350,6 +1337,7 @@ func Open(openPath string) *File {
 	}
 
 	CurrentFile = f
+	f.RedrawRenderLayer()
 	EditorsUIRebuild()
 
 	return f

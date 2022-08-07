@@ -70,8 +70,8 @@ func (t *FillTool) MouseUp(x, y int32, button MouseButton) {
 		}
 	}
 	recFill(x, y)
-	CurrentFile.GetCurrentLayer().Redraw()
-	CurrentFile.ShouldRedraw = true
+	// CurrentFile.GetCurrentLayer().Redraw()
+	// CurrentFile.RedrawRenderLayer()
 }
 
 // DrawPreview is for drawing the preview

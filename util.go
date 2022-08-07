@@ -90,22 +90,17 @@ func MulAndClampUint8(a, b uint8) uint8 {
 // BlendWithOpacity blends two colors together. B is drawn over A.
 func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 	if a.A == 0 {
-		// log.Println("b", b)
 		return b
-		// a.A = b.A
 	}
 	if b.A == 0 {
-		// log.Println("a", a)
 		return a
 	}
 
 	switch blendMode {
 	case rl.BlendAlpha:
-		// return rl.ColorAlphaBlend(b, a, rl.White)
-		// blendRatio := 255 / float32(b.A)
-		a.A = 255/2 + a.A/2
+		a.A = AddAndClampUint8(a.A, b.A/2)
 		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
-
+		log.Println(a.A, b.A, blendRatio, 1-blendRatio)
 		return rl.Color{
 			A: a.A,
 			R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),

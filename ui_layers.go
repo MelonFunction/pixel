@@ -71,10 +71,10 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	hidden := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/eye_open.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			CurrentFile.ShouldRedraw = true
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
 				CurrentFile.Layers[y].Hidden = !CurrentFile.Layers[y].Hidden
+				CurrentFile.RedrawRenderLayer()
 				drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
 				if ok {
 					if CurrentFile.Layers[y].Hidden {
@@ -88,79 +88,79 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 	moveUp := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_up.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MoveLayerUp(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y + 1)
 				}
 				LayersUIRebuildList()
+				CurrentFile.RedrawRenderLayer()
 			}
 		}, nil)
 	moveDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/arrow_down.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MoveLayerDown(y, true); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y - 1)
 				}
 				LayersUIRebuildList()
+				CurrentFile.RedrawRenderLayer()
 			}
 		}, nil)
 	mergeDown := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/merge_down.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.MergeLayerDown(y); err == nil {
 				if CurrentFile.CurrentLayer == y {
 					CurrentFile.SetCurrentLayer(y - 1)
 				}
 				LayersUIRebuildList()
+				CurrentFile.RedrawRenderLayer()
 			} else {
 				log.Println(err)
 			}
 		}, nil)
-	getBlendModeFilePath := func(blendMode rl.BlendMode) string {
-		var bm string
-		switch blendMode {
-		case rl.BlendAlpha:
-			bm = "alpha"
-		case rl.BlendAddColors:
-			bm = "add"
-		case rl.BlendMultiplied:
-			bm = "mult"
-		case rl.BlendSubtractColors:
-			bm = "sub"
-		}
-		return "./res/icons/blendmode_" + bm + ".png"
-	}
-	blendMode := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile(getBlendModeFilePath(layer.BlendMode)), false,
-		func(entity *Entity, button MouseButton) {
-			// button up
-			CurrentFile.ShouldRedraw = true
-			if res, err := scene.QueryID(entity.ID); err == nil {
-				drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
-				drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
-				if ok {
-					switch CurrentFile.Layers[y].BlendMode {
-					case rl.BlendAlpha:
-						CurrentFile.Layers[y].BlendMode = rl.BlendAddColors
-					case rl.BlendAddColors:
-						CurrentFile.Layers[y].BlendMode = rl.BlendAlpha
-					case rl.BlendMultiplied: // todo
-					case rl.BlendSubtractColors: // todo
-					}
-					drawableTexture.SetTexture(GetFile(getBlendModeFilePath(CurrentFile.Layers[y].BlendMode)))
-					CurrentFile.Layers[y].Redraw()
-				}
-			}
-		}, nil)
+	// getBlendModeFilePath := func(blendMode rl.BlendMode) string {
+	// 	var bm string
+	// 	switch blendMode {
+	// 	case rl.BlendAlpha:
+	// 		bm = "alpha"
+	// 	case rl.BlendAddColors:
+	// 		bm = "add"
+	// 	case rl.BlendMultiplied:
+	// 		bm = "mult"
+	// 	case rl.BlendSubtractColors:
+	// 		bm = "sub"
+	// 	}
+	// 	return "./res/icons/blendmode_" + bm + ".png"
+	// }
+	// blendMode := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile(getBlendModeFilePath(layer.BlendMode)), false,
+	// 	func(entity *Entity, button MouseButton) {
+	// 		// button up
+	// 		if res, err := scene.QueryID(entity.ID); err == nil {
+	// 			drawable := res.Components[entity.Scene.ComponentsMap["drawable"]].(*Drawable)
+	// 			drawableTexture, ok := drawable.DrawableType.(*DrawableTexture)
+	// 			if ok {
+	// 				switch CurrentFile.Layers[y].BlendMode {
+	// 				case rl.BlendAlpha:
+	// 					CurrentFile.Layers[y].BlendMode = rl.BlendAddColors
+	// 				case rl.BlendAddColors:
+	// 					CurrentFile.Layers[y].BlendMode = rl.BlendAlpha
+	// 				case rl.BlendMultiplied: // todo
+	// 				case rl.BlendSubtractColors: // todo
+	// 				}
+	// 				drawableTexture.SetTexture(GetFile(getBlendModeFilePath(CurrentFile.Layers[y].BlendMode)))
+	// 				CurrentFile.Layers[y].Redraw()
+	// 				CurrentFile.RedrawRenderLayer()
+	// 			}
+	// 		}
+	// 	}, nil)
 	delete := NewButtonTexture(rl.NewRectangle(0, 0, UIButtonHeight/2, UIButtonHeight/2), GetFile("./res/icons/cross.png"), false,
 		func(entity *Entity, button MouseButton) {
 			// button up
-			CurrentFile.ShouldRedraw = true
 			if err := CurrentFile.DeleteLayer(y, true); err == nil {
 				LayersUIRebuildList()
+				CurrentFile.RedrawRenderLayer()
 			}
 		}, nil)
 
@@ -171,7 +171,7 @@ func LayersUIMakeLayerBox(y int32, layer *Layer) *Entity {
 			moveUp,
 			moveDown,
 			mergeDown,
-			blendMode,
+			// blendMode,
 			delete,
 		},
 		FlowDirectionHorizontal)
