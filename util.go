@@ -98,9 +98,10 @@ func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 
 	switch blendMode {
 	case rl.BlendAlpha:
-		a.A = AddAndClampUint8(a.A, b.A/2)
+		// a.A = AddAndClampUint8(a.A, b.A/2)
+		a.A = AddAndClampUint8(MaxUint8(a.A, b.A), MinUint8(a.A, b.A)/2)
 		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
-		log.Println(a.A, b.A, blendRatio, 1-blendRatio)
+		// log.Println(a.A, b.A, blendRatio, 1-blendRatio)
 		return rl.Color{
 			A: a.A,
 			R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),
@@ -242,6 +243,22 @@ func MaxInt32(a, b int32) int32 {
 
 // MinInt32 returns the smaller int32 of the two args
 func MinInt32(a, b int32) int32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// MaxUint8 returs the bigger uint8 of the two args
+func MaxUint8(a, b uint8) uint8 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// MinUint8 returs the smaller uint8 of the two args
+func MinUint8(a, b uint8) uint8 {
 	if a < b {
 		return a
 	}
