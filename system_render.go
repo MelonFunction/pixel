@@ -233,18 +233,23 @@ func (s *UIRenderSystem) draw(component interface{}, isDrawingChildren bool, off
 }
 
 // Update updates the system
-func (s *UIRenderSystem) Update(dt float32) {}
+func (s *UIRenderSystem) Update(dt float32) {
+}
 
 // Draw draws the system
 func (s *UIRenderSystem) Draw() {
+	// Draw everything and update the UI ECS' values
 	results := s.Scene.QueryTag(s.Scene.Tags["basic"], s.Scene.Tags["interactable"], s.Scene.Tags["scrollable"])
 	for _, result := range results {
 		s.draw(result, false, rl.Vector2{})
 	}
 
-	// force some updates here
-	// it's hacky, but it's better than creating another callback to update something after component update/draw loop
-	// PaletteUIUpdateCurrentColorIndicator()
+	// Do the callbacks now that the UI values are processed
+	select {
+	case fn := <-CurrentFile.RenderSystemRenderCallback:
+		fn()
+	default:
+	}
 	CurrentColorToggleAddRemoveGraphic()
 
 	// Debug text

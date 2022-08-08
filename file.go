@@ -274,6 +274,13 @@ type File struct {
 	CanvasWidthResizePreview, CanvasHeightResizePreview, TileWidthResizePreview, TileHeightResizePreview int32
 	// direction of resize event
 	CanvasDirectionResizePreview ResizeDirection
+
+	// Hacky way to handle events afer all values have been calculated.
+	// There are probably race conditions here since the execution is delayed. If the file is switched before the
+	// function is called, unexpected results will likely happen
+	// It's only used by UIControlSystem.process to run the current palette color indicator's OnScroll function after
+	// offset values  have been calculated
+	RenderSystemRenderCallback chan func()
 }
 
 // NewFile returns a pointer to a new File
@@ -326,6 +333,8 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		CanvasHeightResizePreview: canvasHeight,
 		TileWidthResizePreview:    tileWidth,
 		TileHeightResizePreview:   tileHeight,
+
+		RenderSystemRenderCallback: make(chan func(), 10),
 	}
 
 	// f.Layers[0].BlendMode = rl.BlendAddColors

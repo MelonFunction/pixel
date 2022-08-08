@@ -222,7 +222,10 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		// the lowest level element has a scroll event
 		if interactable != nil {
 			if interactable.OnScroll != nil && scrollAmount != 0 {
-				interactable.OnScroll(scrollAmount)
+				CurrentFile.RenderSystemRenderCallback <- func() {
+					interactable.OnScroll(scrollAmount)
+				}
+
 				return entity
 			}
 		}
