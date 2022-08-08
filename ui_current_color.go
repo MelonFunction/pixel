@@ -315,6 +315,7 @@ func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
 			CurrentColorSetLeftColor(right)
 			SetUIHexColor(LeftColor)
 
+			PaletteUIHideCurrentColorIndicator()
 			SetUIColors(LeftColor)
 			makeBlendArea(LeftColor)
 			makeOpacitySliderArea(LeftColor)

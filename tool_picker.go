@@ -24,6 +24,7 @@ func (t *PickerTool) MouseDown(x, y int32, button MouseButton) {
 func (t *PickerTool) MouseUp(x, y int32, button MouseButton) {
 	color, ok := CurrentFile.GetCurrentLayer().PixelData[IntVec2{x, y}]
 	if ok {
+		PaletteUIHideCurrentColorIndicator()
 		switch button {
 		case rl.MouseLeftButton:
 			CurrentColorSetLeftColor(color)

@@ -267,13 +267,11 @@ func UINew() {
 
 // UIClose closes a file
 func UIClose() {
-	CurrentFile.Destroy()
-	if len(Files) > 0 {
+	if len(Files) > 1 {
+		CurrentFile.Destroy()
 		CurrentFile = Files[len(Files)-1]
-	} else {
-		rl.CloseWindow()
+		EditorsUIRebuild()
 	}
-	EditorsUIRebuild()
 }
 
 // UIOpen opens a file

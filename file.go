@@ -287,7 +287,6 @@ type File struct {
 func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 
 	var scaleRatio = 64.0 / float32(canvasHeight)
-	log.Println(canvasHeight, scaleRatio)
 
 	pathDir, err := os.Getwd()
 	if err != nil {
