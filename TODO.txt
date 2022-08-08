@@ -18,7 +18,7 @@ System
   🟢 Opening an image with transparency causes colored artifacts
     🟢 Also transparency is wrong. Probs blending function
   🟢 Dropping a file on the window should open it
-  🔴 Opening a file should contain/fit, not use default zoom
+  🟢 Opening a file should contain/fit, not use default zoom
   🔴 Export Png option; when saving a .pix as a .png, it'll change the last save location to 
      the .png instead of staying on .pix
   🟢 Serialize state data into a file (like .ase etc)
@@ -81,7 +81,7 @@ Preview Panel
     🟢 Pause/play
   🟢 Show the tile/map editor/placer if the tiles tab is selected
     🟢 Show the current tile being tiled in all directions
-    🟢 maintain aspect ratios
+    🟢 Maintain aspect ratios
     🔴 Allow editing in the preview panel
-    🔴 allow movement/zoom
-    🔴 lock preview window position to cell (with a hotkey)
+    🔴 Allow movement/zoom
+    🔴 Lock preview window position to cell (with a hotkey)

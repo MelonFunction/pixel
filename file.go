@@ -242,9 +242,6 @@ type File struct {
 	// If grid should be drawn
 	DrawGrid bool
 
-	// If RenderLayer should be redrawn
-	ShouldRedraw bool
-
 	// Used by system_file.go
 	FileCameraTarget rl.Vector2 // temp storage for calculations
 	FileCamera       rl.Camera2D
@@ -282,6 +279,9 @@ type File struct {
 // NewFile returns a pointer to a new File
 func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 
+	var scaleRatio = 64.0 / float32(canvasHeight)
+	log.Println(canvasHeight, scaleRatio)
+
 	pathDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -307,11 +307,9 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		HasDoneMouseUpLeft:  true,
 		HasDoneMouseUpRight: true,
 
-		DrawGrid: true,
+		DrawGrid: canvasHeight <= 64, // don't draw the grid for anything bigger than default size
 
-		ShouldRedraw: true,
-
-		FileCamera: rl.Camera2D{Zoom: 12.0,
+		FileCamera: rl.Camera2D{Zoom: 12.0 * scaleRatio,
 			Offset: rl.NewVector2(
 				float32(rl.GetScreenWidth())/2,
 				float32(rl.GetScreenHeight())/2,
@@ -1072,7 +1070,6 @@ func (f *File) Undo() {
 
 // Redo redoes an action
 func (f *File) Redo() {
-	f.ShouldRedraw = true
 	if f.historyOffset > 0 {
 		index := int32(len(f.History)) - f.historyOffset
 		f.historyOffset--
@@ -1241,10 +1238,7 @@ func (f *File) SaveAs(path string) {
 
 // Open a file
 func Open(openPath string) *File {
-	f := NewFile(64, 64, 8, 8)
-	f.Filename = "Drawing"
-	f.PathDir = path.Dir(openPath)
-	f.FileDir = openPath
+	var f *File
 
 	fi, err := os.Stat(openPath)
 	if err != nil {
@@ -1265,11 +1259,10 @@ func Open(openPath string) *File {
 				log.Println(err)
 			}
 
+			f = NewFile(fileSer.CanvasWidth, fileSer.CanvasHeight, fileSer.TileWidth, fileSer.TileHeight)
+			f.PathDir = path.Dir(openPath)
+			f.FileDir = openPath
 			f.DrawGrid = fileSer.DrawGrid
-			f.CanvasWidth = fileSer.CanvasWidth
-			f.CanvasHeight = fileSer.CanvasHeight
-			f.TileWidth = fileSer.TileWidth
-			f.TileHeight = fileSer.TileHeight
 
 			f.Layers = make([]*Layer, len(fileSer.Layers))
 			for i, layer := range fileSer.Layers {
@@ -1306,8 +1299,9 @@ func Open(openPath string) *File {
 			tex := rl.LoadTexture(openPath)
 			pixelColors := rl.LoadImageColors(rl.LoadImageFromTexture(tex))
 
-			f.CanvasWidth = tex.Width
-			f.CanvasHeight = tex.Height
+			f = NewFile(tex.Width, tex.Height, 8, 8)
+			f.PathDir = path.Dir(openPath)
+			f.FileDir = openPath
 
 			editedLayer := NewLayer(f.CanvasWidth, f.CanvasHeight, "background", rl.Blank, false)
 

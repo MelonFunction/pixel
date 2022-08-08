@@ -7,11 +7,6 @@ var (
 	currentButton  *Entity
 )
 
-// EditorsUICloseEditor closes the current editor
-func EditorsUICloseEditor() {
-
-}
-
 // EditorsUIRebuild rebuilds the list of open editors
 func EditorsUIRebuild() {
 	editorsButtons.RemoveChildren()
