@@ -78,11 +78,11 @@ type HistoryResize struct {
 // RedrawRenderLayer redraws the render layer
 func (f *File) RedrawRenderLayer() {
 	rl.BeginTextureMode(f.RenderLayer.Canvas)
-	rl.ClearBackground(rl.Blank)
+	rl.ClearBackground(rl.Black)
 	rl.BeginBlendMode(rl.BlendAlpha)
 	for x := int32(0); x < f.CanvasWidth; x++ {
 		for y := int32(0); y < f.CanvasHeight; y++ {
-			color := rl.Black
+			color := rl.Blank
 			loc := IntVec2{x, y}
 			for _, layer := range f.Layers[:len(f.Layers)-1] {
 				if !layer.Hidden {
@@ -113,10 +113,10 @@ func (f *File) DrawPixel(x, y int32, color rl.Color, layer *Layer) {
 		}
 
 		// Blend color on passed layer
-		color = BlendWithOpacity(oldColor, color, layer.BlendMode)
+		if color != rl.Blank {
+			color = BlendWithOpacity(oldColor, color, layer.BlendMode)
+		}
 		layer.PixelData[loc] = color
-		// Blend new color with existing render layer color
-		f.RenderLayer.PixelData[loc] = BlendWithOpacity(f.RenderLayer.PixelData[loc], color, layer.BlendMode)
 
 		// Prevent overwriting the old color with the new color since this function is called every frame
 		// Always draws to the last element of f.History since the offset is removed automatically on mouse down
@@ -136,37 +136,34 @@ func (f *File) DrawPixel(x, y int32, color rl.Color, layer *Layer) {
 		if color == rl.Blank {
 			rl.DrawPixel(x, y, rl.Black)
 		} else {
-			// rl.BeginBlendMode(layer.BlendMode)
-			// rl.DrawPixel(x, y, rl.Black)
+			rl.BeginBlendMode(layer.BlendMode)
+			rl.DrawPixel(x, y, rl.Black)
 			rl.DrawPixel(x, y, color)
-			// rl.EndBlendMode()
+			rl.EndBlendMode()
 		}
 		rl.EndTextureMode()
 
 		// Draw to render layer
 		rl.BeginTextureMode(f.RenderLayer.Canvas)
-		if color == rl.Blank {
-			rl.DrawPixel(x, y, rl.Black)
-		} else {
-			// rl.BeginBlendMode(rl.BlendSubtractColors)
-			// rl.DrawPixel(x, y, rl.Black)
-			// rl.EndBlendMode()
 
-			rl.BeginBlendMode(rl.BlendAlpha)
-			nc := rl.Black
-			for _, layer := range f.Layers[:len(f.Layers)-1] {
-				if !layer.Hidden {
-					if layerColor, ok := layer.PixelData[loc]; ok {
-						nc = BlendWithOpacity(nc, layerColor, layer.BlendMode)
-					}
+		// Erase current pixel color
+		rl.BeginBlendMode(rl.BlendSubtractColors)
+		rl.DrawPixel(x, y, f.RenderLayer.PixelData[loc])
+		rl.EndBlendMode()
+
+		rl.BeginBlendMode(rl.BlendAlpha)
+		nc := rl.Blank
+		for _, layer := range f.Layers[:len(f.Layers)-1] {
+			if !layer.Hidden {
+				if layerColor, ok := layer.PixelData[loc]; ok {
+					nc = BlendWithOpacity(nc, layerColor, layer.BlendMode)
 				}
 			}
-
-			f.RenderLayer.PixelData[loc] = nc
-			rl.DrawPixel(x, y, rl.Black)
-			rl.DrawPixel(x, y, nc)
-			rl.EndBlendMode()
 		}
+		f.RenderLayer.PixelData[loc] = nc
+		rl.DrawPixel(x, y, rl.Black)
+		rl.DrawPixel(x, y, nc)
+		rl.EndBlendMode()
 		rl.EndTextureMode()
 
 	}
@@ -804,7 +801,6 @@ func (f *File) AppendHistory(action interface{}) {
 		f.History = append(f.History, action)
 	}
 
-	f.RedrawRenderLayer()
 	EditorsUIRebuild()
 }
 
