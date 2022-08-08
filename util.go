@@ -98,10 +98,8 @@ func BlendWithOpacity(a, b rl.Color, blendMode rl.BlendMode) rl.Color {
 
 	switch blendMode {
 	case rl.BlendAlpha:
-		// a.A = AddAndClampUint8(a.A, b.A/2)
 		a.A = AddAndClampUint8(MaxUint8(a.A, b.A), MinUint8(a.A, b.A)/2)
 		blendRatio := (float32(a.A) - float32(b.A)) / float32(a.A)
-		// log.Println(a.A, b.A, blendRatio, 1-blendRatio)
 		return rl.Color{
 			A: a.A,
 			R: uint8(float32(a.R)*blendRatio + float32(b.R)*(1-blendRatio)),

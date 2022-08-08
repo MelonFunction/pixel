@@ -257,7 +257,7 @@ func (t *PixelBrushTool) MouseDown(x, y int32, button MouseButton) {
 func (t *PixelBrushTool) MouseUp(x, y int32, button MouseButton) {
 	t.shouldConnectToLastPos = false
 	t.drawnPixels = make(map[IntVec2]bool)
-	CurrentFile.GetCurrentLayer().Redraw()
+	// CurrentFile.GetCurrentLayer().Redraw()
 }
 
 // DrawPreview is for drawing the preview
