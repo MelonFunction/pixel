@@ -34,12 +34,10 @@ func EditorsUIAddButton(file *File) {
 	button := NewButtonText(
 		rl.NewRectangle(0, 0, fo.X+20, UIFontSize*2),
 		filename, TextAlignCenter, isCurrent, func(entity *Entity, button MouseButton) {
-
 			if res, err := scene.QueryID(currentButton.ID); err == nil {
 				hoverable := res.Components[currentButton.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 				hoverable.Selected = false
 			}
-
 			if res, err := scene.QueryID(entity.ID); err == nil {
 				hoverable := res.Components[entity.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 				hoverable.Selected = true
@@ -48,6 +46,7 @@ func EditorsUIAddButton(file *File) {
 			CurrentFile = file
 			currentButton = entity
 
+			AnimationsUIRebuildList()
 			LayersUIRebuildList()
 		}, nil)
 	if isCurrent {
@@ -57,6 +56,8 @@ func EditorsUIAddButton(file *File) {
 				hoverable := res.Components[currentButton.Scene.ComponentsMap["hoverable"]].(*Hoverable)
 				hoverable.Selected = false
 			}
+
+			AnimationsUIRebuildList()
 			LayersUIRebuildList()
 		}
 

@@ -296,7 +296,7 @@ func NewFile(canvasWidth, canvasHeight, tileWidth, tileHeight int32) *File {
 		},
 		RenderLayer: NewLayer(canvasWidth, canvasHeight, "render", rl.Blank, true),
 
-		FileChanged: true,
+		FileChanged: false,
 
 		Animations: make([]*Animation, 0),
 
