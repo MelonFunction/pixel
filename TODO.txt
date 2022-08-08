@@ -17,7 +17,7 @@ System
   🔴 Prevent quit when there is an unsaved file
   🟢 Opening an image with transparency causes colored artifacts
     🟢 Also transparency is wrong. Probs blending function
-  🔴 Dropping a file on the window should open it
+  🟢 Dropping a file on the window should open it
   🔴 Opening a file should contain/fit, not use default zoom
   🔴 Export Png option; when saving a .pix as a .png, it'll change the last save location to 
      the .png instead of staying on .pix

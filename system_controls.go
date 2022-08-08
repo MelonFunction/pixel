@@ -580,9 +580,8 @@ func (s *UIControlSystem) Update(dt float32) {
 		case CommandTypeOpen:
 			if len(cmd.Name) > 0 {
 				// open also sets the currentfile before rebuilding ui
-				file := Open(cmd.Name)
-				log.Println("adding new file", cmd.Name)
-				Files = append(Files, file)
+				log.Println("Opening file", cmd.Name)
+				Files = append(Files, Open(cmd.Name))
 				// EditorsUIAddButton(file)
 				EditorsUIRebuild()
 
@@ -593,6 +592,17 @@ func (s *UIControlSystem) Update(dt float32) {
 			}
 		}
 	default:
+	}
+
+	for rl.IsFileDropped() {
+		count := int32(1)
+		files := rl.GetDroppedFiles(&count)
+		for _, filePath := range files {
+			log.Println("Opening file", filePath)
+			Files = append(Files, Open(filePath))
+			EditorsUIRebuild()
+		}
+		rl.ClearDroppedFiles()
 	}
 
 	// Don't bother with UI controls, something is being drawn
