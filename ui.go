@@ -201,6 +201,8 @@ const (
 	FlowDirectionHorizontal
 	// FlowDirectionHorizontalReversed flows horizontally, in reverse order
 	FlowDirectionHorizontalReversed
+	// FlowDirectionNoWrap disables the default wrapping
+	FlowDirectionNoWrap
 )
 
 // Scrollable allows an element to render its children elements with an offset
@@ -532,7 +534,7 @@ func (entity *Entity) PushChild(child *Entity) (*Entity, error) {
 					}
 				}
 				if !found {
-					if parentMoveable.LayoutTag == FlowDirectionHorizontalReversed || parentMoveable.LayoutTag == FlowDirectionVerticalReversed {
+					if parentMoveable.LayoutTag&FlowDirectionHorizontalReversed == FlowDirectionHorizontalReversed || parentMoveable.LayoutTag&FlowDirectionVerticalReversed == FlowDirectionVerticalReversed {
 						typed.Children = append([]*Entity{child}, typed.Children...)
 					} else {
 						typed.Children = append(typed.Children, child)
@@ -628,11 +630,13 @@ func (entity *Entity) FlowChildren() {
 					childMoveable.Bounds.X = parentMoveable.Bounds.X
 					childMoveable.Bounds.Y = parentMoveable.Bounds.Y
 
+					shouldWrap := parentMoveable.LayoutTag&FlowDirectionNoWrap != FlowDirectionNoWrap
+
 					if parentMoveable.LayoutTag&FlowDirectionVertical == FlowDirectionVertical ||
 						parentMoveable.LayoutTag&FlowDirectionVerticalReversed == FlowDirectionVerticalReversed {
 
 						// Wrap
-						if offset.Y >= parentMoveable.Bounds.Height {
+						if shouldWrap && offset.Y >= parentMoveable.Bounds.Height {
 							offset.Y = 0
 							offset.X += childMoveable.Bounds.Width
 						}
@@ -645,7 +649,7 @@ func (entity *Entity) FlowChildren() {
 						parentMoveable.LayoutTag&FlowDirectionHorizontalReversed == FlowDirectionHorizontalReversed {
 
 						// Wrap
-						if offset.X >= parentMoveable.Bounds.Width {
+						if shouldWrap && offset.X >= parentMoveable.Bounds.Width {
 							offset.X = 0
 							offset.Y += childMoveable.Bounds.Height
 						}

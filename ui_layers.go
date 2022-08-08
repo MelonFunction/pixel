@@ -33,7 +33,7 @@ func LayersUISetCurrentLayer(index int32) {
 
 // LayersUIMakeList makes the list
 func LayersUIMakeList(bounds rl.Rectangle) {
-	layerList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed)
+	layerList = NewScrollableList(rl.NewRectangle(0, UIButtonHeight, bounds.Width, bounds.Height-UIButtonHeight), []*Entity{}, FlowDirectionVerticalReversed|FlowDirectionNoWrap)
 	// All of the layers
 	for i, layer := range CurrentFile.Layers {
 		if i == len(CurrentFile.Layers)-1 {

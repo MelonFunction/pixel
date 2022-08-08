@@ -10,7 +10,7 @@ Refactor
 UI
   🔴 Resize element
   🔴 Double click to change the text in a label, single click to activate it
-  🔴 When layers list is too long, some elements don't show up
+  🟢 When layers list is too long, some elements don't show up
 
 System
   🟢 * on unsaved files
