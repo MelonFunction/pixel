@@ -150,7 +150,7 @@ func PaletteUIRebuildPalette() {
 			}
 		}
 	}
-	PaletteUIUpdateCurrentColorIndicator()
+	// PaletteUIUpdateCurrentColorIndicator()
 }
 
 // PaletteUIAddColor adds a color to the palette
@@ -326,7 +326,7 @@ func NewPaletteUI(bounds rl.Rectangle) *Entity {
 	}, FlowDirectionVertical)
 
 	PaletteUIRebuildPalette()
-	PaletteUIUpdateCurrentColorIndicator()
+	// PaletteUIUpdateCurrentColorIndicator()
 
 	if interactable, ok := PaletteUIPaletteEntity.GetInteractable(); ok {
 		interactable.OnScroll = func(direction int32) {
