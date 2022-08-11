@@ -48,7 +48,7 @@ func main() {
 	rl.SetWindowPosition(3840-1920*0.75-96, 128)
 	rl.SetTargetFPS(60)
 	rl.SetExitKey(0)
-	rl.SetWindowIcon(*rl.LoadImage("./icon.png"))
+	rl.SetWindowIcon(*rl.LoadImage(GetFile("./res/icon.png")))
 
 	// Make the files
 	Files = []*File{}
