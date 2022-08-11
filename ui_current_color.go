@@ -296,8 +296,8 @@ func CurrentColorToggleAddRemoveGraphic() {
 // the currently selected colors as well as buttons to swap them and add the
 // color to the palette depending on which mouse button was clicked
 func NewCurrentColorUI(bounds rl.Rectangle) *Entity {
-	currentColorPlusTexture = rl.LoadTexture("./res/icons/plus.png")
-	currentColorNegativeTexture = rl.LoadTexture("./res/icons/negative.png")
+	currentColorPlusTexture = rl.LoadTexture(GetFile("./res/icons/plus.png"))
+	currentColorNegativeTexture = rl.LoadTexture(GetFile("./res/icons/negative.png"))
 
 	currentColorBox = NewBox(bounds, []*Entity{}, FlowDirectionHorizontal)
 
