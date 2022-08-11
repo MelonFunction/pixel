@@ -42,7 +42,7 @@
 git clone github.com/MelonFunction/pixel
 cd pixel
 go get -v ./...
-go run .
+go install
 ```
 ⌛ Then wait a while for the libraries to build
 
