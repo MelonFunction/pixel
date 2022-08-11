@@ -1,4 +1,6 @@
 github.com/gen2brain/raylib-go/raylib v0.0.0-20220702153720-2ba84634ed1e h1:e/GRIyVh+q0SSASTNZ7Ns/mfG4TCb+cvVCFow2es42M=
 github.com/gen2brain/raylib-go/raylib v0.0.0-20220702153720-2ba84634ed1e/go.mod h1:+NbsqGlEQqGqrsgJFF5Yj2dkvn0ML2SQb8RqM2hJsPU=
+github.com/gen2brain/raylib-go/raylib v0.0.0-20220805124027-98220fa4f181 h1:p1dR2IfDIoThDupx8XI8nnvaY2O14eTnOxCNyKxmqXE=
+github.com/gen2brain/raylib-go/raylib v0.0.0-20220805124027-98220fa4f181/go.mod h1:+NbsqGlEQqGqrsgJFF5Yj2dkvn0ML2SQb8RqM2hJsPU=
 github.com/gotk3/gotk3 v0.6.1 h1:GJ400a0ecEEWrzjBvzBzH+pB/esEMIGdB9zPSmBdoeo=
 github.com/gotk3/gotk3 v0.6.1/go.mod h1:/hqFpkNa9T3JgNAE2fLvCdov7c5bw//FHNZrZ3Uv9/Q=

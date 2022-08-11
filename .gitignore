@@ -1,4 +1,5 @@
 pixel
 *.png
 !res/icons/*.png
+!icon.png
 *.pix
