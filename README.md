@@ -44,8 +44,13 @@ cd pixel
 go get -v ./...
 go run .
 ```
+⌛ Then wait a while for the libraries to build
 
-## Dependencies:  
+## Dependencies
 Install whatever these libraries say to install!
-- https://github.com/gotk3/gotk3
 - https://github.com/gen2brain/raylib-go
+- https://github.com/gotk3/gotk3
+
+## Screenshot
+
+![MelonPixel editing its own icon](./screenshot.png)
