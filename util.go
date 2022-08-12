@@ -3,12 +3,10 @@ package main
 import (
 	"embed"
 	"fmt"
-	"io/fs"
 	"log"
 	"math"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -172,17 +170,41 @@ func SetupFiles() error {
 
 	os.Mkdir(savePath, 0700)
 
-	fs.WalkDir(f, "res", func(p string, d fs.DirEntry, err error) error {
-		if data, err := os.ReadFile(p); err == nil {
-			savePath := path.Join(savePath, p)
-			nestedPath := filepath.Dir(savePath)
+	// log.Println("Copying internal resources to cache")
+	var writeToCache func(p string) error
+	writeToCache = func(p string) error {
+		if entries, err := f.ReadDir(p); err == nil {
+			for i, dirEntry := range entries {
+				joined := path.Join(p, dirEntry.Name())
+				_ = i
+				// log.Println(i, dirEntry.Name(), dirEntry.IsDir(), joined)
 
-			os.MkdirAll(nestedPath, 0700)
-			os.WriteFile(savePath, data, 0666)
+				if dirEntry.IsDir() {
+					err := os.MkdirAll(path.Join(savePath, joined), 0700)
+					if err != nil {
+						return err
+					}
+					if err = writeToCache(joined); err != nil {
+						return err
+					}
+				} else {
+					data, err := f.ReadFile(joined)
+					if err != nil {
+						log.Println(err)
+						return err
+					}
+					os.WriteFile(path.Join(savePath, joined), data, 0666)
+				}
+			}
+		} else {
+			log.Println(err)
 		}
 
-		return err
-	})
+		return nil
+	}
+	if err = writeToCache("res"); err != nil {
+		log.Println(err)
+	}
 
 	return nil
 }
