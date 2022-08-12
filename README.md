@@ -53,4 +53,5 @@ Install whatever these libraries say to install!
 
 ## Screenshot
 
+MelonPixel editing its own icon  
 ![MelonPixel editing its own icon](./screenshot.png)
