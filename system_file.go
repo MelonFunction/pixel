@@ -433,8 +433,11 @@ func recursiveResize(entity *Entity) {
 
 // Resize is called when a resize event happens
 func (s *UIRenderFileSystem) Resize() {
-	CurrentFile.FileCamera.Offset.X = float32(rl.GetScreenWidth()) / 2
-	CurrentFile.FileCamera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	// resize all files
+	for _, file := range Files {
+		file.FileCamera.Offset.X = float32(rl.GetScreenWidth()) / 2
+		file.FileCamera.Offset.Y = float32(rl.GetScreenHeight()) / 2
+	}
 
 	s.hasDoneFirstFrameResize = true
 
