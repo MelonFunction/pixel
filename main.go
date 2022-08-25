@@ -95,12 +95,17 @@ func main() {
 	EditorsUIRebuild()
 
 	for !rl.WindowShouldClose() {
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.Black)
+		if rl.IsWindowFocused() {
+			rl.SetTargetFPS(60)
+		} else {
+			rl.SetTargetFPS(1)
+		}
 
 		UpdateUI()
-		DrawUI()
 
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+		DrawUI()
 		rl.EndDrawing()
 	}
 
