@@ -6,7 +6,6 @@ import (
 	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
-	"github.com/gotk3/gotk3/gtk"
 )
 
 // Static vars for file
@@ -62,85 +61,86 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	UIControlSystemCmds = make(chan UIControlChanData)
 	UIControlSystemReturns = make(chan UIControlChanData)
 	go func(cmds, returns chan UIControlChanData) {
-		gtk.Init(nil)
+		// gtk.Init(nil)
 
-		win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
-		if err != nil {
-			log.Fatal("Unable to create window:", err)
-		}
-		win.Connect("destroy", func() {
-			gtk.MainQuit()
-		})
+		// win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+		// if err != nil {
+		// 	log.Fatal("Unable to create window:", err)
+		// }
+		// win.Connect("destroy", func() {
+		// 	gtk.MainQuit()
+		// })
 
-		// Only show png files
-		filter, err := gtk.FileFilterNew()
-		if err != nil {
-			log.Fatal(err)
-		}
-		filter.SetName(".png, .pix")
-		filter.AddPattern("*.png")
-		filter.AddPattern("*.pix")
+		// // Only show png files
+		// filter, err := gtk.FileFilterNew()
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// filter.SetName(".png, .pix")
+		// filter.AddPattern("*.png")
+		// filter.AddPattern("*.pix")
 
 		running := true
 		for running {
 			select {
 			case cmd := <-cmds:
-				switch cmd.CommandType {
-				case CommandTypeOpen:
-					fc, err := gtk.FileChooserNativeDialogNew(
-						"Select file to open",
-						win,
-						gtk.FILE_CHOOSER_ACTION_OPEN,
-						"open",
-						"cancel",
-					)
-					if err != nil {
-						log.Fatal(err)
-					}
+				_ = cmd
+				// 	switch cmd.CommandType {
+				// 	case CommandTypeOpen:
+				// 		fc, err := gtk.FileChooserNativeDialogNew(
+				// 			"Select file to open",
+				// 			win,
+				// 			gtk.FILE_CHOOSER_ACTION_OPEN,
+				// 			"open",
+				// 			"cancel",
+				// 		)
+				// 		if err != nil {
+				// 			log.Fatal(err)
+				// 		}
 
-					fc.AddFilter(filter)
-					fc.SetCurrentFolder(CurrentFile.PathDir)
+				// 		fc.AddFilter(filter)
+				// 		fc.SetCurrentFolder(CurrentFile.PathDir)
 
-					switch fc.Run() {
-					case int(gtk.RESPONSE_ACCEPT):
-						name := fc.GetFilename()
-						log.Println("Opened file: ", name)
-						returns <- UIControlChanData{CommandType: CommandTypeOpen, Name: name}
-					default:
-						returns <- UIControlChanData{CommandType: CommandTypeFail}
-					}
-					fc.Destroy()
+				// 		switch fc.Run() {
+				// 		case int(gtk.RESPONSE_ACCEPT):
+				// 			name := fc.GetFilename()
+				// 			log.Println("Opened file: ", name)
+				// 			returns <- UIControlChanData{CommandType: CommandTypeOpen, Name: name}
+				// 		default:
+				// 			returns <- UIControlChanData{CommandType: CommandTypeFail}
+				// 		}
+				// 		fc.Destroy()
 
-				case CommandTypeSave:
-					fc, err := gtk.FileChooserNativeDialogNew(
-						"Select file to save",
-						win,
-						gtk.FILE_CHOOSER_ACTION_SAVE,
-						"save",
-						"cancel",
-					)
-					if err != nil {
-						log.Fatal(err)
-					}
+				// 	case CommandTypeSave:
+				// 		fc, err := gtk.FileChooserNativeDialogNew(
+				// 			"Select file to save",
+				// 			win,
+				// 			gtk.FILE_CHOOSER_ACTION_SAVE,
+				// 			"save",
+				// 			"cancel",
+				// 		)
+				// 		if err != nil {
+				// 			log.Fatal(err)
+				// 		}
 
-					fc.SetCurrentFolder(CurrentFile.PathDir)
-					fc.SetFilename(CurrentFile.Filename)
+				// 		fc.SetCurrentFolder(CurrentFile.PathDir)
+				// 		fc.SetFilename(CurrentFile.Filename)
 
-					switch fc.Run() {
-					case int(gtk.RESPONSE_ACCEPT):
-						name := fc.GetFilename()
-						log.Println("Saved file: ", name)
-						returns <- UIControlChanData{CommandType: CommandTypeSave, Name: name}
-					default:
-						returns <- UIControlChanData{CommandType: CommandTypeFail}
-					}
-					fc.Destroy()
-				case CommandTypeQuit:
-					running = false
-				}
-			default:
-				time.Sleep(time.Millisecond * 100)
-				gtk.MainIterationDo(false)
+				// 		switch fc.Run() {
+				// 		case int(gtk.RESPONSE_ACCEPT):
+				// 			name := fc.GetFilename()
+				// 			log.Println("Saved file: ", name)
+				// 			returns <- UIControlChanData{CommandType: CommandTypeSave, Name: name}
+				// 		default:
+				// 			returns <- UIControlChanData{CommandType: CommandTypeFail}
+				// 		}
+				// 		fc.Destroy()
+				// 	case CommandTypeQuit:
+				// 		running = false
+				// 	}
+				// default:
+				// 	time.Sleep(time.Millisecond * 100)
+				// 	gtk.MainIterationDo(false)
 			}
 		}
 	}(UIControlSystemCmds, UIControlSystemReturns)
@@ -206,7 +206,7 @@ func (s *UIControlSystem) process(component interface{}, isProcessingChildren bo
 		hoverable.Hovered = true
 
 		// Scroll logic
-		scrollAmount := rl.GetMouseWheelMove()
+		scrollAmount := int32(rl.GetMouseWheelMove())
 		if scrollAmount != 0 {
 			if scrollable != nil {
 				UIHasControl = true
@@ -596,14 +596,13 @@ func (s *UIControlSystem) Update(dt float32) {
 	}
 
 	for rl.IsFileDropped() {
-		count := int32(1)
-		files := rl.GetDroppedFiles(&count)
+		files := rl.LoadDroppedFiles()
 		for _, filePath := range files {
 			log.Println("Opening file", filePath)
 			Files = append(Files, Open(filePath))
 			EditorsUIRebuild()
 		}
-		rl.ClearDroppedFiles()
+		rl.UnloadDroppedFiles()
 	}
 
 	// Don't bother with UI controls, something is being drawn
