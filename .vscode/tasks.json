@@ -6,7 +6,7 @@
         {
             "label": "go build",
             "type": "shell",
-            "command": "go build && ./pixel ",
+            "command": "go run .",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
