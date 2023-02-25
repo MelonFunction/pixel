@@ -6,6 +6,7 @@ import (
 	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+	"github.com/ncruces/zenity"
 )
 
 // Static vars for file
@@ -61,86 +62,60 @@ func NewUIControlSystem(keymap Keymap) *UIControlSystem {
 	UIControlSystemCmds = make(chan UIControlChanData)
 	UIControlSystemReturns = make(chan UIControlChanData)
 	go func(cmds, returns chan UIControlChanData) {
-		// gtk.Init(nil)
-
-		// win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
-		// if err != nil {
-		// 	log.Fatal("Unable to create window:", err)
-		// }
-		// win.Connect("destroy", func() {
-		// 	gtk.MainQuit()
-		// })
-
-		// // Only show png files
-		// filter, err := gtk.FileFilterNew()
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// filter.SetName(".png, .pix")
-		// filter.AddPattern("*.png")
-		// filter.AddPattern("*.pix")
-
 		running := true
 		for running {
 			select {
 			case cmd := <-cmds:
 				_ = cmd
-				// 	switch cmd.CommandType {
-				// 	case CommandTypeOpen:
-				// 		fc, err := gtk.FileChooserNativeDialogNew(
-				// 			"Select file to open",
-				// 			win,
-				// 			gtk.FILE_CHOOSER_ACTION_OPEN,
-				// 			"open",
-				// 			"cancel",
-				// 		)
-				// 		if err != nil {
-				// 			log.Fatal(err)
-				// 		}
+				switch cmd.CommandType {
+				case CommandTypeOpen:
+					strings, err := zenity.SelectFileMultiple(
+						zenity.Title("Open File"),
+						zenity.Filename(CurrentFile.PathDir),
+						zenity.FileFilters{
+							{
+								Name:     ".png, .pix",
+								Patterns: []string{"*.png", "*.pix"},
+								CaseFold: true},
+						})
 
-				// 		fc.AddFilter(filter)
-				// 		fc.SetCurrentFolder(CurrentFile.PathDir)
+					log.Println(strings)
+					if err != nil {
+						log.Println(err)
+						returns <- UIControlChanData{CommandType: CommandTypeFail}
+					} else {
+						log.Println(strings)
+						for _, name := range strings {
+							log.Println("Opened file: ", name)
+							returns <- UIControlChanData{CommandType: CommandTypeOpen, Name: name}
+						}
+					}
 
-				// 		switch fc.Run() {
-				// 		case int(gtk.RESPONSE_ACCEPT):
-				// 			name := fc.GetFilename()
-				// 			log.Println("Opened file: ", name)
-				// 			returns <- UIControlChanData{CommandType: CommandTypeOpen, Name: name}
-				// 		default:
-				// 			returns <- UIControlChanData{CommandType: CommandTypeFail}
-				// 		}
-				// 		fc.Destroy()
+				case CommandTypeSave:
+					name, err := zenity.SelectFileSave(
+						zenity.Title("Save File"),
+						zenity.Filename(CurrentFile.PathDir),
+						zenity.FileFilters{
+							{
+								Name:     ".png",
+								Patterns: []string{"*.png"},
+								CaseFold: true},
+							{
+								Name:     ".pix",
+								Patterns: []string{"*.pix"},
+								CaseFold: true},
+						})
 
-				// 	case CommandTypeSave:
-				// 		fc, err := gtk.FileChooserNativeDialogNew(
-				// 			"Select file to save",
-				// 			win,
-				// 			gtk.FILE_CHOOSER_ACTION_SAVE,
-				// 			"save",
-				// 			"cancel",
-				// 		)
-				// 		if err != nil {
-				// 			log.Fatal(err)
-				// 		}
-
-				// 		fc.SetCurrentFolder(CurrentFile.PathDir)
-				// 		fc.SetFilename(CurrentFile.Filename)
-
-				// 		switch fc.Run() {
-				// 		case int(gtk.RESPONSE_ACCEPT):
-				// 			name := fc.GetFilename()
-				// 			log.Println("Saved file: ", name)
-				// 			returns <- UIControlChanData{CommandType: CommandTypeSave, Name: name}
-				// 		default:
-				// 			returns <- UIControlChanData{CommandType: CommandTypeFail}
-				// 		}
-				// 		fc.Destroy()
-				// 	case CommandTypeQuit:
-				// 		running = false
-				// 	}
-				// default:
-				// 	time.Sleep(time.Millisecond * 100)
-				// 	gtk.MainIterationDo(false)
+					if err != nil {
+						log.Println(err)
+						returns <- UIControlChanData{CommandType: CommandTypeFail}
+					} else {
+						log.Println("Saved file: ", name)
+						returns <- UIControlChanData{CommandType: CommandTypeSave, Name: name}
+					}
+				}
+			default:
+				time.Sleep(time.Millisecond * 100)
 			}
 		}
 	}(UIControlSystemCmds, UIControlSystemReturns)

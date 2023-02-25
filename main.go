@@ -43,7 +43,7 @@ func main() {
 	SetupFiles()
 
 	rl.SetTraceLog(rl.LogError)
-	rl.SetConfigFlags(rl.FlagWindowResizable)
+	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagWindowUnfocused)
 	rl.InitWindow(1920*0.75, 1080*0.75, "MelonPixel")
 	// rl.SetWindowPosition(3840-1920*0.75-96, 128)
 	rl.SetWindowPosition(-1920*0.75-128, 128)
@@ -51,7 +51,6 @@ func main() {
 	rl.SetExitKey(0)
 	rl.SetWindowIcon(*rl.LoadImage(GetFile("./res/icon.png")))
 
-	// Make the files
 	Files = []*File{}
 
 	GlobalBrushSize = 1
@@ -61,7 +60,6 @@ func main() {
 	LeftTool = NewPixelBrushTool("Pixel Brush L", false)
 	RightTool = NewPixelBrushTool("Pixel Brush R", false)
 
-	// Load the settings
 	err := LoadSettings()
 	if err != nil {
 		log.Println(err)
@@ -92,7 +90,7 @@ func main() {
 		}
 	}
 
-	// show filename(s) in tab
+	// shows filename(s) in tab
 	EditorsUIRebuild()
 
 	for !rl.WindowShouldClose() {
